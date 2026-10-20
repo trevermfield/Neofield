@@ -48,6 +48,9 @@ const introMons = SPECIES.filter(sp => MON_PICS[sp.id]).map(sp => ({name: sp.nam
 
 const script = readFileSync(game('app_script.html'), 'utf8');
 if (!script.includes('/*NEO_MONS*/[]')) throw new Error('app_script.html is missing the /*NEO_MONS*/[] marker');
-const body = readFileSync(game('index_markup.html'), 'utf8') + script.replace('/*NEO_MONS*/[]', JSON.stringify(introMons));
+const now = new Date();
+const BUILD = process.env.BUILD_ID || now.toISOString().slice(0, 16).replace(/[-:T]/g, '');
+writeFileSync(www('version.json'), JSON.stringify({build: BUILD, built: now.toISOString()}) + '\n');
+const body = readFileSync(game('index_markup.html'), 'utf8') + script.replace('/*NEO_MONS*/[]', JSON.stringify(introMons)).replace("'/*BUILD*/'", JSON.stringify(BUILD));
 writeFileSync(www('index.html'), forArtifact ? body : HEAD + body);
 console.log(`Built www/engine.js and www/index.html${forArtifact ? ' (artifact version)' : ''} with ${introMons.length} Mons for the intro.`);

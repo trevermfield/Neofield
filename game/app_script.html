@@ -3483,6 +3483,24 @@ function linkEnd() {
   setTimeout(() => { try { if (l.conn) l.conn.close(); } catch (e) { /* already closed */ } try { if (l.peer) l.peer.destroy(); } catch (e) { /* already gone */ } }, 300);
 }
 
+// ---------- staying up to date ----------
+// If a phone ever starts an older copy of the game, notice and reload once to get the newest one.
+const BUILD = '/*BUILD*/';
+$('optVersion').textContent = `Version ${BUILD}`;
+(async function checkVersion() {
+  if (window.claude || location.protocol !== 'https:') return;
+  try {
+    const r = await fetch('version.json', {cache: 'no-store'});
+    const v = await r.json();
+    if (v.build && v.build !== BUILD && sessionStorage.getItem('reloadedFor') !== v.build) {
+      sessionStorage.setItem('reloadedFor', v.build);
+      if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(g => g.update().catch(() => {}))); }
+      if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+      location.reload();
+    }
+  } catch (e) { /* offline: keep playing the saved copy */ }
+})();
+
 // Automated tests open the game with ?test to read the battle state.
 if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close()};
 

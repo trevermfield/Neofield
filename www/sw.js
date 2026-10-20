@@ -1,6 +1,6 @@
-// Offline support: always try the network first so updates show up right away,
-// and fall back to the last saved copy when there is no connection.
-const CACHE = 'gym-battles-v1';
+// Offline support: always ask the server first (skipping the phone's own short-term cache) so updates
+// show up right away, and fall back to the last saved copy when there is no connection.
+const CACHE = 'neofield-v2';
 const CORE = ['./', 'index.html', 'engine.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -22,8 +22,9 @@ self.addEventListener('fetch', e => {
   if (!sameSite && !fonts) return;
 
   if (req.mode === 'navigate') {
-    e.respondWith(fetch(req)
-      .then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put('index.html', copy)); return res; })
+    // a page load can't be re-sent with new options, so ask for the same address afresh
+    e.respondWith(fetch(req.url, {cache: 'no-cache', credentials: 'same-origin'})
+      .then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put('index.html', copy)); } return res; })
       .catch(() => caches.match('index.html')));
     return;
   }
@@ -34,8 +35,8 @@ self.addEventListener('fetch', e => {
       fetch(req).then(res => { c.put(req, res.clone()); return res; })));
     return;
   }
-  // game files: network first (the browser's own cache keeps this fast), saved copy when offline
-  e.respondWith(fetch(req)
+  // game files: ask the server first (unchanged files come back as a quick 'not modified'), saved copy when offline
+  e.respondWith(fetch(req, {cache: 'no-cache'})
     .then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
     .catch(() => caches.match(req)));
 });
