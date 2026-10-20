@@ -59,15 +59,15 @@ jobs:
             grep -E "^e: |error:" build.log | head -20 | while IFS= read -r line; do echo "::error::$line"; done
             exit "$status"
           fi
-          cp app/build/outputs/apk/release/app-release.apk ../gym-battles.apk
+          cp app/build/outputs/apk/release/app-release.apk ../neofield.apk
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: app-v1.${{ github.run_number }}
-          name: Gym Battles app 1.${{ github.run_number }}
+          name: Neofield app 1.${{ github.run_number }}
           make_latest: true
-          files: gym-battles.apk
+          files: neofield.apk
           body: |
-            Download **gym-battles.apk** below on an Android phone, open it, and allow the install when Android asks.
+            Download **neofield.apk** below on an Android phone, open it, and allow the install when Android asks.
             New versions install right over the old one, and your saves stay.
