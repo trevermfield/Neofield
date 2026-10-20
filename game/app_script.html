@@ -2434,8 +2434,31 @@ function migrateA() {
   if (!A) return;
   A.box = A.box || []; A.dex = A.dex || {seen: {}, caught: {}};
   if (A.loc === undefined) A.loc = null;
-  const RENAMED = {brightwatercharmander: 'shardmander', neofieldcharmander: 'shardmander', opalisk: 'shardmander', starter1: 'bulbazilla', starter3: 'grrtle', grimshell: 'grrtle'};
+  // Pokédex ids of Neofield Pokémon that were renamed (old id -> current id)
+  const RENAMED = {brightwatercharmander: 'shardmander', neofieldcharmander: 'shardmander', opalisk: 'shardmander',
+    starter1: 'bulbazoid', bulbazilla: 'bulbazoid', starter1stage2: 'ivyzoid', starter1stage3: 'venuzoid',
+    starter2stage2: 'shardmeleon', starter2stage3: 'shardizar',
+    starter3: 'grrtle', grimshell: 'grrtle', starter3stage2: 'roartortle', starter3stage3: 'bellowtoise',
+    wild1: 'eggyhen', wild1stage2: 'leggyhen', wild2: 'sycasqeek', wild2stage2: 'sycamage', wild3: 'zapybara'};
   for (const k of ['seen', 'caught']) for (const [old, now] of Object.entries(RENAMED)) if (A.dex[k][old]) { A.dex[k][now] = 1; delete A.dex[k][old]; } // renamed
+}
+// Team members store their fully evolved form by name. When a Neofield line is renamed or redesigned,
+// rebuild those members from the new family data (same level and HP, fresh moves for that level).
+const RENAMED_LINES = {'Starter 1 Stage 3': 'starter1', 'Starter 2 Stage 3': 'starter2', 'Starter 3 Stage 3': 'starter3', 'Wild 1 Stage 3': 'wild1', 'Wild 2 Stage 2': 'wild2'};
+function migrateRegionalLines() {
+  if (!A || !E) return;
+  let changed = false;
+  for (const m of [...A.team, ...(A.box || [])]) {
+    const fam = m.final && RENAMED_LINES[m.final.species];
+    if (!fam) continue;
+    const fresh = E.newMember(fam, m.level);
+    m.final = fresh.final; m.moves = fresh.moves; m.tutored = [];
+    changed = true;
+  }
+  for (const q of Object.values(A.quests || {})) {
+    if (q.wild && q.wild.some(s => !E.Dex.species.get(s.species).exists)) { q.wild = null; q.step = 0; changed = true; }
+  }
+  if (changed) saveA();
 }
 function markSeen(species) { if (A && A.dex && species) A.dex.seen[toId(species)] = 1; }
 function syncDexFromTeam() {
@@ -2748,6 +2771,7 @@ function boot() {
   E = window.Engine;
   if (!E) { $('loading').textContent = 'The battle engine did not load. Reload the page to try again.'; return; }
   $('loading').hidden = true;
+  migrateRegionalLines();
   renderTeamChips(); renderLeaders(); renderOnline(); renderJourneyCard(); renderAdvCard();
 }
 if (window.Engine) boot(); else window.addEventListener('load', boot);

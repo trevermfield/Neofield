@@ -22,11 +22,22 @@ function placeholder(st) {
 }
 
 // id (the name in lowercase, letters and numbers only) -> picture
-export const MON_PICS = {
-  bulbazilla: 'mons/bulbazilla.png',
-  shardmander: 'mons/shardmander.png',
-  grrtle: 'mons/grrtle.png',
-};
+export const MON_PICS = Object.fromEntries([
+  'bulbazoid',
+  'ivyzoid',
+  'venuzoid',
+  'shardmander',
+  'shardmeleon',
+  'shardizar',
+  'grrtle',
+  'roartortle',
+  'bellowtoise',
+  'eggyhen',
+  'leggyhen',
+  'sycasqeek',
+  'sycamage',
+  'zapybara',
+].map(id => [id, `mons/${id}.png`]));
 
 export function monArt(id, cls = '') {
   const st = SPECIES.find(s => s.id === id);
