@@ -1,4 +1,4 @@
 # Next update
 
-- [ ] Title screen fits the screen exactly: no scrolling up or down on any phone.
+- [x] Title screen fits the screen exactly (done).
 - [ ] Add the new Mons Tyler has created (New Mons folder in Drive, matched by dex number).
