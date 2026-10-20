@@ -1,0 +1,59 @@
+=== [gen9nationaldexubers] Gamer Parker - Overheatbadge ===
+
+Infernape @ Life Orb
+Ability: Iron Fist
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Stealth Rock
+- Close Combat
+- Flare Blitz
+- Mach Punch
+
+Rotom-Heat @ Leftovers
+Ability: Levitate
+EVs: 252 HP / 252 Def / 4 SpA
+Bold Nature
+IVs: 0 Atk
+- Overheat
+- Volt Switch
+- Will-O-Wisp
+- Pain Split
+
+Houndoom @ Life Orb
+Ability: Flash Fire
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Nasty Plot
+- Fire Blast
+- Dark Pulse
+- Sludge Bomb
+
+Ceruledge @ Life Orb
+Ability: Flash Fire
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Swords Dance
+- Bitter Blade
+- Poltergeist
+- Shadow Sneak
+
+Turtonator @ White Herb
+Ability: Shell Armor
+EVs: 4 HP / 252 SpA / 252 Spe
+Modest Nature
+IVs: 0 Atk
+- Shell Smash
+- Fire Blast
+- Draco Meteor
+- Scorching Sands
+
+Charizard @ Charizardite Y
+Ability: Blaze
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Fire Blast
+- Solar Beam
+- Focus Blast
+- Roost

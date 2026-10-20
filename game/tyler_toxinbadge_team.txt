@@ -1,0 +1,58 @@
+=== [gen9nationaldex] Badass Tyler - Toxinbadge ===
+
+Gengar @ Life Orb
+Ability: Cursed Body
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Shadow Ball
+- Sludge Bomb
+- Focus Blast
+- Nasty Plot
+
+Nidoking @ Life Orb
+Ability: Sheer Force
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Earth Power
+- Sludge Wave
+- Ice Beam
+- Fire Blast
+
+Crobat @ Heavy-Duty Boots
+Ability: Infiltrator
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Brave Bird
+- Cross Poison
+- U-turn
+- Roost
+
+Tentacruel @ Black Sludge
+Ability: Liquid Ooze
+EVs: 252 HP / 4 Def / 252 SpD
+Calm Nature
+- Toxic Spikes
+- Rapid Spin
+- Scald
+- Knock Off
+
+Beedrill @ Beedrillite
+Ability: Swarm
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Poison Jab
+- U-turn
+- Drill Run
+- Knock Off
+
+Venusaur @ Black Sludge
+Ability: Overgrow
+EVs: 252 HP / 252 Def / 4 SpA
+Bold Nature
+IVs: 0 Atk
+- Giga Drain
+- Sludge Bomb
+- Earth Power
+- Synthesis

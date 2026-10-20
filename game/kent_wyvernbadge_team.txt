@@ -1,0 +1,57 @@
+=== [gen9nationaldexubers] Builder Kent - Wyvernbadge ===
+
+Duraludon @ Eviolite
+Ability: Stalwart
+EVs: 252 HP / 252 SpA / 4 SpD
+Modest Nature
+IVs: 0 Atk
+- Stealth Rock
+- Draco Meteor
+- Flash Cannon
+- Thunderbolt
+
+Dragonair @ Eviolite
+Ability: Shed Skin
+EVs: 252 HP / 4 Atk / 252 SpD
+Careful Nature
+- Thunder Wave
+- Dragon Tail
+- Aqua Tail
+- Rest
+
+Kingdra @ Choice Specs
+Ability: Swift Swim
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Hydro Pump
+- Draco Meteor
+- Ice Beam
+- Surf
+
+Tyrantrum @ Leftovers
+Ability: Rock Head
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Dragon Dance
+- Head Smash
+- Earthquake
+- Dragon Claw
+
+Garchomp @ Life Orb
+Ability: Rough Skin
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Swords Dance
+- Earthquake
+- Dragon Claw
+- Stone Edge
+
+Salamence @ Salamencite
+Ability: Intimidate
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Dragon Dance
+- Double-Edge
+- Earthquake
+- Roost

@@ -1,0 +1,57 @@
+=== [gen9nationaldexubers] Boss Kaley - Spectrebadge ===
+
+Golurk @ Leftovers
+Ability: No Guard
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Stealth Rock
+- Earthquake
+- Poltergeist
+- Dynamic Punch
+
+Spiritomb @ Leftovers
+Ability: Infiltrator
+EVs: 252 HP / 4 Atk / 252 SpD
+Careful Nature
+- Will-O-Wisp
+- Foul Play
+- Pain Split
+- Sucker Punch
+
+Trevenant @ Sitrus Berry
+Ability: Harvest
+EVs: 252 HP / 252 Atk / 4 Def
+Adamant Nature
+- Horn Leech
+- Poltergeist
+- Will-O-Wisp
+- Protect
+
+Mismagius @ Life Orb
+Ability: Levitate
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Nasty Plot
+- Shadow Ball
+- Mystical Fire
+- Thunderbolt
+
+Chandelure @ Choice Scarf
+Ability: Flash Fire
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Shadow Ball
+- Fire Blast
+- Energy Ball
+- Trick
+
+Dragapult @ Choice Band
+Ability: Infiltrator
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Dragon Darts
+- Phantom Force
+- U-turn
+- Sucker Punch

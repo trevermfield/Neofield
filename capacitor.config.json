@@ -1,0 +1,12 @@
+{
+  "appId": "com.neofield.gymbattles",
+  "appName": "Gym Battles",
+  "webDir": "www",
+  "server": {
+    "url": "https://OWNER.github.io/REPO/",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#0f1218"
+  }
+}

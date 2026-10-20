@@ -1,0 +1,59 @@
+=== [gen9nationaldexubers] Nurse Oksana and Kiev - Hydratebadge ===
+
+Gastrodon @ Leftovers
+Ability: Storm Drain
+EVs: 252 HP / 4 SpA / 252 SpD
+Calm Nature
+IVs: 0 Atk
+- Stealth Rock
+- Earth Power
+- Scald
+- Recover
+
+Milotic @ Leftovers
+Ability: Marvel Scale
+EVs: 252 HP / 252 Def / 4 SpA
+Bold Nature
+IVs: 0 Atk
+- Scald
+- Ice Beam
+- Recover
+- Haze
+
+Herdier @ Eviolite
+Ability: Intimidate
+EVs: 252 HP / 252 Def / 4 Atk
+Impish Nature
+- Return
+- Crunch
+- Play Rough
+- Work Up
+
+Primarina @ Assault Vest
+Ability: Torrent
+EVs: 252 HP / 252 SpA / 4 SpD
+Modest Nature
+IVs: 0 Atk
+- Moonblast
+- Sparkling Aria
+- Ice Beam
+- Energy Ball
+
+Palafin @ Choice Band
+Ability: Zero to Hero
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Jet Punch
+- Wave Crash
+- Close Combat
+- Flip Turn
+
+Blastoise @ Blastoisinite
+Ability: Torrent
+EVs: 4 HP / 252 SpA / 252 Spe
+Modest Nature
+IVs: 0 Atk
+- Water Pulse
+- Aura Sphere
+- Dark Pulse
+- Rapid Spin

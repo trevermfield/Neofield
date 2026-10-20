@@ -1,0 +1,56 @@
+=== [gen9nationaldex] Ranger Tucker - Mountainbadge ===
+
+Tyranitar @ Leftovers
+Ability: Sand Stream
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Stealth Rock
+- Stone Edge
+- Crunch
+- Earthquake
+
+Golem @ Custap Berry
+Ability: Sturdy
+EVs: 252 HP / 252 Atk / 4 Def
+Adamant Nature
+- Earthquake
+- Stone Edge
+- Sucker Punch
+- Explosion
+
+Aerodactyl @ Aerodactylite
+Ability: Unnerve
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Stone Edge
+- Earthquake
+- Dual Wingbeat
+- Roost
+
+Kabutops @ Life Orb
+Ability: Swift Swim
+EVs: 4 HP / 252 Atk / 252 Spe
+Adamant Nature
+- Swords Dance
+- Stone Edge
+- Liquidation
+- Aqua Jet
+
+Magcargo @ White Herb
+Ability: Weak Armor
+EVs: 4 HP / 252 SpA / 252 Spe
+Modest Nature
+IVs: 0 Atk
+- Shell Smash
+- Fire Blast
+- Earth Power
+- Power Gem
+
+Sudowoodo @ Choice Band
+Ability: Rock Head
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Head Smash
+- Wood Hammer
+- Earthquake
+- Sucker Punch

@@ -1,0 +1,58 @@
+=== [gen9nationaldex] Youngin Theo - Buzzbadge ===
+
+Galvantula @ Focus Sash
+Ability: Compound Eyes
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Sticky Web
+- Thunder
+- Bug Buzz
+- Volt Switch
+
+Armaldo @ Leftovers
+Ability: Battle Armor
+EVs: 252 HP / 252 Atk / 4 Def
+Adamant Nature
+- Stealth Rock
+- Stone Edge
+- X-Scissor
+- Rapid Spin
+
+Scizor @ Choice Band
+Ability: Technician
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Bullet Punch
+- U-turn
+- Knock Off
+- Superpower
+
+Yanmega @ Choice Specs
+Ability: Speed Boost
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Bug Buzz
+- Air Slash
+- Giga Drain
+- U-turn
+
+Volcarona @ Heavy-Duty Boots
+Ability: Flame Body
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Quiver Dance
+- Fiery Dance
+- Bug Buzz
+- Giga Drain
+
+Heracross @ Heracronite
+Ability: Guts
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Swords Dance
+- Pin Missile
+- Close Combat
+- Rock Blast

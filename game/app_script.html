@@ -1,0 +1,2757 @@
+<script defer>
+(() => {
+'use strict';
+const LEADERS = {
+  tyler:  {first: 'Tyler',  title: 'Badass Tyler',   badge: 'Toxinbadge',    type: 'Poison',      color: '#b06ee0', icon: 'drop'},
+  trever: {first: 'Trever', title: 'Analyst Trever', badge: 'Alloybadge',    type: 'Steel',       color: '#9fb3d4', icon: 'nut'},
+  tucker: {first: 'Tucker', title: 'Ranger Tucker',  badge: 'Mountainbadge', type: 'Rock',        color: '#d2a564', icon: 'peak'},
+  tanner: {first: 'Tanner', title: 'Coach Tanner',   badge: 'Blizzardbadge', type: 'Ice',         color: '#86d8ec', icon: 'flake'},
+  makenna: {first: 'Makenna', title: 'Ninja Makenna', badge: 'Moonbadge',     type: 'Dark',        color: '#a58fe0', icon: 'moon'},
+  charlotte: {first: 'Charlotte', title: 'Pokéfan Charlotte', badge: 'Zapbadge', type: 'Electric',  color: '#f2cc3a', icon: 'bolt'},
+  lillian: {first: 'Lillian', title: 'Gardener Lillian', badge: 'Petalbadge',   type: 'Grass',       color: '#7fcf5c', icon: 'leaf'},
+  theo:   {first: 'Theo',   title: 'Youngin Theo',   badge: 'Buzzbadge',     type: 'Bug',         color: '#b5cc3a', icon: 'bug'},
+  rachel: {first: 'Rachel', title: 'Scribe Rachel',  badge: 'Mythicbadge',   type: 'Fairy',       color: '#ee9ad0', icon: 'fairy'},
+  anna:   {first: 'Anna',   title: 'Archer Anna',    badge: 'Arrowbadge',    type: 'Flying',      color: '#7fb8e6', icon: 'wing'},
+  jack:   {first: 'Jack',   title: 'Brawler Jack',   badge: 'Rumblebadge',   type: 'Fighting',    color: '#e0644f', icon: 'fist'},
+  parker: {first: 'Parker', title: 'Gamer Parker',   badge: 'Overheatbadge', type: 'Fire',        color: '#f39243', icon: 'flame'},
+  tali:   {first: 'Tali',   title: 'Reader Tali',    badge: 'Visionbadge',   type: 'Psychic',     color: '#d77fe0', icon: 'eye'},
+  kaley:  {first: 'Kaley',  title: 'Boss Kaley',     badge: 'Spectrebadge',  type: 'Ghost',       color: '#9a83d6', icon: 'ghost'},
+  oksana: {first: 'Oksana', title: 'Nurse Oksana and Kiev', badge: 'Hydratebadge', type: 'Water',  color: '#5fa8f0', icon: 'wave'},
+  lynne:  {first: 'Lynne',  title: 'Matriarch Lynne', badge: 'Foundationbadge', type: 'Ground',    color: '#d9a85f', icon: 'pyramid'},
+  kent:   {first: 'Kent',   title: 'Builder Kent',    badge: 'Wyvernbadge',     type: 'Dragon',    color: '#6f86e8', icon: 'dragon'},
+};
+const ORDER = ['tyler', 'trever', 'tucker', 'tanner', 'makenna', 'charlotte', 'lillian', 'theo', 'rachel', 'anna', 'jack', 'parker', 'tali', 'kaley', 'oksana', 'lynne', 'kent'];
+const CUSTOM_COLOR = '#c9cfdb';
+const TYPE_COLORS = {
+  Normal: '#b8b29a', Fire: '#f08a4b', Water: '#5f9cf0', Electric: '#f2d04a', Grass: '#72c25a', Ice: '#86d8ec',
+  Fighting: '#d0574b', Poison: '#b06ee0', Ground: '#d9b45f', Flying: '#a6a4f2', Psychic: '#f2668f', Bug: '#a8bd36',
+  Rock: '#c2a95c', Ghost: '#7f6bb0', Dragon: '#7b63f2', Dark: '#8a7466', Steel: '#9fb3d4', Fairy: '#ee9ad0', Stellar: '#ffffff',
+};
+const STATUS = {psn: ['PSN', '#b06ee0'], tox: ['TOX', '#b06ee0'], brn: ['BRN', '#f08a4b'], par: ['PAR', '#f2d04a'], slp: ['SLP', '#9aa3b2'], frz: ['FRZ', '#86d8ec']};
+const STAT_NAMES = {atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed', accuracy: 'accuracy', evasion: 'evasiveness'};
+const STAT_SHORT = {atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe', accuracy: 'Acc', evasion: 'Eva'};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+};
+
+function emblem(kind, color) {
+  const c = esc(color);
+  const shapes = {
+    drop: `<path d="M24 5 C24 5 10 21 10 30 a14 14 0 0 0 28 0 C38 21 24 5 24 5Z" fill="${c}"/><circle cx="19" cy="31" r="4" fill="#10131a" opacity=".35"/>`,
+    nut: `<path d="M24 4 41 14 41 34 24 44 7 34 7 14Z" fill="${c}"/><circle cx="24" cy="24" r="8" fill="#10131a" opacity=".55"/>`,
+    peak: `<path d="M3 42 19 12 27 26 32 18 45 42Z" fill="${c}"/><path d="M19 12 24 21 21 20 17 23 15 20Z" fill="#fff" opacity=".7"/>`,
+    flake: `<g stroke="${c}" stroke-width="4" stroke-linecap="round"><path d="M24 5v38M7.5 14.5l33 19M7.5 33.5l33-19"/><path d="M19 8l5 5 5-5M19 40l5-5 5 5" fill="none" stroke-width="3"/></g>`,
+    moon: `<path d="M30 5a19 19 0 1 0 13 33A16 16 0 0 1 30 5Z" fill="${c}"/><circle cx="33" cy="14" r="2.5" fill="${c}" opacity=".6"/>`,
+    bolt: `<path d="M28 3 9 27h13l-4 18 21-26H26Z" fill="${c}"/>`,
+    leaf: `<path d="M41 6C18 6 7 18 7 32c0 4 1 7 3 10 3-12 10-20 21-26-9 7-15 15-18 27 3 1 6 2 9 2 15 0 22-14 19-39Z" fill="${c}"/>`,
+    bug: `<ellipse cx="24" cy="28" rx="12" ry="15" fill="${c}"/><path d="M24 13v30" stroke="#10131a" stroke-width="2" opacity=".5"/><g stroke="${c}" stroke-width="3" stroke-linecap="round"><path d="M19 13 13 5M29 13l6-8M12 24H4M36 24h8M12 34l-7 5M36 34l7 5"/></g>`,
+    fairy: `<path d="M24 4l4 13 13 1-10 8 4 14-11-8-11 8 4-14-10-8 13-1Z" fill="${c}"/><circle cx="40" cy="38" r="3" fill="${c}" opacity=".7"/><circle cx="9" cy="40" r="2" fill="${c}" opacity=".6"/>`,
+    wing: `<path d="M6 40C10 22 22 10 42 6c-4 6-8 9-13 11 6 0 10-1 14-3-4 7-10 11-17 12 5 1 9 0 13-2-6 9-17 14-33 16Z" fill="${c}"/>`,
+    fist: `<path d="M12 22c0-3 2-5 5-5h17c3 0 5 2 5 5v9c0 8-6 13-13 13h-3c-6 0-11-5-11-11Z" fill="${c}"/><path d="M17 17v-5a3 3 0 0 1 6 0v5M23 17v-6a3 3 0 0 1 6 0v6M29 17v-5a3 3 0 0 1 6 0v5" fill="${c}"/><path d="M18 24h17M18 30h12" stroke="#10131a" stroke-width="2" opacity=".35"/>`,
+    flame: `<path d="M24 3c3 9 14 14 14 27a14 14 0 0 1-28 0c0-7 4-11 7-14 0 5 2 8 5 9-2-8 0-15 2-22Z" fill="${c}"/><path d="M24 26c2 4 6 6 6 11a6 6 0 0 1-12 0c0-4 4-6 6-11Z" fill="#10131a" opacity=".3"/>`,
+    eye: `<path d="M3 24c6-10 13-15 21-15s15 5 21 15c-6 10-13 15-21 15S9 34 3 24Z" fill="${c}"/><circle cx="24" cy="24" r="8" fill="#10131a" opacity=".55"/><circle cx="24" cy="24" r="3" fill="${c}"/>`,
+    ghost: `<path d="M9 44V22a15 15 0 0 1 30 0v22l-5-4-5 4-5-4-5 4-5-4Z" fill="${c}"/><circle cx="18" cy="22" r="3" fill="#10131a" opacity=".6"/><circle cx="30" cy="22" r="3" fill="#10131a" opacity=".6"/>`,
+    wave: `<path d="M24 4C24 4 11 20 11 29a13 13 0 0 0 26 0C37 20 24 4 24 4Z" fill="${c}"/><path d="M15 31c3 3 6 3 9 0s6-3 9 0" stroke="#10131a" stroke-width="2.5" fill="none" opacity=".4" stroke-linecap="round"/>`,
+    pyramid: `<path d="M24 6 44 40H4Z" fill="${c}"/><path d="M24 6 30 40H18Z" fill="#10131a" opacity=".22"/><path d="M11 28h26" stroke="#10131a" stroke-width="2" opacity=".3"/>`,
+    dragon: `<path d="M8 40c4-12 10-20 18-24l-4-9 9 6 9-3-3 8 7 4-9 2c-1 8-6 14-14 17l3-8c-5 2-10 5-16 7Z" fill="${c}"/><circle cx="33" cy="15" r="1.8" fill="#10131a" opacity=".7"/>`,
+    crown: `<path d="M6 35 4 13l11 9 9-14 9 14 11-9-2 22Z" fill="${c}"/><rect x="6" y="37" width="36" height="5" rx="1.5" fill="${c}"/><circle cx="24" cy="27" r="3" fill="#10131a" opacity=".35"/>`,
+    star: `<path d="M24 4l5.9 12.6 13.6 1.7-10 9.5 2.6 13.6L24 34.8 11.9 41.4l2.6-13.6-10-9.5 13.6-1.7Z" fill="${c}"/>`,
+  };
+  return `<svg viewBox="0 0 48 48" aria-hidden="true">${shapes[kind] || shapes.star}</svg>`;
+}
+
+// ---------- state ----------
+let E = null;               // engine global
+let myKey = store.get('myTeam', 'trever');
+let customTeam = store.get('customTeam', null); // {text}
+const DIFFS = {
+  easy:   {label: 'Easy',   note: 'The computer often picks random moves, never switches out and rarely Mega Evolves.'},
+  normal: {label: 'Normal', note: 'The computer picks strong moves and sometimes switches out of bad matchups.'},
+  hard:   {label: 'Hard',   note: 'The computer picks its strongest move every turn and always Mega Evolves.'},
+};
+let difficulty = store.get('difficulty', 'normal');
+if (!DIFFS[difficulty]) difficulty = 'normal';
+let badgeBook = store.get('badgeBook', null);
+if (!badgeBook) { badgeBook = {easy: {}, normal: store.get('badges', {}) || {}, hard: {}}; store.set('badgeBook', badgeBook); }
+let champions = store.get('champions', {});
+const badgesFor = d => badgeBook[d] || (badgeBook[d] = {});
+let ctx = null;             // null = single gym battle, or {kind: 'gauntlet' | 'journey', ...}
+const fxType = {p1: 'Normal', p2: 'Normal'};
+let battle = null, mem = {}, logIdx = 0, view = null, playing = false, skip = false, panel = 'fight';
+let mode = 'cpu';           // 'cpu' or 'online'
+let ME = 'p1', FOE = 'p2';
+let foe = {name: '', key: null, color: CUSTOM_COLOR};  // who you're facing
+let resultShown = false;
+
+// online state
+let db = null, user = null, myUid = null, canWrite = null;
+let matches = [];           // lobby snapshot
+let match = null;           // {id, data}
+let choices = {p1: [], p2: []}, applied = {p1: 0, p2: 0};
+let unsubMoves = null, unsubMatch = null;
+let refreshing = false, refreshAgain = false;
+
+// ---------- setup screen ----------
+function renderBadges() {
+  const badges = badgesFor(difficulty);
+  const got = ORDER.filter(k => badges[k]).length;
+  $('badgeCount').innerHTML = `${esc(DIFFS[difficulty].label)} · ${got} of ${ORDER.length}${champions[difficulty] ? '<span class="champchip">Champion</span>' : ''}`;
+  $('badges').innerHTML = ORDER.map(k => {
+    const L = LEADERS[k];
+    return `<div class="badge ${badges[k] ? 'earned' : ''}" style="--c:${L.color}" title="${esc(L.badge)}${badges[k] ? ' earned' : ''}">${emblem(L.icon, L.color)}<span>${esc(L.badge.replace('badge', ''))}</span></div>`;
+  }).join('');
+}
+
+function renderTeamChips() {
+  const keys = [...ORDER, 'custom'];
+  $('teamChips').innerHTML = keys.map(k => `<button class="chip" id="chip-${k}" data-k="${k}" aria-pressed="${k === myKey}">${k === 'custom' ? 'Paste a team' : esc(LEADERS[k].first)}</button>`).join('');
+  $('customBox').hidden = myKey !== 'custom';
+  if (myKey === 'custom') {
+    if (customTeam && !$('customText').value) $('customText').value = customTeam.text;
+    $('teamRoster').textContent = customTeam ? 'Saved custom team: ' + teamNames(customTeam.text) : 'Paste a team below to use it.';
+  } else {
+    $('teamRoster').textContent = E ? teamNames(E.TEAM_TEXT[myKey]) : '';
+  }
+}
+
+function teamNames(text) {
+  return (text || '').split(/\n\s*\n/).map(b => b.trim().split('\n')[0].split(' @ ')[0].replace(/\s*\((M|F)\)\s*$/, '').replace(/^.*\((.+)\)$/, '$1').trim()).filter(Boolean).join(' · ');
+}
+
+function renderLeaders() {
+  const badges = badgesFor(difficulty);
+  renderGauntletCard();
+  $('leaders').innerHTML = ORDER.map(k => {
+    const L = LEADERS[k];
+    const mons = E ? teamNames(E.TEAM_TEXT[k]) : '';
+    return `<button class="leader" id="leader-${k}" data-k="${k}" style="--c:${L.color}" ${E ? '' : 'disabled'}>
+      ${emblem(L.icon, L.color)}
+      <div class="who"><div class="meta">${esc(L.type)} · ${esc(L.badge)}</div><div class="title">${esc(L.title)}</div><div class="mons">${esc(mons)}</div></div>
+      <div class="go">${badges[k] ? 'REMATCH' : 'BATTLE'}</div></button>`;
+  }).join('');
+}
+
+$('teamChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  myKey = b.dataset.k; store.set('myTeam', myKey); renderTeamChips(); renderOnline();
+});
+$('customSave').addEventListener('click', () => {
+  if (!E) return;
+  const text = $('customText').value;
+  const {team, problems} = E.parseTeam(text);
+  const note = $('customNote');
+  if (!team) { note.className = 'note err'; note.textContent = problems.join('\n'); return; }
+  if (problems.length) { note.className = 'note err'; note.textContent = 'This team breaks National Dex Ubers rules:\n' + problems.join('\n'); return; }
+  customTeam = {text}; store.set('customTeam', customTeam);
+  note.className = 'note'; note.textContent = `Team saved: ${team.length} Pokémon, ready to battle.`;
+  renderTeamChips(); renderOnline();
+});
+$('leaders').addEventListener('click', e => {
+  const b = e.target.closest('.leader'); if (!b || !E) return;
+  startCpuBattle(b.dataset.k);
+});
+
+function myTeamText() { return myKey === 'custom' ? (customTeam && customTeam.text) : E.TEAM_TEXT[myKey]; }
+function baseName() { return myKey === 'custom' ? 'Player' : LEADERS[myKey].first; }
+function needTeam() {
+  myKey = 'custom'; store.set('myTeam', myKey); renderTeamChips();
+  $('customNote').className = 'note err'; $('customNote').textContent = 'Paste and save a team first.';
+}
+
+function show(id) { for (const s of ['setup', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'intro', 'dex']) $(s).hidden = s !== id; }
+function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
+
+// ---------- shared battle start ----------
+function beginBattle(p1, p2, seed) {
+  battle = E.createBattle(p1, p2, seed);
+  logIdx = battle.log.length;
+  view = {p1: blankMon(), p2: blankMon()};
+  panel = 'fight'; resultShown = false;
+  $('log').innerHTML = '';
+  $('overlay').hidden = true;
+  $('vsLabel').innerHTML = `<small>${esc(mode === 'online' ? 'Online battle' : (foe.subtitle || ''))}</small>You vs ${esc(foe.name)}`;
+  for (const id of ['myCard', 'foeCard']) $(id).classList.remove('fx-hit', 'fx-shake', 'fx-act', 'fx-faint');
+  bagSel = null;
+}
+
+function showLeadScreen() {
+  $('leadTitle').textContent = `vs ${foe.title || foe.name}`;
+  $('leadSub').textContent = mode === 'cpu'
+    ? `${foe.subtitle || ''}. Pick who goes out first.`
+    : `Online battle. Pick who goes out first. ${foe.name} is choosing too.`;
+  $('foeRoster').innerHTML = battle[FOE].pokemon.map(p => `${esc(p.species.name)} ${typesHTML(p.species.types)}`).join('<br>');
+  const carry = ctx && ctx.kind !== undefined;
+  $('leadList').innerHTML = battle[ME].pokemon.map((p, i) => {
+    const pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
+    const hpBar = carry ? `<span class="hpmini"><i style="width:${pct}%;background:${hpColor(pct)}"></i></span><small>${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`}</small>` : '';
+    return `<button class="pick" id="lead-${i}" data-i="${i + 1}" ${p.fainted ? 'disabled' : ''}><div><b>${esc(p.species.name)}</b><small>${esc(p.item ? E.Dex.items.get(p.item).name : '')} · ${p.moveSlots.map(m => esc(m.move)).join(', ')}</small>${hpBar}</div>${typesHTML(p.species.types)}</button>`;
+  }).join('');
+  $('leadBack').textContent = mode !== 'cpu' ? 'Back to lobby' : ctx && ctx.kind === 'journey' ? 'Back to map' : 'Back';
+  show('lead');
+}
+
+$('leadBack').addEventListener('click', () => leaveBattle());
+$('leadList').addEventListener('click', e => {
+  const b = e.target.closest('.pick'); if (!b) return;
+  const lead = +b.dataset.i;
+  if (battle[ME].pokemon[lead - 1].fainted) return;
+  const order = [lead, ...battle[ME].pokemon.map((_, i) => i + 1).filter(i => i !== lead)];
+  show('battle');
+  commit('team ' + order.join(''));
+});
+
+function blankMon() { return {ident: '', species: '', hp: 0, maxhp: 100, status: '', boosts: {}}; }
+function typesHTML(types) { return `<span class="types">${types.map(t => `<span class="type" style="--t:${TYPE_COLORS[t] || '#999'}">${esc(t)}</span>`).join('')}</span>`; }
+
+// ---------- computer battles ----------
+function startCpuBattle(k) {
+  const text = myTeamText();
+  if (!text) { needTeam(); return; }
+  ctx = null;
+  const L = LEADERS[k];
+  foe = {name: L.first, key: k, color: L.color, icon: L.icon, title: L.title, subtitle: `${L.badge} · ${DIFFS[difficulty].label}`};
+  startVsCpu(E.TEAM_TEXT[k], null, text, baseName());
+}
+
+function startVsCpu(foeTeamText, state, playerText, playerName) {
+  mode = 'cpu'; ME = 'p1'; FOE = 'p2'; mem = {};
+  setAccent(foe.color);
+  let p1name = playerName || 'You';
+  if (p1name === foe.name) p1name = 'You';
+  const asTeam = t => Array.isArray(t) ? t : E.parseTeam(t).team;
+  beginBattle({name: p1name, team: asTeam(playerText)}, {name: foe.name, team: asTeam(foeTeamText)});
+  if (state) E.applyTeamState(battle.p1, state);
+  if (ctx && ctx.kind === 'adventure') applyAdvHP();
+  $('battleMap').hidden = !(ctx && (ctx.kind === 'journey' || ctx.kind === 'adventure'));
+  showLeadScreen();
+}
+
+function aiLevel() { return ctx && ctx.kind === 'journey' && J ? J.difficulty : ctx && ctx.kind === 'adventure' && A ? A.difficulty : difficulty; }
+function usesBag() { return !!(ctx && (ctx.kind === 'journey' || ctx.kind === 'adventure')); }
+function bagNow() { return ctx && ctx.kind === 'adventure' ? A.bag : J.bag; }
+function saveBagOwner() { if (ctx && ctx.kind === 'adventure') saveA(); else saveJ(); }
+
+function runAI() {
+  const s = battle.p2, r = s.activeRequest;
+  if (!r || r.wait || s.isChoiceDone()) return;
+  const c = E.aiChoose(battle, 'p2', mem, aiLevel()) || 'default';
+  if (!battle.choose('p2', c)) battle.choose('p2', 'default');
+}
+
+// ---------- choices ----------
+async function commit(choice) {
+  if (playing || !battle || battle.ended) return;
+  if (mode === 'cpu') {
+    runAI();
+    if (!battle.choose('p1', choice)) { chooseError(); return; }
+    E.recountLeft(battle.p1);
+    // the computer may still owe choices (e.g. replacing a fainted Pokémon)
+    await refresh();
+    return;
+  }
+  // online: validate on a scratch check, then record it
+  const req = battle[ME].activeRequest;
+  if (!req || req.wait || battle[ME].isChoiceDone()) return;
+  const ok = battle.choose(ME, choice);
+  if (!ok) { chooseError(); return; }
+  choices[ME] = [...choices[ME], choice];
+  applied[ME] = choices[ME].length;
+  renderControls();
+  try {
+    await db.doc(`matches/${match.id}/moves/${ME}`).set({list: choices[ME], at: Date.now()});
+  } catch (e) {
+    addLine(e && e.code === 'invalid_argument' ? "Your move couldn't be saved. You need edit access to this page to battle online." : "Your move couldn't be saved. Check your connection and reload the page to continue.", 'bad');
+  }
+  await refresh();
+}
+
+function chooseError() {
+  const err = battle[ME].choice && battle[ME].choice.error;
+  addLine(err ? esc(err.replace(/^\[.*?\]\s*/, '')) : 'That choice is not allowed right now.', 'bad');
+}
+
+// Apply any recorded choices that the local battle hasn't used yet (online)
+function applyQueued() {
+  let progressed = true;
+  while (progressed && !battle.ended) {
+    progressed = false;
+    for (const s of ['p1', 'p2']) {
+      const r = battle[s].activeRequest;
+      if (!r || r.wait || battle[s].isChoiceDone()) continue;
+      const c = choices[s][applied[s]];
+      if (c === undefined) continue;
+      applied[s]++;
+      if (!battle.choose(s, c)) battle.choose(s, 'default');
+      progressed = true;
+    }
+  }
+  if (match && match.data.forfeit && !battle.ended) battle.forceWin(match.data.forfeit === 'p1' ? 'p2' : 'p1');
+}
+
+async function refresh() {
+  if (!battle) return;
+  if (refreshing) { refreshAgain = true; return; }
+  refreshing = true;
+  try {
+    do {
+      refreshAgain = false;
+      if (mode === 'online') applyQueued();
+      else {
+        for (let g = 0; g < 10 && !battle.ended; g++) {
+          const r1 = battle.p1.activeRequest;
+          if (r1 && !r1.wait && !battle.p1.isChoiceDone()) break;
+          const before = battle.log.length; runAI();
+          if (battle.log.length === before) break;
+        }
+      }
+      await play();
+    } while (refreshAgain && battle);
+  } finally { refreshing = false; }
+  if (!battle) return;
+  syncFromState();
+  const req = battle[ME].activeRequest;
+  if (!battle.ended && req && req.teamPreview && !battle[ME].isChoiceDone()) { showLeadScreen(); return; }
+  if (!$('battle').hidden || !$('lead').hidden) show('battle');
+  renderControls();
+  if (battle.ended && !resultShown) {
+    resultShown = true;
+    if (mode === 'online' && match && match.data.status !== 'done') {
+      db.doc('matches/' + match.id).update({status: 'done', winner: battle.winner || ''}).catch(() => {});
+    }
+    setTimeout(showResult, skip ? 0 : 500);
+  }
+}
+
+// ---------- log playback ----------
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function play() {
+  const lines = battle.log.slice(logIdx);
+  logIdx = battle.log.length;
+  const events = translate(lines);
+  playing = true;
+  if (!events.length) { playing = false; return; }
+  for (const ev of events) {
+    if (ev.apply) ev.apply();
+    if (ev.text) addLine(ev.text, ev.cls);
+    renderCards();
+    if (ev.fx) applyFx(ev.fx);
+    if (ev.text && !skip) await sleep(ev.cls === 'turn' ? 150 : 520);
+  }
+  playing = false;
+  skip = false;
+}
+$('log').addEventListener('click', () => { skip = true; });
+
+function addLine(text, cls) {
+  const p = document.createElement('p');
+  if (cls) p.className = cls;
+  p.innerHTML = text;
+  const log = $('log');
+  log.appendChild(p);
+  while (log.childNodes.length > 250) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
+
+function parseHP(str, side) {
+  if (!str) return null;
+  const [frac, st] = str.split(' ');
+  if (frac === '0') return {hp: 0, maxhp: view[side].maxhp || 100, status: 'fnt'};
+  const [a, b] = frac.split('/').map(Number);
+  return {hp: a, maxhp: b || 100, status: st || ''};
+}
+function pctOf(side) { const v = view[side]; return v.maxhp ? v.hp / v.maxhp * 100 : 0; }
+
+function translate(lines) {
+  const out = [];
+  const foeName = foe.name;
+  const sideOf = id => (id || '').slice(0, 2);
+  const nick = id => (id || '').split(': ').slice(1).join(': ');
+  const Nm = id => sideOf(id) === ME ? `<span class="key">${esc(nick(id))}</span>` : foe.wild ? `Wild <span class="key">${esc(nick(id))}</span>` : `${esc(foeName)}'s <span class="key">${esc(nick(id))}</span>`;
+  const nm = Nm;
+  const fromTag = parts => { const f = parts.find(x => x && x.startsWith('[from]')); return f ? f.slice(7).replace(/^(item|ability|move): /, '').trim() : ''; };
+  const teamOf = s => s.startsWith(ME) ? 'your team' : `${esc(foeName)}'s team`;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+    if (line.startsWith('|split|')) {
+      const s = line.slice(7);
+      line = s === ME ? lines[i + 1] : lines[i + 2];
+      i += 2;
+    }
+    if (!line || line[0] !== '|') continue;
+    const parts = line.slice(1).split('|');
+    const cmd = parts[0];
+    const id = parts[1];
+    const s = sideOf(id);
+    switch (cmd) {
+      case 'switch': case 'drag': {
+        const species = parts[2].split(',')[0];
+        const hp = parseHP(parts[3], s);
+        out.push({fx: {side: s, kind: 'clear'}, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
+          text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : s === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(foeName)} sent out <span class="key">${esc(nick(id))}</span>!`});
+        break;
+      }
+      case 'replace': {
+        const species = parts[2].split(',')[0];
+        out.push({apply() { view[s].species = species; view[s].ident = id; }, text: `The Illusion broke! It was ${s === ME ? '' : esc(foeName) + "'s "}<span class="key">${esc(species)}</span>!`});
+        break;
+      }
+      case 'detailschange': {
+        const species = parts[2].split(',')[0];
+        out.push({apply() { view[s].species = species; }});
+        break;
+      }
+      case 'move': {
+        const extra = parts.slice(4).join(' ');
+        if (extra.includes('[still]') && extra.includes('[from]')) break;
+        fxType[s] = E.Dex.moves.get(parts[2]).type || 'Normal';
+        out.push({text: `${Nm(id)} used <b>${esc(parts[2])}</b>!`, fx: {side: s, kind: 'act'}});
+        break;
+      }
+      case '-damage': {
+        const hp = parseHP(parts[2], s);
+        const from = fromTag(parts);
+        out.push({fx: from ? null : {side: s, kind: 'hit', color: TYPE_COLORS[fxType[s === 'p1' ? 'p2' : 'p1']] || '#ffffff'}, apply() {
+            const before = pctOf(s);
+            view[s].hp = hp.hp; view[s].maxhp = hp.maxhp;
+            if (hp.status && hp.status !== 'fnt') view[s].status = hp.status;
+            const drop = before - pctOf(s);
+            this.lost = drop > 0 ? Math.max(1, Math.round(drop)) : 0;
+          },
+          get text() { return this.lost === undefined || this.lost === 0 ? '' : `${Nm(id)} lost ${this.lost}% of its health${from ? ` <span class="info">(${esc(from === 'psn' || from === 'tox' ? 'poison' : from === 'brn' ? 'burn' : from)})</span>` : ''}.`; },
+          cls: s === ME ? 'bad' : ''});
+        break;
+      }
+      case '-heal': {
+        const hp = parseHP(parts[2], s);
+        const from = fromTag(parts);
+        out.push({apply() { const before = pctOf(s); view[s].hp = hp.hp; view[s].maxhp = hp.maxhp; const up = pctOf(s) - before; this.gain = up > 0 ? Math.max(1, Math.round(up)) : 0; },
+          get text() { return this.gain === undefined ? '' : (this.gain ? `${Nm(id)} restored ${this.gain}% HP${from ? ` <span class="info">(${esc(from)})</span>` : ''}.` : ''); },
+          cls: s === ME ? 'good' : ''});
+        break;
+      }
+      case 'faint':
+        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: s === ME ? 'bad' : 'good'});
+        break;
+      case '-supereffective': out.push({text: `It's super effective!`, fx: {side: s, kind: 'shake'}}); break;
+      case '-resisted': out.push({text: `It's not very effective…`, cls: 'info'}); break;
+      case '-immune': out.push({text: `It doesn't affect ${nm(id)}…`, cls: 'info'}); break;
+      case '-crit': out.push({text: `A critical hit!`, fx: {side: s, kind: 'shake'}}); break;
+      case '-miss': out.push({text: parts[2] ? `${Nm(parts[2])} avoided the attack!` : `The attack missed!`, cls: 'info'}); break;
+      case '-fail': out.push({text: `But it failed!`, cls: 'info'}); break;
+      case '-hitcount': out.push({text: `Hit ${esc(parts[2])} time${parts[2] === '1' ? '' : 's'}!`, cls: 'info'}); break;
+      case '-status': {
+        const st = parts[2];
+        const msg = {psn: 'was poisoned', tox: 'was badly poisoned', brn: 'was burned', par: 'is paralyzed! It may be unable to move', slp: 'fell asleep', frz: 'was frozen solid'}[st] || 'got a status condition';
+        out.push({apply() { view[s].status = st; }, text: `${Nm(id)} ${msg}!`});
+        break;
+      }
+      case '-curestatus': {
+        const st = parts[2];
+        const msg = st === 'slp' ? 'woke up' : st === 'frz' ? 'thawed out' : 'was cured';
+        out.push({apply() { if (view[s].ident === id) view[s].status = ''; }, text: `${Nm(id)} ${msg}!`});
+        break;
+      }
+      case 'cant': {
+        const why = parts[2];
+        const msg = why === 'slp' ? 'is fast asleep.' : why === 'par' ? "is paralyzed! It can't move!" : why === 'frz' ? 'is frozen solid!' : why === 'recharge' ? 'must recharge!' : why === 'flinch' ? 'flinched!' : "can't move!";
+        out.push({text: `${Nm(id)} ${msg}`, cls: 'info'});
+        break;
+      }
+      case '-boost': case '-unboost': {
+        const stat = parts[2], n = +parts[3], up = cmd === '-boost';
+        const adv = n >= 3 ? (up ? 'rose drastically' : 'fell severely') : n === 2 ? (up ? 'rose sharply' : 'harshly fell') : n === 1 ? (up ? 'rose' : 'fell') : (up ? "won't go any higher" : "won't go any lower");
+        out.push({apply() { view[s].boosts[stat] = Math.max(-6, Math.min(6, (view[s].boosts[stat] || 0) + (up ? n : -n))); }, text: `${Nm(id)}'s ${STAT_NAMES[stat] || stat} ${adv}!`});
+        break;
+      }
+      case '-weather': {
+        const w = parts[1];
+        if (line.includes('[upkeep]')) break;
+        const msg = {Snowscape: 'It started to snow!', Snow: 'It started to snow!', Hail: 'It started to hail!', SandStorm: 'A sandstorm kicked up!', Sandstorm: 'A sandstorm kicked up!', RainDance: 'It started to rain!', SunnyDay: 'The sunlight turned harsh!', none: 'The weather cleared up.'}[w] || '';
+        if (msg) out.push({text: msg, cls: 'info'});
+        break;
+      }
+      case '-sidestart': {
+        const cond = parts[2].replace('move: ', '');
+        const team = teamOf(parts[1]);
+        const msg = {
+          'Stealth Rock': `Pointed stones float around ${team}!`, 'Spikes': `Spikes were scattered around ${team}'s feet!`,
+          'Toxic Spikes': `Poison spikes were scattered around ${team}'s feet!`, 'Sticky Web': `A sticky web spreads out under ${team}!`,
+          'Aurora Veil': `Aurora Veil made ${team} stronger against attacks!`, 'Reflect': `Reflect raised ${team}'s Defense!`, 'Light Screen': `Light Screen raised ${team}'s Sp. Def!`,
+        }[cond] || `${esc(cond)} started on ${team}'s side.`;
+        out.push({text: msg, cls: 'info'});
+        break;
+      }
+      case '-sideend': {
+        const cond = parts[2].replace('move: ', '');
+        out.push({text: `${esc(cond)} is gone from ${teamOf(parts[1])}'s side.`, cls: 'info'});
+        break;
+      }
+      case '-mega': out.push({text: `${Nm(id)} Mega Evolved into <b>Mega ${esc(parts[2])}</b>!`, cls: 'good'}); break;
+      case '-enditem': {
+        const item = parts[2];
+        const tail = parts.slice(3).join(' ');
+        let msg;
+        if (tail.includes('Knock Off')) msg = `${Nm(id)} lost its ${esc(item)}!`;
+        else if (tail.includes('[eat]')) msg = `${Nm(id)} ate its ${esc(item)}!`;
+        else msg = `${Nm(id)} used up its ${esc(item)}.`;
+        out.push({text: msg, cls: 'info'});
+        break;
+      }
+      case '-ability': out.push({text: `<span class="info">[${nm(id)}'s ${esc(parts[2])}]</span>`}); break;
+      case '-activate': {
+        const eff = parts[2] || '';
+        if (eff === 'ability: Sturdy') out.push({text: `${Nm(id)} endured the hit with Sturdy!`});
+        else if (eff.startsWith('move: Infestation')) out.push({text: `${Nm(id)} is trapped by an infestation!`, cls: 'info'});
+        else if (eff === 'confusion') out.push({text: `${Nm(id)} is confused!`, cls: 'info'});
+        break;
+      }
+      case '-start': {
+        const eff = (parts[2] || '').replace('move: ', '');
+        if (eff === 'Encore') out.push({text: `${Nm(id)} must do an encore!`});
+        else if (eff === 'confusion') out.push({text: `${Nm(id)} became confused!`});
+        else if (eff === 'Substitute') out.push({text: `${Nm(id)} put in a substitute!`});
+        break;
+      }
+      case '-end': {
+        const eff = (parts[2] || '').replace('move: ', '');
+        if (eff === 'Encore') out.push({text: `${Nm(id)}'s encore ended.`, cls: 'info'});
+        break;
+      }
+      case '-message': out.push({text: esc(parts[1]), cls: 'info'}); break;
+      case 'turn': out.push({text: `Turn ${esc(parts[1])}`, cls: 'turn'}); break;
+      case 'win': if (ctx && ctx.fight && (ctx.fight.caught || ctx.fight.finished)) break; out.push({text: parts[1] === battle[ME].name ? 'You won the battle!' : `${esc(foeName)} won the battle!`, cls: parts[1] === battle[ME].name ? 'good' : 'bad'}); break;
+      case 'tie': out.push({text: `The battle ended in a tie.`}); break;
+      case 'error': out.push({text: esc(parts.slice(1).join(' ')), cls: 'bad'}); break;
+    }
+  }
+  return out;
+}
+
+// ---------- rendering ----------
+function hpColor(pct) { return pct > 50 ? 'var(--hp-good)' : pct > 20 ? 'var(--hp-mid)' : 'var(--hp-low)'; }
+
+function cardHTML(side) {
+  const v = view[side];
+  if (!v.species) return `<div class="head"><span class="name">${side === ME ? 'Your side' : esc(foe.name)}</span><span class="owner">${side === ME ? 'You' : 'Opponent'}</span></div><div class="note">Waiting for the first Pokémon…</div>`;
+  const sp = E.Dex.species.get(v.species);
+  const pct = Math.max(0, pctOf(side));
+  const shownPct = v.hp > 0 ? Math.max(1, Math.round(pct)) : 0;
+  const hpText = side === ME ? `${Math.max(0, v.hp)}/${v.maxhp}` : `${shownPct}%`;
+  const st = STATUS[v.status];
+  const boosts = Object.entries(v.boosts).filter(([, n]) => n).map(([k, n]) => `<span class="boost ${n > 0 ? 'up' : 'down'}">${STAT_SHORT[k] || k} ${n > 0 ? '+' : ''}${n}</span>`).join('');
+  const sideObj = battle[side];
+  const hazards = Object.keys(sideObj.sideConditions).filter(k => k !== 'catchguard').map(k => {
+    const c = sideObj.sideConditions[k];
+    const name = E.Dex.conditions.get(k).name || k;
+    return `<span class="hazard">${esc(name)}${c.layers > 1 ? ' ×' + c.layers : ''}</span>`;
+  }).join('');
+  const balls = sideObj.pokemon.map(p => `<i class="${p.fainted || p.hp <= 0 ? 'out' : p.hp < p.maxhp / 2 ? 'hurt' : ''} ${p.isActive ? 'active' : ''}"></i>`).join('');
+  const art = artOf(sp.name);
+  return `${art ? `<span class="cardart">${art}</span>` : ''}
+    <div class="head"><span class="name">${sp.isMega ? 'Mega ' : ''}${esc(sp.isMega ? sp.baseSpecies : sp.name)}${battle[side].active[0] && battle[side].active[0].level !== 100 ? ` <small class="lvl">Lv ${battle[side].active[0].level}</small>` : ''}</span><span class="owner">${side === ME ? 'You' : esc(foe.name)}</span></div>
+    <div class="row" style="justify-content:space-between">${typesHTML(sp.types)}<span class="balls" aria-label="Team status">${balls}</span></div>
+    <div class="hpwrap"><div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><span class="hptext">${hpText}</span></div>
+    <div class="tags">${st ? `<span class="status" style="background:${st[1]}">${st[0]}</span>` : ''}${boosts}${hazards}</div>`;
+}
+
+function renderCards() {
+  $('foeCard').innerHTML = cardHTML(FOE);
+  $('myCard').innerHTML = cardHTML(ME);
+  $('foeCard').classList.toggle('hasart', !!(view[FOE].species && artOf(view[FOE].species)));
+  $('myCard').classList.toggle('hasart', !!(view[ME].species && artOf(view[ME].species)));
+  const w = battle.field.weather;
+  const wname = w ? (E.Dex.conditions.get(w).name || w) : '';
+  $('weather').textContent = wname ? `${wname === 'Snowscape' ? 'Snow' : wname} · ${battle.field.weatherState.duration || ''} turns left` : '';
+}
+
+function applyFx(fx) {
+  const el = $(fx.side === ME ? 'myCard' : 'foeCard');
+  if (!el) return;
+  const pulse = cls => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 520); };
+  if (fx.kind === 'hit') { el.style.setProperty('--fx', fx.color); pulse('fx-hit'); }
+  else if (fx.kind === 'shake') pulse('fx-shake');
+  else if (fx.kind === 'act') pulse('fx-act');
+  else if (fx.kind === 'faint') el.classList.add('fx-faint');
+  else if (fx.kind === 'clear') el.classList.remove('fx-faint');
+}
+
+// After playback, correct the view from the true battle state
+function syncFromState() {
+  for (const side of ['p1', 'p2']) {
+    const real = battle[side].active[0];
+    if (!real) continue;
+    const p = real;
+    const v = view[side];
+    v.species = side === FOE && real.illusion ? real.illusion.species.name : real.species.name;
+    v.ident = side + 'a: ' + p.name;
+    if (side === ME) { v.hp = p.hp; v.maxhp = p.maxhp; } else { v.hp = p.hp ? Math.max(1, Math.round(p.hp / p.maxhp * 100)) : 0; v.maxhp = 100; }
+    v.status = p.status || '';
+    v.boosts = {...p.boosts};
+  }
+  renderCards();
+}
+
+function renderControls() {
+  const c = $('controls');
+  if (!battle || battle.ended) { c.innerHTML = ''; return; }
+  const req = battle[ME].activeRequest;
+  if (!req || req.wait || battle[ME].isChoiceDone()) {
+    c.innerHTML = `<div class="waiting">${mode === 'online' ? '<span class="pulse"></span>' : ''}Waiting for ${esc(foe.name)}…</div>`;
+    return;
+  }
+  if (req.teamPreview) { c.innerHTML = ''; return; }
+  if (!req.forceSwitch && catchPending()) { c.innerHTML = catchHTML(); return; }
+  const forced = !!req.forceSwitch;
+  if (forced) panel = 'switch';
+  const act = req.active && req.active[0];
+  const trapped = act && (act.trapped || act.maybeTrapped);
+  let html = '';
+  if (!forced) {
+    html += `<div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-fight" aria-selected="${panel === 'fight'}" data-panel="fight">Fight</button>
+      <button class="tab" role="tab" id="tab-switch" aria-selected="${panel === 'switch'}" data-panel="switch">Pokémon</button>
+      ${usesBag() ? `<button class="tab" role="tab" id="tab-bag" aria-selected="${panel === 'bag'}" data-panel="bag">Bag</button>` : ''}
+      ${act && act.canMegaEvo ? '<label class="mega"><input type="checkbox" id="megaBox"> Mega Evolve</label>' : ''}
+    </div>`;
+  } else {
+    html += `<div class="prompt">Choose your next Pokémon.</div>`;
+  }
+  if (panel === 'bag' && !forced && usesBag()) {
+    html += bagButtons(bagNow(), bagSel, true);
+    if (!bagSel) html += '<div class="prompt">Pick an item. Using one takes your turn.</div>';
+    if (bagSel) {
+      html += `<div class="prompt">${esc(E.ITEMS[bagSel].desc)} Use it on which Pokémon?</div><div class="swaps">` + battle.p1.pokemon.map((p, i) => {
+        const prob = E.itemProblem(bagSel, p);
+        const pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
+        return `<button class="swap" id="use-${i}" data-use="${i}" ${prob ? 'disabled' : ''} title="${esc(prob)}"><b>${esc(p.name)}${p.isActive ? ' · in battle' : ''}</b>
+          <div class="hp"><i style="width:${p.fainted ? 0 : pct}%;background-color:${hpColor(pct)}"></i></div>
+          <small class="note">${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`}${p.status && p.status !== 'fnt' ? ' · ' + p.status.toUpperCase() : ''}</small></button>`;
+      }).join('') + '</div>';
+    }
+  } else if (panel === 'fight' && act) {
+    const me = battle[ME].active[0], foeReal = battle[FOE].active[0];
+    // Don't let move hints reveal an Illusion: judge matchups against what you can see
+    const foeMon = foeReal && foeReal.illusion ? Object.assign(Object.create(foeReal), {types: foeReal.illusion.types, species: foeReal.illusion.species, ability: '', weighthg: foeReal.illusion.weighthg}) : foeReal;
+    html += '<div class="moves">' + act.moves.map((m, i) => {
+      const mv = E.Dex.moves.get(m.id);
+      let effTxt = '';
+      if (mv.category !== 'Status' && foeMon && !foeMon.fainted) {
+        const r = E.estimate(battle, me, foeMon, m.id);
+        if (r) effTxt = r.eff === 0 ? '<span class="eff no">No effect</span>' : r.eff > 1 ? '<span class="eff se">Super effective</span>' : r.eff < 1 ? '<span class="eff nve">Resisted</span>' : '';
+      }
+      const pow = mv.category === 'Status' ? 'Status' : (mv.basePower ? `${mv.basePower} power` : mv.category);
+      const pp = m.maxpp ? `${m.pp}/${m.maxpp} PP` : '';
+      return `<button class="move" id="move-${i + 1}" data-slot="${i + 1}" style="--t:${TYPE_COLORS[mv.type] || '#999'}" ${m.disabled ? 'disabled' : ''} title="${esc(mv.shortDesc || '')}">
+        <b>${esc(m.move)}</b><small><span>${esc(mv.type)} · ${esc(pow)}</span></small><small>${effTxt || '<span></span>'}<span>${pp}</span></small></button>`;
+    }).join('') + '</div>';
+  } else {
+    html += '<div class="swaps">' + req.side.pokemon.map((p, i) => {
+      const [hpStr, st] = p.condition.split(' ');
+      const [a, b] = hpStr.split('/').map(Number);
+      const pct = b ? a / b * 100 : 0;
+      const fainted = st === 'fnt' || hpStr === '0';
+      const disabled = p.active || fainted || (!forced && trapped);
+      const name = p.details.split(',')[0];
+      return `<button class="swap" id="swap-${i + 1}" data-i="${i + 1}" ${disabled ? 'disabled' : ''}>
+        <b>${esc(name)}${p.active ? ' · in battle' : ''}</b>
+        <div class="hp"><i style="width:${fainted ? 0 : pct}%;background-color:${hpColor(pct)}"></i></div>
+        <small class="note">${fainted ? 'Fainted' : `${Math.max(0, a)}/${b} HP`}${st && st !== 'fnt' ? ' · ' + st.toUpperCase() : ''}</small></button>`;
+    }).join('') + '</div>';
+    if (!forced && trapped) html += '<div class="prompt">You are trapped and cannot switch out.</div>';
+  }
+  c.innerHTML = html;
+}
+
+$('controls').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.disabled || playing) return;
+  if (t.id === 'catchThrow') { throwBall(); return; }
+  if (t.id === 'catchNo') { finishWild(); return; }
+  if (t.dataset.panel) { panel = t.dataset.panel; bagSel = null; renderControls(); return; }
+  if (t.dataset.item) { bagSel = bagSel === t.dataset.item ? null : t.dataset.item; renderControls(); return; }
+  if (t.dataset.use) { useItemInBattle(+t.dataset.use); return; }
+  if (t.dataset.slot) {
+    const mega = $('megaBox') && $('megaBox').checked;
+    commit(`move ${t.dataset.slot}${mega ? ' mega' : ''}`);
+    return;
+  }
+  if (t.dataset.i) { panel = 'fight'; commit(`switch ${t.dataset.i}`); }
+});
+
+// ---------- forfeit and results ----------
+let forfeitArmed = false;
+$('forfeit').addEventListener('click', async () => {
+  if (!battle) return;
+  if (battle.ended) { leaveBattle(); return; }
+  if (!forfeitArmed) { forfeitArmed = true; $('forfeit').textContent = 'Tap again to forfeit'; setTimeout(() => { forfeitArmed = false; $('forfeit').textContent = 'Forfeit'; }, 2500); return; }
+  forfeitArmed = false; $('forfeit').textContent = 'Forfeit';
+  if (mode === 'online') {
+    try { await db.doc('matches/' + match.id).update({forfeit: ME, status: 'done'}); }
+    catch (e) { addLine("Couldn't reach the server to forfeit. Try again.", 'bad'); return; }
+    match.data = {...match.data, forfeit: ME, status: 'done'};
+  }
+  battle.forceWin(FOE);
+  await refresh();
+});
+
+function showResult() {
+  if (!battle) return;
+  const won = battle.winner === battle[ME].name;
+  if (ctx && ctx.kind === 'journey') { journeyBattleOver(won); return; }
+  if (ctx && ctx.kind === 'adventure') { advBattleOver(won); return; }
+  if (ctx && ctx.kind === 'gauntlet') { gauntletResult(won); return; }
+  const badges = badgesFor(difficulty);
+  const forfeited = mode === 'online' ? match && match.data.forfeit : !won && !battle[FOE].pokemon.every(p => p.fainted) && !battle[ME].pokemon.every(p => p.fainted);
+  let html;
+  if (mode === 'cpu') {
+    const L = LEADERS[foe.key];
+    if (won) {
+      const first = !badges[foe.key];
+      badges[foe.key] = true; store.set('badgeBook', badgeBook);
+      const left = battle[ME].pokemon.filter(p => !p.fainted).length;
+      html = `${emblem(L.icon, L.color)}<h3>${esc(L.badge)}${first ? ' earned' : ' defended'}</h3>
+        <p>You beat ${esc(L.title)} with ${left} Pokémon still standing, in ${battle.turn} turns.</p>`;
+    } else {
+      html = `${emblem(L.icon, L.color)}<h3>${esc(L.first)} wins</h3><p>${forfeited ? 'You forfeited the match.' : `${esc(L.title)} held the ${esc(L.badge)} after ${battle.turn} turns.`} Try a different lead or switch more often.</p>`;
+    }
+    html += `<div class="row" style="justify-content:center"><button class="btn primary" id="rematch">Rematch</button><button class="btn" id="toSetup">Choose another gym</button></div>`;
+  } else {
+    const ic = foe.key ? LEADERS[foe.key].icon : 'star';
+    const left = battle[won ? ME : FOE].pokemon.filter(p => !p.fainted).length;
+    const ff = match && match.data.forfeit;
+    const why = ff ? (ff === ME ? 'You forfeited.' : `${esc(foe.name)} forfeited.`) : `${left} Pokémon left standing after ${battle.turn} turns.`;
+    html = `${emblem(ic, foe.color)}<h3>${won ? 'You beat ' + esc(foe.name) : esc(foe.name) + ' wins'}</h3><p>${why}</p>
+      <div class="row" style="justify-content:center"><button class="btn primary" id="toSetup">Back to lobby</button></div>`;
+  }
+  $('result').innerHTML = html;
+  $('overlay').hidden = false;
+}
+$('result').addEventListener('click', e => {
+  if (e.target.id === 'rematch') { $('overlay').hidden = true; startCpuBattle(foe.key); }
+  if (e.target.id === 'gNext') { $('overlay').hidden = true; ctx.stage++; runGauntletStage(); }
+  if (e.target.id === 'gRetry') { $('overlay').hidden = true; startGauntlet(); }
+  if (e.target.id === 'jToMap') { $('overlay').hidden = true; endBattleQuietly(); openMap({}); }
+  if (e.target.id === 'jNewAfter') { $('overlay').hidden = true; endBattleQuietly(); ctx = null; openJourneyStart(); }
+  if (e.target.id === 'toSetup') { $('overlay').hidden = true; leaveBattle(); }
+});
+
+function endBattleQuietly() {
+  if (unsubMoves) { unsubMoves(); unsubMoves = null; }
+  if (unsubMatch) { unsubMatch(); unsubMatch = null; }
+  battle = null; match = null;
+  $('overlay').hidden = true;
+  $('battleMap').hidden = true;
+}
+
+function leaveBattle() {
+  const wasJourney = ctx && ctx.kind === 'journey';
+  const wasAdv = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
+  endBattleQuietly();
+  ctx = null;
+  if (wasJourney) { openMap({}); return; }
+  if (wasAdv) { if (wasAdv.quest != null) openQuest(wasAdv.quest); else openAdvMap({}); return; }
+  setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR);
+  renderBadges(); renderLeaders(); renderOnline();
+  show('setup');
+}
+
+// ---------- online lobby ----------
+function teamLabel(p) {
+  const L = LEADERS[p.key];
+  return L ? `${L.type} team` : 'Custom team';
+}
+
+function renderOnline() {
+  const box = $('online');
+  if (!box) return;
+  if (!E) { box.innerHTML = '<div class="note">Loading the battle engine…</div>'; return; }
+  if (db === undefined) { box.innerHTML = '<div class="note">Connecting…</div>'; return; }
+  if (!db || !myUid) {
+    box.innerHTML = window.claude ? '<div class="note">Online battles need you to be signed in to Claude on a page shared with you. Ask the page owner to invite you by email as an Editor, then reopen it.</div>' : '<div class="note">Online battles are not available in this version yet. Every other mode works here.</div>';
+    return;
+  }
+  const mine = matches.filter(m => m.data.p1 && m.data.p1.uid === myUid && m.data.status === 'open');
+  const active = matches.filter(m => m.data.status === 'active' && ((m.data.p1 && m.data.p1.uid === myUid) || (m.data.p2 && m.data.p2.uid === myUid)));
+  const open = matches.filter(m => m.data.status === 'open' && m.data.p1 && m.data.p1.uid !== myUid);
+  let html = '<div class="lobby">';
+  for (const m of active) {
+    const opp = m.data.p1.uid === myUid ? m.data.p2 : m.data.p1;
+    html += `<div class="match"><div class="who"><b>vs ${esc(opp.name)}</b><small>Battle in progress · ${esc(teamLabel(opp))}</small></div><button class="btn primary" data-act="resume" data-id="${esc(m.id)}">Resume</button></div>`;
+  }
+  for (const m of mine) {
+    html += `<div class="match mine"><div class="who"><b><span class="pulse"></span>Your challenge is open</b><small>Waiting for someone to join · ${esc(teamLabel(m.data.p1))}</small></div><button class="btn" data-act="cancel" data-id="${esc(m.id)}">Cancel</button></div>`;
+  }
+  for (const m of open) {
+    html += `<div class="match" style="--c:${esc(m.data.p1.color || CUSTOM_COLOR)}"><div class="who"><b>${esc(m.data.p1.name)}'s challenge</b><small>${esc(teamLabel(m.data.p1))} · ${esc(teamNames(m.data.p1.team))}</small></div><button class="btn primary" data-act="join" data-id="${esc(m.id)}">Join</button></div>`;
+  }
+  if (!mine.length) html += `<div class="row"><button class="btn primary" id="createMatch" data-act="create">Post a challenge</button></div>`;
+  if (!open.length && !active.length) html += `<div class="note">${mine.length ? 'Tell your brother to open this page and tap Join. The battle starts as soon as they do.' : 'Post a challenge with your selected team. Anyone with edit access to this page can join it from their own phone.'}</div>`;
+  if (canWrite === false) html += `<div class="note err">You can view this page but not battle on it. Ask the owner to invite you by email as an Editor.</div>`;
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+$('online').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  b.disabled = true;
+  try {
+    if (act === 'create') await createMatch();
+    else if (act === 'cancel') await db.doc('matches/' + id).update({status: 'cancelled'});
+    else if (act === 'join') await joinMatch(id);
+    else if (act === 'resume') { const m = matches.find(x => x.id === id); if (m) openMatch(m.id, m.data); }
+  } catch (err) {
+    const box = $('online');
+    const msg = document.createElement('div'); msg.className = 'note err';
+    msg.textContent = err && err.code === 'invalid_argument' ? 'You need edit access to this page to battle online. Ask the owner to invite you by email as an Editor.' : (err && err.message) || 'Something went wrong. Check your connection and try again.';
+    box.appendChild(msg);
+  } finally { b.disabled = false; }
+});
+
+function playerInfo() {
+  const text = myTeamText();
+  return {uid: myUid, name: baseName(), key: myKey === 'custom' ? null : myKey, color: LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR, team: text};
+}
+
+function newId() {
+  const a = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let s = ''; for (let i = 0; i < 8; i++) s += a[Math.floor(Math.random() * a.length)];
+  return s;
+}
+
+async function createMatch() {
+  if (!myTeamText()) { needTeam(); return; }
+  // close any old open challenge of mine first
+  for (const m of matches.filter(m => m.data.p1 && m.data.p1.uid === myUid && m.data.status === 'open')) {
+    await db.doc('matches/' + m.id).update({status: 'cancelled'});
+  }
+  const id = newId();
+  const seed = [0, 0, 0, 0].map(() => Math.floor(Math.random() * 0x10000));
+  await db.doc('matches/' + id).set({status: 'open', seed, p1: playerInfo(), p2: null, createdAt: Date.now()});
+}
+
+async function joinMatch(id) {
+  if (!myTeamText()) { needTeam(); return; }
+  const ref = db.doc('matches/' + id);
+  const lease = await ref.acquire({holder: myUid, ttlMs: 5000});
+  if (!lease.acquired) throw {message: 'Someone else is joining that challenge right now.'};
+  const snap = await ref.get();
+  const d = snap.exists ? snap.data() : null;
+  if (!d || d.status !== 'open' || d.p2) throw {message: 'That challenge is no longer open.'};
+  const me = playerInfo();
+  if (me.name === d.p1.name) me.name = me.name + ' 2';
+  await ref.update({p2: me, status: 'active', startedAt: Date.now()});
+  openMatch(id, {...d, p2: me, status: 'active'});
+}
+
+function openMatch(id, data) {
+  if (unsubMoves) unsubMoves();
+  if (unsubMatch) unsubMatch();
+  mode = 'online';
+  match = {id, data};
+  ME = data.p1.uid === myUid ? 'p1' : 'p2';
+  FOE = ME === 'p1' ? 'p2' : 'p1';
+  const opp = data[FOE];
+  foe = {name: opp.name, key: opp.key, color: opp.color || CUSTOM_COLOR};
+  setAccent(foe.color);
+  const t1 = E.parseTeam(data.p1.team).team, t2 = E.parseTeam(data.p2.team).team;
+  beginBattle({name: data.p1.name, team: t1}, {name: data.p2.name, team: t2}, data.seed);
+  choices = {p1: [], p2: []}; applied = {p1: 0, p2: 0};
+  let first = true;
+  show('battle');
+  $('controls').innerHTML = '<div class="waiting">Loading the battle…</div>';
+  unsubMoves = db.collection(`matches/${id}/moves`).onSnapshot(snap => {
+    let changed = false;
+    for (const d of snap.docs) {
+      if (d.id !== 'p1' && d.id !== 'p2') continue;
+      const list = (d.data() || {}).list || [];
+      // never shrink our own list from a stale snapshot
+      if (list.length > choices[d.id].length) { choices[d.id] = list.slice(); changed = true; }
+    }
+    if (first) { first = false; skip = true; changed = true; }
+    if (changed) refresh();
+  }, () => addLine('Lost the live connection to this battle. Reload the page to reconnect.', 'bad'));
+  unsubMatch = db.doc('matches/' + id).onSnapshot(snap => {
+    if (!snap.exists || !match || match.id !== id) return;
+    const d = snap.data();
+    const hadForfeit = match.data.forfeit;
+    match.data = d;
+    if (d.forfeit && !hadForfeit) refresh();
+  });
+}
+
+
+// ---------- team guide ----------
+const STAT_ORDER = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+const STAT_LABEL = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
+const ABILITY_IMMUNE = {levitate: 'Ground', waterabsorb: 'Water', dryskin: 'Water', stormdrain: 'Water', voltabsorb: 'Electric', lightningrod: 'Electric', motordrive: 'Electric', flashfire: 'Fire', sapsipper: 'Grass', eartheater: 'Ground'};
+let infoKey = null, infoReturn = 'setup';
+
+function calcStats(set, sp) {
+  const nat = E.Dex.natures.get(set.nature || 'Serious');
+  const L = set.level || 100, out = {};
+  for (const s of STAT_ORDER) {
+    const b = sp.baseStats[s], iv = set.ivs && set.ivs[s] != null ? set.ivs[s] : 31, ev = set.evs && set.evs[s] || 0;
+    const core = Math.floor((2 * b + iv + Math.floor(ev / 4)) * L / 100);
+    if (s === 'hp') out[s] = sp.baseStats.hp === 1 ? 1 : core + L + 10;
+    else out[s] = Math.floor((core + 5) * (nat.plus === s ? 1.1 : nat.minus === s ? 0.9 : 1));
+  }
+  return {stats: out, nat};
+}
+
+function matchups(types, abilityId) {
+  const groups = {};
+  for (const t of E.Dex.types.names()) {
+    if (t === 'Stellar') continue;
+    let m = 1;
+    for (const dt of types) m *= E.Dex.getImmunity(t, dt) ? Math.pow(2, E.Dex.getEffectiveness(t, dt)) : 0;
+    if (ABILITY_IMMUNE[abilityId] === t) m = 0;
+    if (abilityId === 'thickfat' && (t === 'Fire' || t === 'Ice')) m *= 0.5;
+    if (abilityId === 'dryskin' && t === 'Fire') m *= 1.25;
+    if (m === 1) continue;
+    (groups[m] = groups[m] || []).push(t);
+  }
+  const rows = [[4, '4×', 'w'], [2.5, '2.5×', 'w'], [2, '2×', 'w'], [0.5, '½×', 'r'], [0.25, '¼×', 'r'], [0.125, '⅛×', 'r'], [0, 'None', 'i']];
+  return rows.filter(([m]) => groups[m]).map(([m, label, cls]) => `<div><span class="k ${cls}">${label}</span>${typesHTML(groups[m])}</div>`).join('');
+}
+
+function statBlock(set, sp, title) {
+  const {stats, nat} = calcStats(set, sp);
+  const rows = STAT_ORDER.map(s => {
+    const cls = nat.plus === s ? 'plus' : nat.minus === s ? 'minus' : '';
+    const w = Math.min(100, stats[s] / (s === 'hp' ? 450 : 420) * 100);
+    return `<span class="s ${cls}">${STAT_LABEL[s]}</span><span class="v">${stats[s]}</span><span class="bar" title="Base ${sp.baseStats[s]}"><i style="width:${w}%"></i></span>`;
+  }).join('');
+  const base = STAT_ORDER.map(s => `${STAT_LABEL[s]} ${sp.baseStats[s]}`).join(' · ');
+  return `<div><div class="lbl">${esc(title)}</div><div class="statgrid">${rows}</div><div class="statnote">Base stats: ${base} (total ${STAT_ORDER.reduce((a, s) => a + sp.baseStats[s], 0)})</div></div>`;
+}
+
+function dexCard(set, idx) {
+  const sp = E.Dex.species.get(set.species);
+  const item = set.item ? E.Dex.items.get(set.item) : null;
+  const ab = E.Dex.abilities.get(set.ability);
+  const nat = E.Dex.natures.get(set.nature || 'Serious');
+  const evs = STAT_ORDER.filter(s => set.evs && set.evs[s]).map(s => `${set.evs[s]} ${STAT_LABEL[s]}`).join(' / ') || 'None';
+  const natTxt = nat.plus ? `${nat.name} (+${STAT_LABEL[nat.plus]}, −${STAT_LABEL[nat.minus]})` : `${nat.name} (no stat change)`;
+  let mega = '';
+  if (item && item.megaStone) {
+    const megaName = typeof item.megaStone === 'string' ? item.megaStone : Object.values(item.megaStone)[0];
+    const msp = E.Dex.species.get(megaName);
+    if (msp.exists) {
+      const mab = E.Dex.abilities.get(msp.abilities[0]);
+      mega = `<div class="kv"><div class="lbl">Mega Evolution</div>
+        <p><b>Mega ${esc(msp.baseSpecies)}</b> ${typesHTML(msp.types)}</p>
+        <p><b>${esc(mab.name)}:</b> <span>${esc(mab.shortDesc || mab.desc)}</span></p></div>
+        ${statBlock(set, msp, 'Stats after Mega Evolving')}
+        <div><div class="lbl">Weaknesses after Mega Evolving</div><div class="mults">${matchups(msp.types, mab.id)}</div></div>`;
+    }
+  }
+  const moves = set.moves.map(m => {
+    const mv = E.Dex.moves.get(m);
+    const acc = mv.accuracy === true ? 'Never misses' : `${mv.accuracy}% acc`;
+    const pow = mv.category === 'Status' ? 'Status' : `${mv.category} · ${mv.basePower ? mv.basePower + ' power' : 'varies'}`;
+    const pp = Math.floor(mv.pp * 8 / 5);
+    const pri = mv.priority ? ` · Priority ${mv.priority > 0 ? '+' : ''}${mv.priority}` : '';
+    return `<div class="mv" style="--t:${TYPE_COLORS[mv.type] || '#999'}"><div class="top"><b>${esc(mv.name)}</b>${typesHTML([mv.type])}</div>
+      <div class="nums">${esc(pow)} · ${esc(acc)} · ${pp} PP${pri}</div><p>${esc(mv.shortDesc || mv.desc)}</p></div>`;
+  }).join('');
+  return `<details class="dex" ${idx === 0 ? 'open' : ''}>
+    <summary><span class="nm">${esc(sp.name)}</span><span class="chev"></span>
+      <span class="sub">${typesHTML(sp.types)} ${item ? '· ' + esc(item.name) : ''} · ${esc(ab.name)}</span></summary>
+    <div class="dexbody">
+      <div class="kv"><div class="lbl">Held item</div><p><b>${item ? esc(item.name) : 'None'}</b>${item ? ': <span>' + esc(item.shortDesc || item.desc) + '</span>' : ''}</p></div>
+      <div class="kv"><div class="lbl">Ability</div><p><b>${esc(ab.name)}:</b> <span>${esc(ab.shortDesc || ab.desc)}</span></p></div>
+      <div class="kv"><div class="lbl">Nature and training</div><p><b>${esc(natTxt)}</b></p><p><span>EVs: ${esc(evs)} · Level ${set.level || 100}</span></p></div>
+      ${statBlock(set, sp, 'Stats at level ' + (set.level || 100))}
+      <div><div class="lbl">Moves</div><div class="mvlist">${moves}</div></div>
+      <div><div class="lbl">Damage taken by type</div><div class="mults">${matchups(sp.types, ab.id)}</div></div>
+      ${mega}
+    </div></details>`;
+}
+
+function renderInfo() {
+  const keys = [...ORDER, ...(customTeam ? ['custom'] : [])];
+  if (!keys.includes(infoKey)) infoKey = keys.includes(myKey) ? myKey : ORDER[0];
+  $('infoChips').innerHTML = keys.map(k => `<button class="chip" id="info-${k}" data-k="${k}" aria-pressed="${k === infoKey}">${k === 'custom' ? 'Custom team' : esc(LEADERS[k].first)}</button>`).join('');
+  const text = infoKey === 'custom' ? customTeam.text : E.TEAM_TEXT[infoKey];
+  const team = E.parseTeam(text).team || [];
+  if (LEADERS[infoKey]) setAccent(LEADERS[infoKey].color); else setAccent(CUSTOM_COLOR);
+  $('infoBody').innerHTML = team.map(dexCard).join('');
+}
+
+function openGuide(key, from) {
+  if (!E) return;
+  $('info').querySelector('h1').textContent = 'Team guide';
+  infoKey = key; infoReturn = from;
+  renderInfo(); show('info');
+  $('info').querySelector('.scroll').scrollTop = 0;
+}
+$('openGuide').addEventListener('click', () => openGuide(myKey, 'setup'));
+$('battleGuide').addEventListener('click', () => (ctx && (ctx.kind === 'adventure' || ctx.kind === 'journey')) ? (mapMode = ctx.kind, openTeamView('battle')) : openGuide(ctx && ctx.kind === 'journey' && J ? (J.teamKey === 'custom' && !customTeam ? ORDER[0] : J.teamKey) : mode === 'cpu' ? myKey : (match && match.data[ME].key) || myKey, 'battle'));
+$('infoChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; infoKey = b.dataset.k; renderInfo(); });
+$('infoBack').addEventListener('click', () => {
+  if (infoReturn === 'map') { if (mapMode === 'adventure') openAdvMap({}); else openMap({}); return; }
+  if (typeof infoReturn === 'number') { openQuest(infoReturn); return; }
+  if (infoReturn === 'battle' && battle) { setAccent(foe.color); show('battle'); }
+  else { setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); }
+});
+
+// ---------- difficulty ----------
+const DIFF_FOOT = ' Stats never change at any level, so every team can beat every other team. Badges are tracked separately for each difficulty.';
+function renderDifficulty() {
+  for (const d of Object.keys(DIFFS)) $('diff-' + d).setAttribute('aria-checked', String(d === difficulty));
+  $('diffNote').textContent = DIFFS[difficulty].note + DIFF_FOOT;
+}
+$('diffSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  difficulty = b.dataset.d; store.set('difficulty', difficulty);
+  renderDifficulty(); renderBadges(); renderLeaders();
+});
+
+// ---------- shared helpers ----------
+let bagSel = null;
+let toastTimer = null;
+function toast(msg, ms = 3400) {
+  const t = $('toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+}
+const reducedMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function bagButtons(bag, sel, compact) {
+  return `<div class="bagrow${compact ? ' compact' : ''}">` + Object.entries(E.ITEMS).filter(([id, it]) => !(it.ball && (compact || !bag.pokeball))).map(([id, it]) =>
+    `<button class="bagitem" id="item-${id}" data-item="${id}" aria-pressed="${sel === id}" ${bag[id] ? '' : 'disabled'} title="${esc(it.desc)}"><b>${esc(it.name)}<span>×${bag[id] || 0}</span></b>${compact ? '' : `<small>${esc(it.desc)}</small>`}</button>`).join('') + '</div>';
+}
+function addItems(bag, reward) {
+  for (const [k, n] of Object.entries(reward)) bag[k] = (bag[k] || 0) + n;
+  return Object.entries(reward).map(([k, n]) => `+${n} ${E.ITEMS[k].name}${n > 1 ? 's' : ''}`).join(', ');
+}
+
+// ---------- Elite Four and Champion (free play) ----------
+// The four strongest teams in testing, weakest to strongest.
+const ELITE = ['parker', 'kent', 'rachel', 'anna'];
+const CHAMP = {name: 'The Champion', title: 'The Champion', color: '#e8c76a', icon: 'crown'};
+function renderGauntletCard() {
+  const b = badgesFor(difficulty);
+  if (!ORDER.every(k => b[k])) { $('gauntletCard').innerHTML = ''; return; }
+  const label = DIFFS[difficulty].label;
+  const champ = champions[difficulty];
+  $('gauntletCard').innerHTML = `<div class="modecard" style="--c:${CHAMP.color}">
+    <h3>Elite Four and Champion</h3>
+    <p>You hold all 17 ${esc(label)} badges. Face ${ELITE.map(k => esc(LEADERS[k].title)).join(', ')} and then the Champion, back to back. Your HP carries over between battles and there is no healing.</p>
+    ${champ ? `<p>You already hold the ${esc(label)} Champion title.</p>` : ''}
+    <div class="row"><button class="btn primary" id="gauntletGo">${champ ? 'Defend the title' : 'Begin the challenge'}</button></div></div>`;
+}
+$('gauntletCard').addEventListener('click', e => { if (e.target.id === 'gauntletGo') startGauntlet(); });
+
+function startGauntlet() {
+  if (!myTeamText()) { needTeam(); return; }
+  ctx = {kind: 'gauntlet', stage: 0, state: null, champTeam: E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k]))};
+  runGauntletStage();
+}
+function runGauntletStage() {
+  const st = ctx.stage;
+  let teamText;
+  if (st < 4) {
+    const k = ELITE[st], L = LEADERS[k];
+    foe = {name: L.first, key: k, color: L.color, icon: L.icon, title: `Elite Four ${L.title}`, subtitle: `Elite Four · ${st + 1} of 4 · ${DIFFS[difficulty].label}`};
+    teamText = E.TEAM_TEXT[k];
+  } else {
+    foe = {...CHAMP, key: null, subtitle: `Final battle · ${DIFFS[difficulty].label}`};
+    teamText = ctx.champTeam;
+  }
+  startVsCpu(teamText, ctx.state, myTeamText(), baseName());
+}
+function gauntletResult(won) {
+  let html;
+  const ic = emblem(foe.icon || 'star', foe.color);
+  if (won) {
+    ctx.state = E.readTeamState(battle.p1);
+    const left = battle.p1.pokemon.filter(p => !p.fainted).length;
+    if (ctx.stage < 4) {
+      const next = ctx.stage + 1 < 4 ? `Elite Four ${LEADERS[ELITE[ctx.stage + 1]].title}` : 'The Champion';
+      html = `${ic}<h3>${esc(foe.name)} defeated</h3><p>${left} Pokémon still standing. Next up: ${esc(next)}. No healing in between.</p>
+        <div class="row" style="justify-content:center"><button class="btn primary" id="gNext">Next battle</button><button class="btn" id="toSetup">Give up</button></div>`;
+    } else {
+      champions[difficulty] = true; store.set('champions', champions);
+      html = `${emblem('crown', CHAMP.color)}<h3>${esc(DIFFS[difficulty].label)} Champion</h3><p>You beat the Elite Four and the Champion back to back. Your name goes in the Hall of Fame.</p>
+        <div class="row" style="justify-content:center"><button class="btn primary" id="toSetup">Back to menu</button></div>`;
+    }
+  } else {
+    html = `${ic}<h3>Challenge over</h3><p>${esc(foe.name)} stopped you at battle ${ctx.stage + 1} of 5. Start again from the first Elite Four member.</p>
+      <div class="row" style="justify-content:center"><button class="btn primary" id="gRetry">Try again</button><button class="btn" id="toSetup">Back to menu</button></div>`;
+  }
+  $('result').innerHTML = html;
+  $('overlay').hidden = false;
+}
+
+// ---------- Journey mode ----------
+// Gyms in order of strength from testing, easiest first.
+const JORDER = ['lillian', 'trever', 'oksana', 'charlotte', 'tyler', 'tucker', 'kaley', 'makenna', 'lynne', 'tanner', 'theo', 'jack', 'tali', 'parker', 'kent', 'rachel', 'anna'];
+const HOME = 'Willow Hearth', LEAGUE = 'Victory Summit';
+const TOWNS = {
+  tyler: 'Mirefang Hollow', trever: 'Gearholt City', tucker: 'Cragpine', tanner: 'Frostcourt', makenna: 'Duskwhisper',
+  charlotte: 'Voltgrove', lillian: 'Bloomfield', theo: 'Hivewood', rachel: 'Parchmont', anna: 'Skyquiver',
+  jack: 'Ironknuckle', parker: 'Cinderplay', tali: 'Oracle Rest', kaley: 'Gravemoor', oksana: 'Tidemend',
+  lynne: 'Bedrock Keep', kent: 'Wyrmforge',
+};
+const LINES = {
+  tyler: {intro: ['So you made it to Mirefang Hollow. Most trainers turn back at the smell.', "My Poison team doesn't play fair, and neither do I. Let's go."],
+    win: ['Huh. You actually shrugged off the venom.', 'Take the Toxinbadge. You earned it, I guess.'],
+    e4: 'Back for more poison? This is the Elite Four. No holding back this time.'},
+  trever: {intro: ['I ran the numbers on your team before you walked in.', 'Steel resists ten types. Your odds are not great.'],
+    win: ["Fascinating. My model didn't account for you.", "The Alloybadge is yours. I'll be updating my spreadsheet."],
+    e4: "I've studied every battle you've fought since my gym. Time to test my new model."},
+  tucker: {intro: ['Welcome to Cragpine. Watch your step, these trails bite back.', 'My Rock team was raised out here in the wild. Ready?'],
+    win: ['You read the terrain like a real ranger.', "Here's the Mountainbadge. Stay on the marked trails."],
+    e4: 'The mountain taught me patience. The League taught me to finish the job.'},
+  tanner: {intro: ['Alright, rookie, this is my court. Frostcourt plays by my rules.', "Full-court press, no timeouts. Show me what you've got!"],
+    win: ["Now that's a buzzer-beater. Great hustle out there.", 'Take the Blizzardbadge. Practice is over, go win the season.'],
+    e4: "Playoff time. The Elite Four don't give second chances, and neither do I."},
+  makenna: {intro: ["You didn't see me, but I've been watching you since the edge of town.", 'Strike from the shadows or not at all. Begin.'],
+    win: ['You saw through every trick. Impressive.', 'The Moonbadge is yours. Walk quietly.'],
+    e4: 'The shadows of the League run deeper than my old gym. Try to keep up.'},
+  charlotte: {intro: ["Oh my gosh, a challenger! I've been SO excited all day!", "My Electric team is charged up and ready. Let's make some sparks!"],
+    win: ['That was electric! Best battle all week, seriously!', "Here's your Zapbadge! Can we be friends now?"],
+    e4: "I've practiced nonstop since you beat me. Get ready for a shock!"},
+  lillian: {intro: ['Welcome to Bloomfield. Mind the seedlings on your way in.', 'Every garden needs patience, and every battle needs roots. Shall we?'],
+    win: ["You've grown so much in just one battle.", 'Take the Petalbadge. Come back when the roses bloom.'],
+    e4: "My garden has grown wild since we last met. Let's see if you can weed it out."},
+  theo: {intro: ['Whoa, a real trainer! I caught all these bugs myself!', "Don't let 'em fool you, they sting. Let's battle!"],
+    win: ['Aw man! You squished my whole team!', "Fine, here's the Buzzbadge. I'm gonna catch even bigger bugs."],
+    e4: 'I caught bigger bugs, just like I said I would! Ready to get stung?'},
+  rachel: {intro: ['Every great tale needs a challenger. Today, that is you.', "Let's see how your chapter ends."],
+    win: ["What a twist. I'll have to rewrite the ending.", 'The Mythicbadge is yours. Your story is worth telling.'],
+    e4: "I've written a new chapter for the League, and you're in it."},
+  anna: {intro: ["Skyquiver's winds are strong today. Perfect for my birds.", 'I never miss my mark. Draw your first Pokémon.'],
+    win: ["A clean hit. You've got a sharp eye.", 'Take the Arrowbadge. Aim high.'],
+    e4: "My aim has only gotten sharper. Don't blink."},
+  jack: {intro: ['Gloves on! Ironknuckle trains its fighters the hard way.', "No tricks, no excuses. Just fists. Let's rumble!"],
+    win: ['Oof! You hit harder than you look.', 'The Rumblebadge is yours, champ. Respect.'],
+    e4: "I've trained every day since that loss. Round two, let's go!"},
+  parker: {intro: ['Hold on, let me pause my game. Okay, you have my full attention.', 'My Fire team speedruns every challenger. Ready, player two?'],
+    win: ['GG, seriously. That was a clutch play.', 'Overheatbadge unlocked. Achievement earned.'],
+    e4: "New save file, new strats. Let's see you beat the boss rush."},
+  tali: {intro: ['I saw this battle in my book before you arrived.', "Let's see if the ending is the one I read."],
+    win: ["The pages changed. I didn't foresee that.", 'The Visionbadge is yours. Keep writing your own story.'],
+    e4: "I've read ahead this time. I know how this ends."},
+  kaley: {intro: ["Hold on, I'm on a call. ... I'll call you back, I have a challenger.", "Let's make this quick. My Ghosts don't waste time."],
+    win: ['Not bad. You just earned yourself a meeting.', "Take the Spectrebadge. Don't make me regret it."],
+    e4: "I cleared my whole schedule for this rematch. Let's not waste it."},
+  oksana: {intro: ['Welcome to Tidemend! Kiev and I keep every trainer here healthy.', 'Stay hydrated, because this battle is going to make you sweat!'],
+    win: ['Great work! Kiev is wagging his tail, he likes you.', "Here's the Hydratebadge. Remember to drink some water!"],
+    e4: "Kiev and I are on call for the League now. Let's check your vitals!"},
+  lynne: {intro: ['Bedrock Keep has stood for a hundred years. So has my resolve.', "Show me the foundation you've built, young one."],
+    win: ['A strong foundation. Your family would be proud.', 'Accept the Foundationbadge with my blessing.'],
+    e4: 'The League is built on solid ground. So am I. Show me how much you have grown.'},
+  kent: {intro: ['Wyrmforge builds things to last. Dragons included.', "Let's see if your team was built right. No shortcuts."],
+    win: ['Solid work. You built something strong.', "Take the Wyvernbadge. That's quality craftsmanship."],
+    e4: "I rebuilt my team from the ground up. Let's stress-test yours."},
+};
+const E4_WIN = ['Well fought. Go on, the next member of the Elite Four is waiting.', 'You earned your way past me. Keep climbing.'];
+const E4_LAST = ["That's the whole Elite Four. The Champion is waiting at the top of Victory Summit."];
+const CHAMP_LINES = {
+  intro: ["So you're the one who beat every gym in the region, then the whole Elite Four.", "I've borrowed a little power from every leader you faced. This is the final battle."],
+  win: ['...Incredible. The title is yours.', 'From today, you are the Champion of the Neofield Region.'],
+};
+const START_BAG = {hyperpotion: 10, fullrestore: 4, fullheal: 5, revive: 4, maxrevive: 1};
+const GYM_REWARD = {hyperpotion: 2, fullrestore: 1, revive: 1};
+const E4_REWARD = {hyperpotion: 2, fullrestore: 2, revive: 1};
+
+let J = store.get('journey', null);
+if (J && (!J.order || !J.team)) J = null;
+if (J) for (const t of Object.values(J.team)) t.hp = Math.min(t.maxhp, Math.max(0, t.hp || 0));
+let jTeamKey = null;
+let mapFromBattle = false;
+let mapMode = 'journey';
+let startMode = 'journey';
+let restartArmed = false;
+function saveJ() { store.set('journey', J); }
+
+function jStage() {
+  if (!J) return null;
+  if (J.done) return {kind: 'done'};
+  if (J.pos < J.order.length) return {kind: 'gym', key: J.order[J.pos]};
+  if (J.e4pos < 4) return {kind: 'e4', key: J.e4[J.e4pos]};
+  return {kind: 'champion'};
+}
+function speakerFor(st) {
+  if (st.kind === 'champion' || st.kind === 'done') return {name: CHAMP.name, key: null, color: CHAMP.color};
+  const L = LEADERS[st.key];
+  return {name: st.kind === 'e4' ? `Elite Four ${L.title}` : L.title, key: st.key, color: L.color};
+}
+function portraitHTML(key, color) {
+  return key ? `<img src="portraits/${key}.jpg" alt="">` : emblem('crown', color || CHAMP.color);
+}
+
+// --- dialogue ---
+let talkQueue = null;
+function talk(speaker, lines) {
+  return new Promise(resolve => {
+    const box = $('talkBox');
+    box.style.setProperty('--c', speaker.color);
+    $('talkPortrait').innerHTML = speaker.svg ? speaker.svg : speaker.key ? portraitHTML(speaker.key, speaker.color) : emblem(speaker.icon || 'crown', speaker.color);
+    $('talkName').textContent = speaker.name;
+    talkQueue = {lines: lines.slice(), resolve};
+    $('talkLine').textContent = talkQueue.lines.shift();
+    $('talk').hidden = false;
+    box.focus({preventScroll: true});
+  });
+}
+$('talkBox').addEventListener('click', () => {
+  if (!talkQueue) return;
+  if (talkQueue.lines.length) {
+    $('talkLine').textContent = talkQueue.lines.shift();
+    const b = $('talkBox'); b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+    return;
+  }
+  const done = talkQueue.resolve; talkQueue = null;
+  $('talk').hidden = true;
+  done();
+});
+
+// --- setup screen card ---
+function renderJourneyCard() {
+  const el = $('journeyCard');
+  if (!E) { el.innerHTML = '<div class="note">Loading…</div>'; return; }
+  if (J && !J.done) {
+    const st = jStage();
+    const where = st.kind === 'gym' ? `Next: ${LEADERS[st.key].title} in ${TOWNS[st.key]}` : st.kind === 'e4' ? `Elite Four battle ${J.e4pos + 1} of 4 at ${LEADERS[st.key] ? 'Victory Summit' : ''}` : 'The Champion is waiting at Victory Summit';
+    const col = st.key ? LEADERS[st.key].color : CHAMP.color;
+    el.innerHTML = `<div class="modecard" style="--c:${col}">
+      <h3>Your journey</h3>
+      <p>${J.pos} of 17 badges · ${esc(DIFFS[J.difficulty].label)} · ${esc(J.playerName)}'s team</p>
+      <div class="meter"><i style="width:${Math.round((J.pos + J.e4pos) / 22 * 100)}%"></i></div>
+      <p>${esc(where)}</p>
+      <div class="row"><button class="btn primary" id="jContinue">Continue journey</button><button class="btn" id="jRestart">Start over</button></div>
+      ${restartArmed ? `<div class="confirmrow">Start over? This journey will be lost. <button class="btn" id="jRestartYes">Yes, start over</button><button class="btn" id="jRestartNo">Keep it</button></div>` : ''}
+    </div>`;
+  } else if (J && J.done) {
+    el.innerHTML = `<div class="modecard" style="--c:${CHAMP.color}">
+      <h3>Champion of the Neofield Region</h3>
+      <p>You finished a journey on ${esc(DIFFS[J.difficulty].label)} with ${esc(J.playerName)}'s team.</p>
+      <div class="row"><button class="btn primary" id="jNew">Start a new journey</button><button class="btn" id="jContinue">See the map</button></div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="modecard" style="--c:${LEADERS[JORDER[0]].color}">
+      <h3>Start a journey</h3>
+      <p>Travel the Neofield Region town by town. Hear from each leader, earn all 17 badges with a bag full of healing items, then face a random Elite Four and the Champion.</p>
+      <div class="row"><button class="btn primary" id="jNew">Start a journey</button></div>
+    </div>`;
+  }
+}
+$('journeyCard').addEventListener('click', e => {
+  const id = e.target.id;
+  if (id === 'jContinue') openMap({});
+  else if (id === 'jNew') openJourneyStart();
+  else if (id === 'jRestart') { restartArmed = true; renderJourneyCard(); }
+  else if (id === 'jRestartNo') { restartArmed = false; renderJourneyCard(); }
+  else if (id === 'jRestartYes') { restartArmed = false; openJourneyStart(); }
+});
+
+// --- start screen ---
+function openJourneyStart(mode = 'journey') {
+  startMode = mode;
+  $('jstart').querySelector('h1').textContent = mode === 'adventure' ? 'New adventure' : 'New journey';
+  $('jstart').querySelector('.lede').textContent = mode === 'adventure'
+    ? 'Your team starts at its first evolution stage at level 8 and grows from there. Train against wild Pokémon, take on side quests for money and items, shop for supplies, beat all 17 gyms, then the Elite Four and a level 70 Champion.'
+    : 'Travel the Neofield Region town by town, earn all 17 badges, then face the Elite Four and the Champion. Your team\'s HP carries over between battles, so use your bag.';
+  $('jBegin').textContent = mode === 'adventure' ? 'Begin adventure' : 'Begin journey';
+  jTeamKey = jTeamKey || (myKey === 'custom' && !customTeam ? ORDER[0] : myKey);
+  renderJourneyStart();
+  setAccent(LEADERS[jTeamKey] ? LEADERS[jTeamKey].color : CUSTOM_COLOR);
+  show('jstart');
+  $('jstart').querySelector('.scroll').scrollTop = 0;
+}
+function renderJourneyStart() {
+  const keys = [...ORDER, ...(customTeam ? ['custom'] : [])];
+  $('jTeamChips').innerHTML = keys.map(k => `<button class="chip" id="jchip-${k}" data-k="${k}" aria-pressed="${k === jTeamKey}">${k === 'custom' ? 'Custom team' : esc(LEADERS[k].first)}</button>`).join('');
+  const text = jTeamKey === 'custom' ? customTeam.text : E.TEAM_TEXT[jTeamKey];
+  $('jTeamRoster').textContent = startMode === 'adventure'
+    ? E.parseSets(text).map(s => E.evolutionPath(s.species).map(c => c.species).join(' → ')).join(' · ')
+    : teamNames(text);
+  $('jDiffNote').textContent = `${DIFFS[difficulty].label}. ${DIFFS[difficulty].note} You can change this on the main menu before you begin. The journey keeps its difficulty until it ends, and the badges you win count toward that difficulty.`;
+  $('jStartBag').innerHTML = Object.entries(startMode === 'adventure' ? ADV_START_BAG : START_BAG).map(([k, n]) => `<div class="bagitem"><b>${esc(E.ITEMS[k].name)}<span>×${n}</span></b><small>${esc(E.ITEMS[k].desc)}</small></div>`).join('');
+}
+$('jTeamChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  jTeamKey = b.dataset.k; renderJourneyStart();
+  setAccent(LEADERS[jTeamKey] ? LEADERS[jTeamKey].color : CUSTOM_COLOR);
+});
+$('jstartBack').addEventListener('click', () => { renderJourneyCard(); renderAdvCard(); setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); });
+$('jBegin').addEventListener('click', () => {
+  if (startMode === 'adventure') { startAdventure(); return; }
+  const text = jTeamKey === 'custom' ? customTeam && customTeam.text : E.TEAM_TEXT[jTeamKey];
+  if (!text) return;
+  // Build a throwaway battle once to learn each Pokémon's max HP
+  const tmp = E.createBattle({name: 'a', team: E.parseTeam(text).team}, {name: 'b', team: E.parseTeam(E.TEAM_TEXT.tyler).team});
+  J = {
+    v: 1, difficulty, teamKey: jTeamKey, teamText: text,
+    playerName: jTeamKey === 'custom' ? 'Player' : LEADERS[jTeamKey].first,
+    order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
+    team: E.readTeamState(tmp.p1), bag: {...START_BAG}, leagueHealed: false, done: false, travelled: -1,
+  };
+  saveJ();
+  openMap({});
+});
+
+// --- map ---
+function mapPoints() {
+  const pts = [{x: 180, y: 688}];
+  const cols = [62, 180, 298];
+  for (let i = 0; i < 18; i++) {
+    const row = Math.floor(i / 3), c = i % 3, col = row % 2 ? 2 - c : c;
+    pts.push({x: cols[col] + ((i * 37) % 21 - 10), y: 598 - row * 106 + ((i * 53) % 17 - 8)});
+  }
+  return pts; // pts[0] = home, pts[1..17] = gyms in journey order, pts[18] = Victory Summit
+}
+function segCtrl(a, b, i) {
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const vertical = Math.abs(a.y - b.y) > 50;
+  return {x: vertical ? mx + (a.x < 180 ? -42 : 42) : mx, y: vertical ? my : my + (i % 2 ? 26 : -26)};
+}
+function segPath(a, b, i) {
+  const c = segCtrl(a, b, i);
+  return `M${a.x} ${a.y} Q${c.x} ${c.y} ${b.x} ${b.y}`;
+}
+function rng(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+let terrainCache = null;
+function terrain(pts) {
+  if (terrainCache) return terrainCache;
+  const r = rng(20261018);
+  // keep scenery off the towns, their name labels and the road
+  const road = [];
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i], c = segCtrl(a, b, i);
+    for (let t = 0; t <= 1; t += 0.05) road.push({x: (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * c.x + t * t * b.x, y: (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * c.y + t * t * b.y});
+  }
+  const far = (x, y, d) => pts.every(p => Math.hypot(p.x - x, p.y - y) > d && !(Math.abs(p.x - x) < 52 && y > p.y && y < p.y + 52))
+    && road.every(q => Math.hypot(q.x - x, q.y - y) > 16);
+  let out = '';
+  // sea along the right edge and a few lakes
+  out += `<path d="M360 0 C330 80 345 160 322 240 C300 330 340 420 318 520 C300 600 336 660 360 720Z" fill="#17304a"/>`;
+  for (let i = 0; i < 4; i++) {
+    const x = 30 + r() * 280, y = 40 + r() * 600;
+    if (far(x, y, 46)) out += `<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${(18 + r() * 16).toFixed(0)}" ry="${(10 + r() * 8).toFixed(0)}" fill="#1b3550"/>`;
+  }
+  for (let i = 0; i < 60; i++) {
+    const x = 10 + r() * 330, y = 20 + r() * 660;
+    if (!far(x, y, 34)) continue;
+    if (r() < 0.4) {
+      const h = 12 + r() * 10;
+      out += `<path d="M${(x - h * .7).toFixed(1)} ${y.toFixed(1)} L${x.toFixed(1)} ${(y - h).toFixed(1)} L${(x + h * .7).toFixed(1)} ${y.toFixed(1)}Z" fill="#2b3442"/><path d="M${(x - h * .22).toFixed(1)} ${(y - h * .68).toFixed(1)} L${x.toFixed(1)} ${(y - h).toFixed(1)} L${(x + h * .22).toFixed(1)} ${(y - h * .68).toFixed(1)}Z" fill="#53606f"/>`;
+    } else {
+      out += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4 + r() * 4).toFixed(1)}" fill="#1f3a2c"/>`;
+    }
+  }
+  terrainCache = out;
+  return out;
+}
+const emblemAt = (kind, color, x, y, size) => emblem(kind, color).replace('<svg ', `<svg x="${x - size / 2}" y="${y - size / 2}" width="${size}" height="${size}" `);
+
+function renderWorldMap(markerIdx, S, overlay = '') {
+  const pts = mapPoints();
+  const st = S.stage();
+  const curStop = S.done ? 18 : Math.min(S.pos, 17) + 1; // index into pts of the place you're headed
+  let svg = `<rect width="360" height="720" fill="#141c26"/>` + terrain(pts);
+  // route
+  for (let i = 1; i < pts.length; i++) {
+    const done = i <= curStop;
+    svg += `<path id="seg-${i}" d="${segPath(pts[i - 1], pts[i], i)}" fill="none" stroke="${done ? '#c9d3e3' : '#3a4658'}" stroke-width="${done ? 3 : 2.5}" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
+  }
+  // home
+  const h = pts[0];
+  svg += `<path d="M${h.x - 11} ${h.y + 7} V${h.y - 3} L${h.x} ${h.y - 12} L${h.x + 11} ${h.y - 3} V${h.y + 7}Z" fill="#c9d3e3"/><text x="${h.x}" y="${h.y + 24}" text-anchor="middle" font-size="10" fill="#95a0b2">${HOME}</text>`;
+  // towns
+  for (let i = 0; i < 17; i++) {
+    const k = S.order[i], L = LEADERS[k], p = pts[i + 1];
+    const cleared = i < S.pos, current = !S.done && i === S.pos;
+    if (current) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="24" fill="none" stroke="${L.color}" stroke-width="2"/>`;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="17" fill="${cleared ? L.color : '#1d2633'}" stroke="${cleared || current ? L.color : '#3a4658'}" stroke-width="${current ? 3 : 2}"/>`;
+    svg += emblemAt(L.icon, cleared ? '#10131a' : current ? L.color : '#56616f', p.x, p.y, 20);
+    svg += `<text x="${p.x}" y="${p.y + 31}" text-anchor="middle" font-size="10" font-weight="${current ? 700 : 500}" fill="${current ? '#e9edf3' : cleared ? '#b4bdcb' : '#677286'}">${TOWNS[k]}</text>`;
+  }
+  // league
+  const lg = pts[18], inLeague = S.pos >= 17;
+  if (inLeague && !S.done) svg += `<circle class="ringpulse" cx="${lg.x}" cy="${lg.y}" r="26" fill="none" stroke="${CHAMP.color}" stroke-width="2"/>`;
+  svg += `<circle cx="${lg.x}" cy="${lg.y}" r="19" fill="${S.done ? CHAMP.color : '#1d2633'}" stroke="${inLeague ? CHAMP.color : '#3a4658'}" stroke-width="${inLeague ? 3 : 2}"/>`;
+  svg += emblemAt('crown', S.done ? '#10131a' : inLeague ? CHAMP.color : '#56616f', lg.x, lg.y, 22);
+  svg += `<text x="${lg.x}" y="${lg.y + 33}" text-anchor="middle" font-size="10" font-weight="700" fill="${inLeague ? '#e9edf3' : '#677286'}">${LEAGUE}</text>`;
+  svg += overlay; overlay = '';
+  // you
+  const m = pts[markerIdx];
+  svg += `<g id="marker" transform="translate(${m.x} ${m.y})"><path d="M0 -20 c-7 0 -11 -5 -11 -10 a11 11 0 0 1 22 0 c0 5 -4 10 -11 10Z" fill="#ffffff" stroke="#10131a" stroke-width="1.5"/><circle cx="0" cy="-30" r="4" fill="${st && st.key ? LEADERS[st.key].color : CHAMP.color}"/></g>`;
+  svg += overlay;
+  $('mapSvg').innerHTML = svg;
+}
+function renderMap(markerIdx) {
+  return renderWorldMap(markerIdx, {stage: jStage, done: J.done, pos: J.pos, order: J.order});
+}
+function scrollMapTo(y) {
+  const wrap = $('mapWrap'), svg = $('mapSvg');
+  const scale = svg.getBoundingClientRect().height / 720;
+  wrap.scrollTop = Math.max(0, y * scale - wrap.clientHeight / 2);
+}
+function animateMarker(segIdx, done) {
+  const path = $('mapSvg').querySelector(`#seg-${segIdx}`), mk = $('mapSvg').querySelector('#marker');
+  if (!path || !mk || reducedMotion()) { done && done(); return; }
+  const len = path.getTotalLength(), t0 = performance.now(), dur = 1500;
+  const step = t => {
+    const k = Math.min(1, (t - t0) / dur), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    const pt = path.getPointAtLength(e * len);
+    mk.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+    scrollMapTo(pt.y);
+    if (k < 1) requestAnimationFrame(step); else done && done();
+  };
+  requestAnimationFrame(step);
+}
+
+function renderNextBar() {
+  const bar = $('nextBar');
+  if (mapFromBattle) { bar.innerHTML = `<button class="btn primary" id="mapBackBattle">Back to battle</button>`; return; }
+  const st = jStage();
+  if (st.kind === 'done') {
+    bar.innerHTML = `<div class="nextcard" style="--c:${CHAMP.color}"><span class="face">${emblem('crown', CHAMP.color)}</span><div><b>You are the Champion</b><small>Every gym, the Elite Four and the Champion beaten on ${esc(DIFFS[J.difficulty].label)}.</small></div></div>
+      <button class="btn primary" id="jNewFromMap">Start a new journey</button>`;
+    return;
+  }
+  const sp = speakerFor(st);
+  let sub;
+  if (st.kind === 'gym') sub = `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · Badge ${J.pos + 1} of 17`;
+  else if (st.kind === 'e4') sub = `${LEAGUE} · Elite Four battle ${J.e4pos + 1} of 4`;
+  else sub = `${LEAGUE} · Random Pokémon from every leader`;
+  const btn = st.kind === 'gym' ? `Challenge ${LEADERS[st.key].first}` : st.kind === 'e4' ? `Challenge ${LEADERS[st.key].first}` : 'Face the Champion';
+  bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(sp.key, sp.color)}</span><div><b>${esc(sp.name)}</b><small>${esc(sub)}</small></div></div>
+    <button class="btn primary" id="jChallenge">${esc(btn)}</button>`;
+}
+function openMap({travel, fromBattle, msg}) {
+  if (!J) { openJourneyStart(); return; }
+  mapMode = 'journey';
+  mapFromBattle = !!fromBattle;
+  const st = jStage();
+  const color = st && st.key ? LEADERS[st.key].color : CHAMP.color;
+  setAccent(color);
+  const dest = J.done ? 18 : Math.min(J.pos, 17) + 1;
+  const firstTrip = J.travelled < dest && !fromBattle;
+  const from = firstTrip ? Math.max(0, dest - 1) : dest;
+  renderMap(from);
+  $('mapSub').textContent = `${J.pos} of 17 badges · ${DIFFS[J.difficulty].label}${J.done ? ' · Champion' : ''}`;
+  $('mapMenu').hidden = mapFromBattle;
+  $('mapBag').hidden = mapFromBattle;
+  $('mapTeam').hidden = mapFromBattle;
+  $('mapDex').hidden = true;
+  renderNextBar();
+  show('journey');
+  requestAnimationFrame(() => {
+    scrollMapTo(mapPoints()[from].y);
+    if (msg) toast(msg, 4200);
+    if (firstTrip || travel) {
+      animateMarker(dest, () => { J.travelled = dest; saveJ(); });
+    }
+  });
+}
+$('mapMenu').addEventListener('click', () => { renderJourneyCard(); renderAdvCard(); renderBadges(); renderLeaders(); setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); });
+$('mapBag').addEventListener('click', () => mapMode === 'adventure' ? openAdvBag('map') : openBag());
+$('battleMap').addEventListener('click', () => ctx && ctx.kind === 'adventure' ? openAdvMap({fromBattle: true}) : openMap({fromBattle: true}));
+$('nextBar').addEventListener('click', e => {
+  const id = e.target.id;
+  if (mapMode === 'adventure') { advNextBarClick(id); return; }
+  if (id === 'mapBackBattle') { mapFromBattle = false; setAccent(foe.color); show('battle'); }
+  else if (id === 'jChallenge') jChallenge();
+  else if (id === 'jNewFromMap') openJourneyStart();
+});
+
+function healAll() { for (const s of Object.values(J.team)) s.hp = s.maxhp; }
+
+async function jChallenge() {
+  const st = jStage();
+  if (!st || st.kind === 'done') return;
+  if (Object.values(J.team).every(s => s.hp <= 0)) healAll();
+  if (st.kind !== 'gym' && !J.leagueHealed) {
+    healAll(); J.leagueHealed = true; saveJ();
+    toast('Your team rested at the Victory Summit Pokémon Center and is fully healed.', 4000);
+  }
+  if (st.kind === 'champion' && !J.champTeam) { J.champTeam = E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k])); saveJ(); }
+  const sp = speakerFor(st);
+  const lines = st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro;
+  await talk(sp, lines);
+  let teamText;
+  if (st.kind === 'champion') {
+    foe = {...CHAMP, key: null, subtitle: `${LEAGUE} · Final battle`};
+    teamText = J.champTeam;
+  } else {
+    const L = LEADERS[st.key];
+    foe = {name: L.first, key: st.key, color: L.color, icon: L.icon,
+      title: st.kind === 'e4' ? `Elite Four ${L.title}` : L.title,
+      subtitle: st.kind === 'e4' ? `Elite Four · ${J.e4pos + 1} of 4` : `${TOWNS[st.key]} · ${L.badge}`};
+    teamText = E.TEAM_TEXT[st.key];
+  }
+  ctx = {kind: 'journey', stage: st};
+  startVsCpu(teamText, J.team, J.teamText, J.playerName);
+}
+
+function useItemInBattle(i) {
+  if (!battle || playing || !bagSel || !bagNow()[bagSel]) return;
+  const p = battle.p1.pokemon[i];
+  const prob = E.itemProblem(bagSel, p);
+  if (prob) { addLine(esc(prob), 'bad'); return; }
+  E.applyItem(battle, 'p1', bagSel, p);
+  syncFromState();
+  bagNow()[bagSel]--; saveBagOwner();
+  bagSel = null; panel = 'fight';
+  runAI();
+  E.spendTurnOnItem(battle, 'p1');
+  E.recountLeft(battle.p1);
+  refresh();
+}
+
+async function journeyBattleOver(won) {
+  const st = ctx.stage;
+  const sp = speakerFor(st);
+  if (won) {
+    J.team = E.readTeamState(battle.p1);
+    saveJ();
+    let lines;
+    if (st.kind === 'gym') lines = LINES[st.key].win;
+    else if (st.kind === 'e4') lines = J.e4pos === 3 ? E4_LAST : [E4_WIN[J.e4pos % 2]];
+    else lines = CHAMP_LINES.win;
+    await talk(sp, lines);
+    endBattleQuietly();
+    ctx = null;
+    if (st.kind === 'gym') {
+      const L = LEADERS[st.key];
+      badgesFor(J.difficulty)[st.key] = true; store.set('badgeBook', badgeBook);
+      J.pos++;
+      healAll();
+      const got = addItems(J.bag, GYM_REWARD);
+      saveJ();
+      openMap({travel: true, msg: `You received the ${L.badge}! Your team was fully healed. ${got}.`});
+    } else if (st.kind === 'e4') {
+      J.e4pos++;
+      const got = addItems(J.bag, E4_REWARD);
+      saveJ();
+      openMap({msg: `${LEADERS[st.key].first} is defeated! ${got}.`});
+    } else {
+      J.done = true; champions[J.difficulty] = true;
+      store.set('champions', champions); saveJ();
+      hallOfFame();
+    }
+    return;
+  }
+  // lost: black out and heal
+  healAll();
+  const league = st.kind !== 'gym';
+  if (league) J.e4pos = 0;
+  saveJ();
+  $('result').innerHTML = `${emblem(st.key ? LEADERS[st.key].icon : 'crown', sp.color)}<h3>You blacked out</h3>
+    <p>Your team was rushed to the nearest Pokémon Center and fully healed. ${league ? 'The Elite Four must be faced again from the start.' : `${esc(sp.name)} is waiting for a rematch.`}</p>
+    <div class="row" style="justify-content:center"><button class="btn primary" id="jToMap">Back to map</button></div>`;
+  $('overlay').hidden = false;
+}
+
+function hallOfFame() {
+  const names = Object.keys(J.team);
+  $('result').innerHTML = `${emblem('crown', CHAMP.color)}<h3>Hall of Fame</h3>
+    <p>You beat all 17 gyms, the Elite Four and the Champion on ${esc(DIFFS[J.difficulty].label)}. You are the Champion of the Neofield Region.</p>
+    <p>${names.map(esc).join(' · ')}</p>
+    <div class="row" style="justify-content:center"><button class="btn primary" id="jToMap">See the map</button><button class="btn" id="jNewAfter">New journey</button></div>`;
+  $('overlay').hidden = false;
+}
+
+// --- team & bag between battles ---
+let jBagSel = null;
+function openBag() { jBagSel = null; renderBag(); show('jbag'); }
+function renderBag() {
+  $('jbagItems').innerHTML = bagButtons(J.bag, jBagSel);
+  const note = $('jbagNote');
+  if (!note.dataset.msg) note.textContent = jBagSel ? `Use the ${E.ITEMS[jBagSel].name} on which Pokémon?` : 'Pick an item, then the Pokémon to use it on.';
+  $('jbagTeam').innerHTML = Object.entries(J.team).map(([name, s], i) => {
+    const pct = s.maxhp ? s.hp / s.maxhp * 100 : 0;
+    const fake = {name, hp: s.hp, maxhp: s.maxhp, fainted: s.hp <= 0, status: ''};
+    const prob = jBagSel ? E.itemProblem(jBagSel, fake) : 'Pick an item first.';
+    return `<button class="swap" id="jteam-${i}" data-name="${esc(name)}" ${jBagSel && !prob ? '' : 'disabled'} title="${esc(prob)}"><b>${esc(name)}</b>
+      <div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div>
+      <small class="note">${s.hp <= 0 ? 'Fainted' : `${s.hp}/${s.maxhp} HP`}</small></button>`;
+  }).join('');
+}
+$('jbagItems').addEventListener('click', e => {
+  if (mapMode === 'adventure') return;
+  const b = e.target.closest('[data-item]'); if (!b || b.disabled) return;
+  jBagSel = jBagSel === b.dataset.item ? null : b.dataset.item;
+  delete $('jbagNote').dataset.msg; renderBag();
+});
+$('jbagTeam').addEventListener('click', e => {
+  if (mapMode === 'adventure') return;
+  const b = e.target.closest('[data-name]'); if (!b || b.disabled || !jBagSel) return;
+  const s = J.team[b.dataset.name], it = E.ITEMS[jBagSel];
+  const before = s.hp;
+  if (it.revive) s.hp = Math.max(1, Math.floor(s.maxhp * it.revive));
+  else if (it.heal) s.hp = Math.min(s.maxhp, s.hp + Math.floor(s.maxhp * it.heal));
+  J.bag[jBagSel]--;
+  const msg = it.revive ? `${b.dataset.name} was revived with ${s.hp} HP.` : `${b.dataset.name} restored ${s.hp - before} HP.`;
+  if (!J.bag[jBagSel]) jBagSel = null;
+  saveJ();
+  $('jbagNote').dataset.msg = '1'; $('jbagNote').textContent = msg;
+  renderBag();
+});
+$('jbagBack').addEventListener('click', () => { if (mapMode !== 'adventure') openMap({}); else if (advBagFrom != null && advBagFrom !== 'map') openQuest(advBagFrom); else openAdvMap({}); });
+
+
+// ---------- Adventure mode ----------
+// Gym levels climb from 10 to 60, the Elite Four from 62 to 68, the Champion is level 70.
+const ADV_START_LV = 8;
+const GYM_LV = JORDER.map((_, i) => Math.round(10 + i * 50 / 16));
+const E4_LV = [62, 64, 66, 68];
+const CHAMP_LV = 70;
+const ADV_START_BAG = {hyperpotion: 6, fullrestore: 1, fullheal: 3, revive: 2, maxrevive: 0};
+const PRICES = {pokeball: 200, hyperpotion: 600, fullrestore: 1500, fullheal: 300, revive: 1000, maxrevive: 2500};
+const TUTOR_PRICE = 1500;
+const gymPrize = lv => 800 + lv * 120;
+const trainerPrize = lv => 300 + lv * 60;
+const E4_PRIZE = 5000, CHAMP_PRIZE = 15000;
+const money = n => '$' + n.toLocaleString('en-US');
+
+// One side quest unlocks after each gym. Trainers go by their trade, never a personal name.
+const AREAS = [
+  {name: 'Whisperleaf Forest', kind: 'Forest', types: ['Bug', 'Grass'], trainer: 'Bug Catcher', color: '#6fb35a', icon: 'leaf'},
+  {name: 'Echo Cave', kind: 'Cave', types: ['Rock', 'Ground', 'Dark'], trainer: 'Spelunker', color: '#9b8a6e', icon: 'peak'},
+  {name: 'Galecrest Mountain', kind: 'Mountain', types: ['Rock', 'Flying', 'Fighting'], trainer: 'Hiker', color: '#b39a6b', icon: 'peak'},
+  {name: 'Mirror Lake', kind: 'Lake', types: ['Water'], trainer: 'Fisher', color: '#5f9cf0', icon: 'wave'},
+  {name: 'Sunscar Desert', kind: 'Desert', types: ['Ground', 'Fire'], trainer: 'Desert Nomad', color: '#e0b25a', icon: 'pyramid'},
+  {name: 'Emberpeak Volcano', kind: 'Volcano', types: ['Fire', 'Rock'], trainer: 'Fire Breather', color: '#f08a4b', icon: 'flame'},
+  {name: 'Fogmire Swamp', kind: 'Swamp', types: ['Poison', 'Water', 'Ghost'], trainer: 'Swamp Guide', color: '#8e7cc3', icon: 'drop'},
+  {name: 'Frostfang Tundra', kind: 'Tundra', types: ['Ice'], trainer: 'Skier', color: '#86d8ec', icon: 'flake'},
+  {name: 'Old Stone Ruins', kind: 'Ruins', types: ['Psychic', 'Rock', 'Ghost'], trainer: 'Ruin Maniac', color: '#c99ad6', icon: 'eye'},
+  {name: 'Saltwind Beach', kind: 'Beach', types: ['Water', 'Flying'], trainer: 'Swimmer', color: '#6cc3d9', icon: 'wave'},
+  {name: 'Thunder Plains', kind: 'Plains', types: ['Electric', 'Normal'], trainer: 'Storm Chaser', color: '#f2cc3a', icon: 'bolt'},
+  {name: 'Duskwood Grove', kind: 'Grove', types: ['Dark', 'Ghost'], trainer: 'Night Watcher', color: '#8a7466', icon: 'moon'},
+  {name: 'Skyreach Cliffs', kind: 'Cliffs', types: ['Flying', 'Dragon'], trainer: 'Bird Keeper', color: '#7fb8e6', icon: 'wing'},
+  {name: 'Old Iron Works', kind: 'Factory', types: ['Steel', 'Electric'], trainer: 'Mechanic', color: '#9fb3d4', icon: 'nut'},
+  {name: 'Fairy Meadow', kind: 'Meadow', types: ['Fairy', 'Grass'], trainer: 'Picnicker', color: '#ee9ad0', icon: 'fairy'},
+  {name: "Dragon's Den", kind: 'Den', types: ['Dragon', 'Water'], trainer: 'Dragon Tamer', color: '#6f86e8', icon: 'dragon'},
+  {name: 'Victory Road', kind: 'Road', types: null, trainer: 'Ace Trainer', color: '#e8c76a', icon: 'crown'},
+];
+const questLevel = i => Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
+
+let A = store.get('adventure', null);
+if (A && (!A.team || !A.order)) A = null;
+if (A) for (const m of [...A.team, ...(A.box || [])]) m.frac = Math.min(1, Math.max(0, +m.frac || 0));
+migrateA();
+let advBagFrom = 'map';
+let advBagSel = null;
+let advRestartArmed = false;
+function saveA() { if (A && A.regional) syncDexFromTeam(); store.set('adventure', A); }
+
+function aStage() {
+  if (!A) return null;
+  if (A.done) return {kind: 'done'};
+  if (A.pos < A.order.length) return {kind: 'gym', key: A.order[A.pos]};
+  if (A.e4pos < 4) return {kind: 'e4', key: A.e4[A.e4pos]};
+  return {kind: 'champion'};
+}
+const avgLevel = () => Math.round(A.team.reduce((a, m) => a + m.level, 0) / A.team.length);
+function advSets() { A.team.forEach(ensureMoves); return E.playerSets(A.team); }
+function advHealAll() { for (const m of [...A.team, ...(A.box || [])]) m.frac = 1; }
+
+// --- setup card ---
+function renderAdvCard() {
+  const el = $('advCard');
+  if (!E) { el.innerHTML = '<div class="note">Loading…</div>'; return; }
+  if (A && !A.done) {
+    const st = aStage();
+    const next = st.kind === 'gym' ? `Next: ${LEADERS[st.key].title} (level ${GYM_LV[A.pos]})` : st.kind === 'e4' ? `Elite Four battle ${A.e4pos + 1} of 4` : 'The Champion is waiting';
+    el.innerHTML = `<div class="modecard" style="--c:#e8c76a">
+      <h3>Your adventure</h3>
+      <p>${A.regional ? esc(A.playerName) + ' · ' : ''}${A.pos} of 17 badges · ${money(A.money)} · Team level ${avgLevel()} · ${esc(DIFFS[A.difficulty].label)}</p>
+      <div class="meter"><i style="width:${Math.round((A.pos + A.e4pos) / 22 * 100)}%"></i></div>
+      <p>${esc(next)}</p>
+      <div class="row"><button class="btn primary" id="aContinue">Continue adventure</button><button class="btn" id="aRestart">Start over</button></div>
+      ${advRestartArmed ? `<div class="confirmrow">Start over? This adventure will be lost. <button class="btn" id="aRestartYes">Yes, start over</button><button class="btn" id="aRestartNo">Keep it</button></div>` : ''}
+    </div>`;
+  } else if (A && A.done) {
+    el.innerHTML = `<div class="modecard" style="--c:#e8c76a"><h3>Adventure complete</h3><p>You beat the level ${CHAMP_LV} Champion on ${esc(DIFFS[A.difficulty].label)}.</p>
+      <div class="row"><button class="btn primary" id="aNew">Start a new adventure</button><button class="btn" id="aContinue">See the map</button></div></div>`;
+  } else {
+    el.innerHTML = `<div class="modecard" style="--c:#e8c76a"><h3>Start an adventure</h3>
+      <p>Meet Professor Okla, choose one of three brand-new Neofield starters and build your team by catching wild Pokémon on the routes. Level up, evolve, clear side quests and shop for supplies. Gym leaders scale from level 10 up to a level ${CHAMP_LV} Champion.</p>
+      <div class="row"><button class="btn primary" id="aNew">Start an adventure</button></div></div>`;
+  }
+}
+$('advCard').addEventListener('click', e => {
+  const id = e.target.id;
+  if (id === 'aContinue') openAdvMap({});
+  else if (id === 'aNew') openProfessor();
+  else if (id === 'aRestart') { advRestartArmed = true; renderAdvCard(); }
+  else if (id === 'aRestartNo') { advRestartArmed = false; renderAdvCard(); }
+  else if (id === 'aRestartYes') { advRestartArmed = false; openProfessor(); }
+});
+
+function startAdventure() {
+  const text = jTeamKey === 'custom' ? customTeam && customTeam.text : E.TEAM_TEXT[jTeamKey];
+  if (!text) return;
+  A = {
+    v: 1, difficulty, teamKey: jTeamKey, playerName: jTeamKey === 'custom' ? 'Player' : LEADERS[jTeamKey].first,
+    team: E.parseSets(text).map(s => ({final: s, level: ADV_START_LV, frac: 1, tutored: [], moves: E.startingMoves(s, ADV_START_LV)})),
+    order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
+    money: 1500, bag: {...ADV_START_BAG}, quests: {}, travelled: -1, done: false,
+  };
+  saveA();
+  openAdvMap({});
+}
+
+// --- main map ---
+function questOverlay() {
+  const pts = mapPoints();
+  let svg = '';
+  for (let i = 0; i < Math.min(A.pos, 17); i++) {
+    const p = pts[i + 1], ar = AREAS[i], q = A.quests[i] || {};
+    const x = Math.min(340, p.x + 27), y = p.y - 22;
+    const done = q.done;
+    svg += `<g data-quest="${i}" role="button" aria-label="${esc(ar.name)}"><circle cx="${x}" cy="${y}" r="15" fill="transparent"/>
+      <rect x="${x - 8}" y="${y - 8}" width="16" height="16" rx="3" transform="rotate(45 ${x} ${y})" fill="${done ? '#1d2633' : ar.color}" stroke="${ar.color}" stroke-width="2"/>
+      ${done ? `<path d="M${x - 4} ${y} l3 3 l5 -6" stroke="${ar.color}" stroke-width="2" fill="none"/>` : `<text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="10" font-weight="800" fill="#10131a">!</text>`}</g>`;
+  }
+  return svg;
+}
+function openAdvMap({fromBattle, msg} = {}) {
+  if (!A) { openProfessor(); return; }
+  mapMode = 'adventure';
+  mapFromBattle = !!fromBattle;
+  const st = aStage();
+  setAccent(st && st.key ? LEADERS[st.key].color : CHAMP.color);
+  const dest = A.done ? 18 : Math.min(A.pos, 17) + 1;
+  const firstTrip = A.travelled < dest && !fromBattle;
+  const from = firstTrip ? Math.max(0, dest - 1) : dest;
+  if (firstTrip) A.loc = null;
+  renderWorldMap(from, {stage: aStage, done: A.done, pos: A.pos, order: A.order}, routeOverlay() + questOverlay());
+  $('mapSub').textContent = `${money(A.money)} · ${A.pos} of 17 badges · ${DIFFS[A.difficulty].label}`;
+  $('mapMenu').hidden = mapFromBattle;
+  $('mapBag').hidden = mapFromBattle;
+  $('mapTeam').hidden = mapFromBattle;
+  $('mapDex').hidden = mapFromBattle || !A.regional;
+  renderAdvNextBar();
+  show('journey');
+  requestAnimationFrame(() => {
+    scrollMapTo(mapPoints()[from].y);
+    if (A.loc != null && !firstTrip && !mapFromBattle) placeMarkerOnRoute(A.loc);
+    if (msg) toast(msg, 4600);
+    if (firstTrip) animateMarker(dest, () => { A.travelled = dest; saveA(); });
+  });
+}
+function renderAdvNextBar() {
+  const bar = $('nextBar');
+  if (mapFromBattle) { bar.innerHTML = `<button class="btn primary" id="mapBackBattle">Back to battle</button>`; return; }
+  if (A.regional && A.loc != null) { bar.innerHTML = routeCardHTML(A.loc); return; }
+  const st = aStage();
+  const actions = `<div class="advactions"><button class="btn" id="aTrain">Train</button><button class="btn" id="aShop">Shop</button><button class="btn" id="aCenter">Heal team</button></div>`;
+  if (st.kind === 'done') {
+    bar.innerHTML = `<div class="nextcard" style="--c:${CHAMP.color}"><span class="face">${emblem('crown', CHAMP.color)}</span><div><b>Adventure complete</b><small>You beat the level ${CHAMP_LV} Champion.</small></div></div>${actions}`;
+    return;
+  }
+  const sp = speakerFor(st);
+  const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? E4_LV[A.e4pos] : CHAMP_LV;
+  const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `Victory Summit · level ${lv}`;
+  const label = st.kind === 'champion' ? 'Face the Champion' : `Challenge ${LEADERS[st.key].first}`;
+  bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(sp.key, sp.color)}</span><div><b>${esc(sp.name)}</b><small>${esc(sub)} · your team averages level ${avgLevel()}</small></div></div>
+    <button class="btn primary" id="aChallenge">${esc(label)}</button>${actions}`;
+}
+function advNextBarClick(id) {
+  if (id === 'mapBackBattle') { mapFromBattle = false; setAccent(foe.color); show('battle'); }
+  else if (id === 'aChallenge') advChallenge();
+  else if (id === 'aTrain') advTrain();
+  else if (id === 'aShop') openShop();
+  else if (id === 'rGrass') routeBattle(A.loc);
+  else if (id === 'rLeave') { A.loc = null; saveA(); openAdvMap({}); }
+  else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Pokémon Center.'); }
+}
+$('mapSvg').addEventListener('click', e => {
+  if (mapMode !== 'adventure' || mapFromBattle) return;
+  const g = e.target.closest('[data-quest]');
+  if (g) { openQuest(+g.dataset.quest); return; }
+  const r = e.target.closest('[data-route]');
+  if (r) openRoute(+r.dataset.route);
+});
+
+// --- battles ---
+function advFight(fight) {
+  if (A.team.every(m => m.frac <= 0)) advHealAll();
+  ctx = {kind: 'adventure', fight};
+  foe = fight.foe;
+  const sets = advSets();
+  // unique names so HP can be matched back to each team slot
+  const seen = {};
+  ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
+  startVsCpu(fight.sets, null, sets, A.playerName);
+  if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0);
+}
+function applyAdvHP() {
+  const state = {};
+  battle.p1.pokemon.forEach(p => {
+    const i = ctx.names.indexOf(p.name);
+    const f = i >= 0 ? A.team[i].frac : 1;
+    state[p.name] = {hp: f <= 0 ? 0 : Math.max(1, Math.round(f * p.maxhp))};
+  });
+  E.applyTeamState(battle.p1, state);
+}
+function readAdvHP() {
+  for (const p of battle.p1.pokemon) {
+    const i = ctx.names.indexOf(p.name);
+    if (i >= 0) A.team[i].frac = p.fainted ? 0 : p.hp / p.maxhp;
+  }
+}
+function advTrain() {
+  const lv = Math.max(2, avgLevel() - 1 + Math.floor(Math.random() * 3) - 1);
+  const mon = E.randomMon(lv);
+  advFight({type: 'train', sets: [mon], foe: {name: 'Wild', wild: true, key: null, color: '#8fb36a', icon: 'leaf', title: `Wild ${mon.species}`, subtitle: `Training · level ${lv}`}});
+}
+async function advChallenge() {
+  const st = aStage();
+  if (!st || st.kind === 'done') return;
+  let sets, lv;
+  if (st.kind === 'gym') { lv = GYM_LV[A.pos]; sets = E.leaderSets(E.TEAM_TEXT[st.key], lv); }
+  else if (st.kind === 'e4') { lv = E4_LV[A.e4pos]; sets = E.leaderSets(E.TEAM_TEXT[st.key], lv); }
+  else {
+    lv = CHAMP_LV;
+    if (!A.champTeam) { A.champTeam = E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k])); saveA(); }
+    sets = E.leaderSets(A.champTeam, lv);
+  }
+  const sp = speakerFor(st);
+  await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
+  const f = st.kind === 'champion'
+    ? {...CHAMP, key: null, subtitle: `Victory Summit · level ${lv}`}
+    : {name: LEADERS[st.key].first, key: st.key, color: LEADERS[st.key].color, icon: LEADERS[st.key].icon,
+       title: st.kind === 'e4' ? `Elite Four ${LEADERS[st.key].title}` : LEADERS[st.key].title,
+       subtitle: st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `${TOWNS[st.key]} · ${LEADERS[st.key].badge} · level ${lv}`};
+  advFight({type: st.kind, stage: st, level: lv, sets, foe: f, speaker: sp});
+}
+
+// --- moves, level-ups and evolution ---
+function ensureMoves(m) {
+  if (!Array.isArray(m.moves) || !m.moves.length) m.moves = E.startingMoves(m.final, m.level, m.tutored || []);
+  return m.moves;
+}
+function mset(m) { ensureMoves(m); return E.setAtLevel(m.final, m.level, {tutored: m.tutored, moves: m.moves}); }
+function moveCardHTML(name, tag, extraClass, attrs) {
+  const mv = E.moveInfo(name);
+  const bits = [mv.category, mv.power ? `Power ${mv.power}` : '', mv.accuracy ? `Accuracy ${mv.accuracy}%` : 'Never misses'].filter(Boolean).join(' · ');
+  return `<${tag} class="mvcard ${extraClass || ''}" style="--t:${TYPE_COLORS[mv.type] || '#999'}" ${attrs || ''}><div class="top"><b>${esc(mv.name)}</b>${typesHTML([mv.type])}</div><small>${esc(bits)}</small><small>${esc(mv.desc || '')}</small></${tag}>`;
+}
+// Ask which move to forget. Resolves with the forgotten move's name, or null to skip the new move.
+function chooseMove(m, newMove, opts = {}) {
+  return new Promise(resolve => {
+    const box = $('learnBox'), name = mset(m).species;
+    let pick = null;
+    const draw = () => {
+      box.innerHTML = `<h3>${esc(name)} wants to learn ${esc(newMove)}</h3>
+        <p>${esc(name)} already knows four moves. ${esc(opts.note || 'Pick one to forget, or skip the new move.')}</p>
+        <div class="learnlbl">New move</div>${moveCardHTML(newMove, 'div', 'newmv')}
+        <div class="learnlbl">Forget which move?</div>
+        ${m.moves.map((mv, i) => moveCardHTML(mv, 'button', pick === i ? 'armed' : '', `type="button" data-forget="${i}" id="forget-${i}" aria-pressed="${pick === i}"`)).join('')}
+        <div class="row" style="justify-content:center;margin-top:10px">
+          ${pick != null ? `<button class="btn primary" id="learnYes">Forget ${esc(m.moves[pick])}, learn ${esc(newMove)}</button>` : ''}
+          <button class="btn" id="learnNo">${esc(opts.cancel || `Don't learn ${newMove}`)}</button></div>`;
+    };
+    const done = v => { $('learn').hidden = true; box.onclick = null; resolve(v); };
+    box.onclick = e => {
+      const f = e.target.closest('[data-forget]');
+      if (f) { pick = pick === +f.dataset.forget ? null : +f.dataset.forget; draw(); const y = $('learnYes'); if (y) y.scrollIntoView({block: 'nearest'}); return; }
+      if (e.target.id === 'learnNo') done(null);
+      else if (e.target.id === 'learnYes') { const old = m.moves[pick]; m.moves[pick] = newMove; done(old); }
+    };
+    draw();
+    $('learn').hidden = false;
+  });
+}
+
+// ---- evolution spectacle ----
+let evoSound = store.get('evoSound', true);
+let audio = null;
+function tone(freq, t0, dur, type = 'triangle', vol = .12) {
+  if (!evoSound || !audio) return;
+  const o = audio.createOscillator(), g = audio.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0, audio.currentTime + t0);
+  g.gain.linearRampToValueAtTime(vol, audio.currentTime + t0 + .02);
+  g.gain.exponentialRampToValueAtTime(.0001, audio.currentTime + t0 + dur);
+  o.connect(g).connect(audio.destination);
+  o.start(audio.currentTime + t0); o.stop(audio.currentTime + t0 + dur + .05);
+}
+function sfxCharge(sec) {
+  const notes = [0, 4, 7, 12];
+  let t = 0, step = .28, k = 0;
+  while (t < sec) { tone(330 * Math.pow(2, (notes[k % 4] + 12 * Math.floor(k / 8)) / 12), t, .22, 'triangle', .07); t += step; step = Math.max(.07, step * .93); k++; }
+}
+function sfxReveal() {
+  [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .09, .35, 'square', .05));
+  [523, 659, 784, 1047, 1319].forEach(f => tone(f, .45, 1.6, 'triangle', .06));
+  tone(130, 0, .8, 'sine', .25);
+}
+function sfxPop() { tone(600 + Math.random() * 900, 0, .15, 'sine', .04); }
+function updateSoundBtn() { $('evoSound').textContent = evoSound ? 'Sound on' : 'Sound off'; }
+$('evoSound').addEventListener('click', () => { evoSound = !evoSound; store.set('evoSound', evoSound); updateSoundBtn(); });
+
+const fx = {parts: [], raf: 0, mode: 'idle', colors: ['#fff'], spawnT: 0, fireT: 0};
+function fxResize() { const c = $('evoCanvas'), d = Math.min(2, devicePixelRatio || 1); c.width = innerWidth * d; c.height = innerHeight * d; c.getContext('2d').setTransform(d, 0, 0, d, 0, 0); }
+function fxCenter() { const o = document.querySelector('#evo .orb'); if (!o) return {x: innerWidth / 2, y: innerHeight * .42}; const r = o.getBoundingClientRect(); return {x: r.left + r.width / 2, y: r.top + r.height / 2}; }
+function burst(x, y, n, speed, conf) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, v = speed * (.35 + Math.random());
+    fx.parts.push({x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - (conf ? 2 : 0), life: 0, max: 60 + Math.random() * 70, size: conf ? 4 + Math.random() * 5 : 1.5 + Math.random() * 2.5,
+      color: fx.colors[i % fx.colors.length], conf, rot: Math.random() * 6, vr: (Math.random() - .5) * .4, g: conf ? .09 : .03, drag: conf ? .985 : .96});
+  }
+}
+function fxLoop() {
+  const c = $('evoCanvas'), ctx2 = c.getContext('2d'), W = innerWidth, H = innerHeight, ctr = fxCenter();
+  ctx2.clearRect(0, 0, W, H);
+  if (fx.mode === 'charge') {
+    for (let k = 0; k < 4; k++) {
+      const a = Math.random() * Math.PI * 2, r = Math.max(W, H) * (.45 + Math.random() * .3);
+      const x = ctr.x + Math.cos(a) * r, y = ctr.y + Math.sin(a) * r;
+      fx.parts.push({x, y, vx: 0, vy: 0, life: 0, max: 200, size: 1.5 + Math.random() * 2.5, color: fx.colors[k % fx.colors.length], spiral: true, a, r, sp: .012 + Math.random() * .02});
+    }
+  }
+  if (fx.mode === 'party' && ++fx.fireT % 38 === 0) {
+    const x = W * (.15 + Math.random() * .7), y = H * (.12 + Math.random() * .35);
+    burst(x, y, 60, 5, false); sfxPop();
+  }
+  if (fx.mode === 'party' && fx.fireT % 6 === 0) {
+    fx.parts.push({x: Math.random() * W, y: -10, vx: (Math.random() - .5) * 1.5, vy: 1 + Math.random() * 2, life: 0, max: 400, size: 5 + Math.random() * 5, color: fx.colors[Math.floor(Math.random() * fx.colors.length)], conf: true, rot: Math.random() * 6, vr: (Math.random() - .5) * .3, g: .03, drag: .995});
+  }
+  fx.parts = fx.parts.filter(p => p.life < p.max && p.y < H + 40);
+  for (const p of fx.parts) {
+    p.life++;
+    if (p.spiral) {
+      p.r *= 0.955; p.a += p.sp * 6;
+      p.x = ctr.x + Math.cos(p.a) * p.r; p.y = ctr.y + Math.sin(p.a) * p.r;
+      if (p.r < 30) p.life = p.max;
+    } else { p.vx *= p.drag; p.vy = p.vy * p.drag + p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr || 0; }
+    const fade = 1 - p.life / p.max;
+    ctx2.globalAlpha = p.conf ? Math.min(1, fade * 2) : fade;
+    ctx2.fillStyle = p.color;
+    if (p.conf) {
+      ctx2.save(); ctx2.translate(p.x, p.y); ctx2.rotate(p.rot); ctx2.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2); ctx2.restore();
+    } else {
+      ctx2.globalCompositeOperation = 'lighter';
+      ctx2.beginPath(); ctx2.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx2.fill();
+      ctx2.globalAlpha *= .25; ctx2.beginPath(); ctx2.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2); ctx2.fill();
+      ctx2.globalCompositeOperation = 'source-over';
+    }
+  }
+  ctx2.globalAlpha = 1;
+  fx.raf = requestAnimationFrame(fxLoop);
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function evoColors(types) { const c = types.map(t => TYPE_COLORS[t] || '#9ad'); return [c[0], c[1] || c[0]]; }
+function setEvoColors(types) { const [a, b] = evoColors(types); const el = $('evo'); el.style.setProperty('--c1', a); el.style.setProperty('--c2', b); }
+
+async function evolveScene(m, ev) {
+  const el = $('evo'), stage = $('evoStage');
+  const before = E.statsAt(m.final, m.level, m.moves, ev.from), after = E.statsAt(m.final, m.level, m.moves, ev.to);
+  const reduce = reducedMotion();
+  let skipped = false;
+  el.className = 'evo'; setEvoColors(before.types);
+  updateSoundBtn();
+  fx.parts = []; fx.mode = 'idle'; fx.colors = ['#ffffff', ...evoColors(before.types)];
+  fxResize(); addEventListener('resize', fxResize);
+  el.hidden = false;
+  if (!reduce) fx.raf = requestAnimationFrame(fxLoop);
+  // 1. intro
+  stage.innerHTML = `<div class="orb"><span class="glyph">${artOf(ev.from) || '?'}</span></div><div class="ename" id="evoName">${esc(ev.from)}</div><div class="eline">What? ${esc(ev.from)} is evolving!</div><div class="row"><button class="btn primary" id="evoGo">Watch!</button></div>`;
+  $('evoSkip').hidden = true;
+  await new Promise(r => { $('evoGo').onclick = r; $('evoGo').focus(); });
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
+  $('evoSkip').hidden = false;
+  const skipP = new Promise(r => { $('evoSkip').onclick = () => { skipped = true; r(); }; });
+  // 2. charge
+  if (!reduce) {
+    stage.querySelector('.row').remove();
+    stage.querySelector('.eline').textContent = `${ev.from} is glowing…`;
+    el.classList.add('charging'); fx.mode = 'charge';
+    const total = 4200; sfxCharge(total / 1000);
+    const name = $('evoName'), glyph = stage.querySelector('.glyph');
+    const flick = (async () => {
+      let t = 0, gap = 420, alt = false;
+      while (t < total && !skipped) {
+        alt = !alt;
+        name.textContent = alt ? ev.to : ev.from;
+        setEvoColors(alt ? after.types : before.types);
+        el.style.setProperty('--beat', Math.max(.12, gap / 1000) + 's');
+        glyph.innerHTML = artOf(alt ? ev.to : ev.from) || (alt ? '!' : '?');
+        await wait(gap); t += gap; gap = Math.max(55, gap * .86);
+      }
+    })();
+    await Promise.race([flick, skipP]);
+  }
+  // 3. flash + reveal
+  skipped = true;
+  $('evoSkip').hidden = true;
+  setEvoColors(after.types);
+  fx.colors = ['#ffffff', '#ffe27a', '#ffb300', ...evoColors(after.types), ...evoColors(after.types)];
+  fx.parts = fx.parts.filter(p => !p.spiral);
+  const fl = $('evoFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+  el.classList.remove('charging'); el.classList.add('reveal', 'quake');
+  sfxReveal();
+  const lbl = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed'};
+  stage.innerHTML = `<div class="banner">Congratulations!</div><div class="orb"><span class="glyph">${artOf(ev.to) || '★'}</span></div><div class="ename">${esc(ev.to)}</div>
+    <div class="eline">Your ${esc(ev.from)} evolved into ${esc(ev.to)}!</div>${typesHTML(after.types)}
+    <div class="estats">${Object.keys(lbl).map(k => `<span>${lbl[k]} <b>${after.stats[k] - before.stats[k] > 0 ? '+' : ''}${after.stats[k] - before.stats[k]}</b></span>`).join('')}</div>
+    <div class="row"><button class="btn primary" id="evoDone">Awesome!</button></div>`;
+  if (!reduce) {
+    await wait(30);
+    const c = fxCenter();
+    burst(c.x, c.y, 160, 11, false); burst(c.x, c.y, 120, 9, true);
+    fx.mode = 'party'; fx.fireT = 0;
+    setTimeout(() => { const c2 = fxCenter(); burst(c2.x, c2.y, 90, 8, true); }, 450);
+  }
+  setTimeout(() => el.classList.remove('quake'), 600);
+  $('evoDone').focus();
+  await new Promise(r => { $('evoDone').onclick = r; });
+  cancelAnimationFrame(fx.raf); fx.parts = []; fx.mode = 'idle';
+  removeEventListener('resize', fxResize);
+  el.hidden = true; el.className = 'evo'; $('evoFlash').classList.remove('go');
+}
+
+// Level the team up by n, playing evolutions and asking about moves. Returns summary lines.
+async function growAndShow(n) {
+  A.team.forEach(ensureMoves);
+  const events = E.growTeam(A.team, n);
+  saveA();
+  const lines = [];
+  for (const ev of events) {
+    const m = A.team[ev.slot];
+    if (ev.type === 'grew') lines.push(`${ev.species} grew to level ${ev.level}.`);
+    else if (ev.type === 'evolve') { await evolveScene(m, ev); lines.push(`${ev.from} evolved into ${ev.to}!`); }
+    else if (ev.type === 'learned') lines.push(`${ev.species} learned ${ev.move}!`);
+    else if (ev.type === 'wants') {
+      if (m.moves.includes(ev.move)) continue;
+      const old = await chooseMove(m, ev.move);
+      lines.push(old ? `${ev.species} forgot ${old} and learned ${ev.move}!` : `${ev.species} did not learn ${ev.move}.`);
+    }
+    saveA();
+  }
+  return lines;
+}
+
+function summaryHTML(lines) {
+  // condense "X grew to level N" lines into one
+  const grew = lines.filter(l => l.includes(' grew to level '));
+  const other = lines.filter(l => !l.includes(' grew to level '));
+  const out = [];
+  if (grew.length) out.push(`<p>Your team grew to level ${A.team.map(m => m.level).join(', ')}.</p>`);
+  for (const l of other) out.push(`<p class="${l.includes('evolved') ? 'evoline' : 'new'}">${esc(l)}</p>`);
+  return `<div class="summary">${out.join('')}</div>`;
+}
+function advResult(icon, color, title, text, lines, buttons) {
+  $('result').innerHTML = `${emblem(icon, color)}<h3>${esc(title)}</h3><p>${text}</p>${lines && lines.length ? summaryHTML(lines) : ''}<div class="row" style="justify-content:center">${buttons}</div>`;
+  $('overlay').hidden = false;
+}
+
+async function advBattleOver(won) {
+  const fight = ctx.fight;
+  readAdvHP();
+  saveA();
+  if (!won) {
+    advHealAll(); A.loc = null;
+    if (fight.type === 'e4' || fight.type === 'champion') A.e4pos = 0;
+    if (fight.quest != null) A.quests[fight.quest].step = 0;
+    saveA();
+    advResult(fight.foe.icon || 'star', fight.foe.color, 'You blacked out',
+      `Your team was rushed to the Pokémon Center and fully healed. ${fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
+      null, `<button class="btn primary" id="aToMap">Back to map</button>`);
+    return;
+  }
+  if (fight.type === 'train') {
+    const lines = await growAndShow(1); saveA();
+    advResult('leaf', '#8fb36a', 'Training complete', `You beat the wild ${esc(fight.sets[0].species)}. Every Pokémon on your team gained a level.`, lines,
+      `<button class="btn primary" id="aTrainAgain">Train again</button><button class="btn" id="aToMap">Back to map</button>`);
+    return;
+  }
+  if (fight.type === 'route') {
+    const caughtMsg = fight.caught ? addCaught(fight.caught) : '';
+    saveA();
+    const lines = await growAndShow(1); saveA();
+    const f = E.familyOf(fight.sets[0].family);
+    advResult(fight.caught ? 'star' : 'leaf', f.color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Pokémon defeated',
+      `${esc(caughtMsg)} Every Pokémon on your team gained a level.`, lines,
+      `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
+    return;
+  }
+  if (fight.type === 'questWild') {
+    const q = A.quests[fight.quest]; q.step++;
+    const caughtMsg = fight.caught ? addCaught(fight.caught) + ' ' : '';
+    const lines = null; saveA();
+    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Pokémon defeated', `${esc(caughtMsg)}${q.step < 3 ? `${3 - q.step} more wild Pokémon before the trainer.` : `The ${esc(q.trainer)} is waiting at the end of the path.`}`, lines,
+      `<button class="btn primary" id="aQuestNext">Keep going</button><button class="btn" id="aToQuest">Quest map</button>`);
+    return;
+  }
+  if (fight.type === 'questTrainer') {
+    const q = A.quests[fight.quest]; q.step = 4; q.done = true;
+    const prize = trainerPrize(q.level);
+    A.money += prize;
+    const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
+    saveA();
+    await talk({name: q.trainer, key: null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, [`You're the real deal. Take these, you've earned them.`]);
+    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, `${AREAS[fight.quest].name} cleared`, `You won ${money(prize)}. ${esc(got)}.`, null,
+      `<button class="btn primary" id="aToMap">Back to map</button>`);
+    return;
+  }
+  // gym, Elite Four, Champion
+  await talk(fight.speaker, fight.type === 'gym' ? LINES[fight.stage.key].win : fight.type === 'e4' ? (A.e4pos === 3 ? E4_LAST : [E4_WIN[A.e4pos % 2]]) : CHAMP_LINES.win);
+  endBattleQuietly(); ctx = null;
+  if (fight.type === 'gym') {
+    const L = LEADERS[fight.stage.key];
+    badgesFor(A.difficulty)[fight.stage.key] = true; store.set('badgeBook', badgeBook);
+    const prize = gymPrize(fight.level);
+    A.money += prize; A.pos++;
+    const lines = await growAndShow(2);
+    advHealAll();
+    const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
+    saveA();
+    advResult(L.icon, L.color, `${L.badge} earned`, `You won ${money(prize)} and your team was fully healed. ${esc(got)}. A new side quest opened: ${esc(AREAS[A.pos - 1].name)}.`, lines,
+      `<button class="btn primary" id="aToMapTravel">Back to map</button>`);
+  } else if (fight.type === 'e4') {
+    A.e4pos++; A.money += E4_PRIZE;
+    const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 2, revive: 1});
+    saveA();
+    advResult(LEADERS[fight.stage.key].icon, LEADERS[fight.stage.key].color, `${LEADERS[fight.stage.key].first} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, null, `<button class="btn primary" id="aToMap">Back to map</button>`);
+  } else {
+    A.money += CHAMP_PRIZE; A.done = true;
+    champions[A.difficulty] = true; store.set('champions', champions);
+    saveA();
+    advResult('crown', CHAMP.color, 'Hall of Fame', `You beat the level ${CHAMP_LV} Champion and won ${money(CHAMP_PRIZE)}. Your team: ${A.team.map(m => esc(mset(m).species) + ' Lv ' + m.level).join(', ')}.`, null, `<button class="btn primary" id="aToMap">See the map</button>`);
+  }
+}
+$('result').addEventListener('click', e => {
+  const id = e.target.id;
+  if (!['aToMap', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
+  const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
+  $('overlay').hidden = true;
+  endBattleQuietly(); ctx = null;
+  if (id === 'aTrainAgain') advTrain();
+  else if (id === 'aRouteAgain') routeBattle(fight.route);
+  else if (id === 'aQuestNext') questContinue(fight.quest);
+  else if (id === 'aToQuest') openQuest(fight.quest);
+  else openAdvMap({});
+});
+
+// --- side quests ---
+function ensureQuest(i) {
+  if (A.quests[i] && A.quests[i].wild) return A.quests[i];
+  const ar = AREAS[i], lv = questLevel(i);
+  A.quests[i] = {
+    level: lv, step: 0, done: false, trainer: ar.trainer,
+    wild: [0, 1, 2].map(k => A.regional ? E.regionalWild(i, Math.max(2, lv - 2 + k)) : E.randomMon(Math.max(2, lv - 2 + k), ar.types)),
+    trainerTeam: [0, 1, 2].map(() => E.randomMon(lv + 1, ar.types, true)),
+  };
+  saveA();
+  return A.quests[i];
+}
+function openQuest(i) {
+  mapMode = 'adventure';
+  const q = ensureQuest(i), ar = AREAS[i];
+  setAccent(ar.color);
+  $('questName').textContent = ar.name;
+  $('questSub').textContent = q.done ? 'Cleared' : `${ar.kind} · level ${q.level} · ${money(A.money)}`;
+  // quest map: entrance, three wild spots, trainer
+  const pts = [{x: 60, y: 380}, {x: 240, y: 330}, {x: 100, y: 240}, {x: 260, y: 150}, {x: 150, y: 60}];
+  const r = rng(1000 + i);
+  let svg = `<rect width="360" height="420" fill="color-mix(in srgb, ${ar.color} 14%, #121820)"/>`;
+  for (let k = 0; k < 40; k++) {
+    const x = 10 + r() * 340, y = 10 + r() * 400;
+    if (pts.some(p => Math.hypot(p.x - x, p.y - y) < 40)) continue;
+    svg += ar.kind === 'Lake' || ar.kind === 'Beach' ? `<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${(8 + r() * 14).toFixed(0)}" ry="${(4 + r() * 6).toFixed(0)}" fill="${ar.color}" opacity=".18"/>`
+      : ar.kind === 'Forest' || ar.kind === 'Grove' || ar.kind === 'Meadow' || ar.kind === 'Swamp' ? `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(5 + r() * 7).toFixed(0)}" fill="${ar.color}" opacity=".22"/>`
+      : `<path d="M${(x - 9).toFixed(0)} ${y.toFixed(0)} L${x.toFixed(0)} ${(y - 14).toFixed(0)} L${(x + 9).toFixed(0)} ${y.toFixed(0)}Z" fill="${ar.color}" opacity=".22"/>`;
+  }
+  for (let k = 1; k < pts.length; k++) {
+    const a = pts[k - 1], b = pts[k], done = q.step >= k;
+    svg += `<path d="M${a.x} ${a.y} Q${(a.x + b.x) / 2 + (k % 2 ? 40 : -40)} ${(a.y + b.y) / 2} ${b.x} ${b.y}" fill="none" stroke="${done ? '#e9edf3' : '#56616f'}" stroke-width="3" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
+  }
+  svg += `<text x="${pts[0].x}" y="${pts[0].y + 26}" text-anchor="middle" font-size="11" fill="#b4bdcb">Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
+  for (let k = 1; k <= 4; k++) {
+    const p = pts[k], cleared = q.step >= k, cur = !q.done && q.step === k - 1;
+    const label = k < 4 ? `Wild Pokémon ${k}` : q.trainer;
+    if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="24" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="17" fill="${cleared ? ar.color : '#1d2633'}" stroke="${cleared || cur ? ar.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
+    svg += k < 4 ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
+    svg += `<text x="${p.x}" y="${p.y + 32}" text-anchor="middle" font-size="11" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(label)}</text>`;
+  }
+  $('questSvg').innerHTML = svg;
+  let card;
+  if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>You beat the ${esc(q.trainer)} here. Nothing left to do.</small></div></div>`;
+  else if (q.step < 3) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Wild Pokémon ${q.step + 1} of 3</b><small>Something is rustling ahead · around level ${q.level} · HP carries over, so use your bag</small></div></div>
+    <button class="btn primary" id="qGo">Keep going</button>`;
+  else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>Three Pokémon around level ${q.level + 1} · prize ${money(trainerPrize(q.level))} and items</small></div></div>
+    <button class="btn primary" id="qGo">Challenge the ${esc(q.trainer)}</button>`;
+  $('questBar').innerHTML = card;
+  show('quest');
+}
+function questContinue(i) {
+  const q = ensureQuest(i), ar = AREAS[i];
+  if (q.done) { openQuest(i); return; }
+  if (q.step < 3) {
+    const mon = q.wild[q.step];
+    advFight({type: 'questWild', quest: i, catchable: !!mon.family, sets: [JSON.parse(JSON.stringify(mon))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · ${q.step + 1} of 3`}});
+  } else {
+    talk({name: q.trainer, key: null, color: ar.color, icon: ar.icon}, [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
+      advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: q.trainer, key: null, color: ar.color, icon: 'star', title: q.trainer, subtitle: `${ar.name} · level ${q.level + 1}`}});
+    });
+  }
+}
+$('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questContinue(questIdx()); });
+$('questLeave').addEventListener('click', () => openAdvMap({}));
+$('questBag').addEventListener('click', () => openAdvBag(questIdx()));
+function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
+
+// --- shop ---
+function openShop() { $('shopNote').textContent = 'Tap Buy to add an item to your bag.'; renderShop(); show('shop'); }
+function renderShop() {
+  $('shopMoney').textContent = money(A.money);
+  $('tutorPrice').textContent = money(TUTOR_PRICE);
+  $('shopItems').innerHTML = Object.entries(PRICES).map(([id, price]) => `<div class="shoprow"><div><b>${esc(E.ITEMS[id].name)} <small style="display:inline">· you have ${A.bag[id] || 0}</small></b><small>${esc(E.ITEMS[id].desc)}</small><span class="price">${money(price)}</span></div>
+    <button class="btn primary" id="buy-${id}" data-buy="${id}" ${A.money < price ? 'disabled' : ''}>Buy</button></div>`).join('');
+  $('shopTutor').innerHTML = A.team.map((m, i) => {
+    const cur = mset(m);
+    const opts = E.tutorOptions(m);
+    return `<div class="tutorbox"><b>${esc(cur.species)} <span class="lvl">Lv ${m.level}</span></b><small class="note">Knows ${cur.moves.map(esc).join(', ')}</small>
+      <div class="row">${opts.length ? opts.map(mv => `<button class="btn" data-tutor="${i}" data-move="${esc(mv)}" ${A.money < TUTOR_PRICE ? 'disabled' : ''}>Teach ${esc(mv)}</button>`).join('') : '<small class="note">Nothing to teach right now. More moves open up as it evolves.</small>'}</div></div>`;
+  }).join('');
+}
+$('shopItems').addEventListener('click', e => {
+  const b = e.target.closest('[data-buy]'); if (!b || b.disabled) return;
+  const id = b.dataset.buy;
+  if (A.money < PRICES[id]) return;
+  A.money -= PRICES[id]; A.bag[id] = (A.bag[id] || 0) + 1; saveA();
+  $('shopNote').textContent = `Bought a ${E.ITEMS[id].name}.`;
+  renderShop();
+});
+$('shopTutor').addEventListener('click', async e => {
+  const b = e.target.closest('[data-tutor]'); if (!b || b.disabled) return;
+  const m = A.team[+b.dataset.tutor];
+  if (A.money < TUTOR_PRICE) return;
+  const mv = b.dataset.move, name = mset(m).species;
+  let msg;
+  if (m.moves.length < 4) { m.moves.push(mv); msg = `${name} learned ${mv}!`; }
+  else {
+    const old = await chooseMove(m, mv, {note: `The lesson costs ${money(TUTOR_PRICE)}, and you only pay if it learns the move.`, cancel: 'Never mind'});
+    msg = old ? `${name} forgot ${old} and learned ${mv}!` : `${name} did not learn ${mv}. No charge.`;
+    if (!old) { $('shopNote').textContent = msg; renderShop(); return; }
+  }
+  A.money -= TUTOR_PRICE; m.tutored.push(mv); saveA();
+  $('shopNote').textContent = msg;
+  renderShop();
+});
+$('shopBack').addEventListener('click', () => openAdvMap({}));
+
+// --- team & bag ---
+function openAdvBag(from) { advBagFrom = from; advBagSel = null; mapMode = 'adventure'; delete $('jbagNote').dataset.msg; renderAdvBag(); show('jbag'); }
+function renderAdvBag() {
+  $('jbagItems').innerHTML = bagButtons(A.bag, advBagSel);
+  const note = $('jbagNote');
+  if (!note.dataset.msg) note.textContent = advBagSel ? `Use the ${E.ITEMS[advBagSel].name} on which Pokémon?` : 'Pick an item, then the Pokémon to use it on.';
+  $('jbagTeam').innerHTML = A.team.map((m, i) => {
+    const cur = mset(m);
+    const pct = m.frac * 100;
+    const fake = {name: cur.species, hp: m.frac > 0 ? Math.max(1, Math.round(m.frac * 100)) : 0, maxhp: 100, fainted: m.frac <= 0, status: ''};
+    const prob = advBagSel ? E.itemProblem(advBagSel, fake) : 'Pick an item first.';
+    return `<button class="swap" id="ateam-${i}" data-slot="${i}" ${advBagSel && !prob ? '' : 'disabled'} title="${esc(prob)}"><b>${esc(cur.species)} <span class="lvl">Lv ${m.level}</span></b>
+      <div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div>
+      <small class="note">${m.frac <= 0 ? 'Fainted' : `${Math.round(pct)}% HP`} · ${cur.moves.map(esc).join(', ')}</small></button>`;
+  }).join('');
+}
+$('jbagItems').addEventListener('click', e => {
+  if (mapMode !== 'adventure') return;
+  const b = e.target.closest('[data-item]'); if (!b || b.disabled) return;
+  advBagSel = advBagSel === b.dataset.item ? null : b.dataset.item;
+  delete $('jbagNote').dataset.msg; renderAdvBag();
+});
+$('jbagTeam').addEventListener('click', e => {
+  if (mapMode !== 'adventure') return;
+  const b = e.target.closest('[data-slot]'); if (!b || b.disabled || !advBagSel) return;
+  const m = A.team[+b.dataset.slot], it = E.ITEMS[advBagSel];
+  if (it.revive) m.frac = it.revive;
+  else if (it.heal) m.frac = Math.min(1, m.frac + it.heal);
+  A.bag[advBagSel]--;
+  const name = mset(m).species;
+  $('jbagNote').dataset.msg = '1';
+  $('jbagNote').textContent = it.revive ? `${name} was revived.` : `${name} was healed to ${Math.round(m.frac * 100)}% HP.`;
+  if (!A.bag[advBagSel]) advBagSel = null;
+  saveA(); renderAdvBag();
+});
+
+
+
+// ---------- your team (from the map) ----------
+function teamCard(set, idx, levelLabel, extra) {
+  return dexCard(set, idx)
+    .replace('</span><span class="chev"></span>', `${levelLabel ? ` <span class="lvl">${levelLabel}</span>` : ''}</span><span class="chev"></span>`)
+    .replace('<div class="dexbody">', `<div class="dexbody">${extra}`);
+}
+function hpBlock(frac, text) {
+  const pct = Math.max(0, frac * 100);
+  return `<div class="teamtop"><div class="lbl">Health</div><div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><small class="note">${text}</small></div>`;
+}
+function openTeamView(from) {
+  if (!E) return;
+  infoReturn = from;
+  let cards = [];
+  if (mapMode === 'adventure' && A) {
+    cards = A.team.map((m, i) => {
+      const set = mset(m);
+      const path = E.evolutionPath(m.final.species);
+      const next = path.find(p => p.at > m.level);
+      const route = path.map(p => p.species === set.species ? `<b>${esc(p.species)}</b>` : esc(p.species) + (p.at > 1 ? ` (Lv ${p.at})` : '')).join(' → ');
+      const tutor = E.tutorOptions(m);
+      const extra = hpBlock(m.frac, (m.frac <= 0 ? 'Fainted' : `${Math.round(m.frac * 100)}% HP`) + (infoReturn === 'battle' ? ' before this battle' : ''))
+        + `<div class="kv"><div class="lbl">Evolution</div><p class="evopath">${route}</p><p class="evopath">${next ? `Evolves into ${esc(next.species)} at level ${next.at}.` : 'Fully evolved.'}</p></div>`
+        + `<div class="kv"><div class="lbl">Battle-set goal</div><p class="evopath">${(m.final.moves || []).map(esc).join(', ')}${tutor.length ? ` · The Move Tutor can teach ${tutor.map(esc).join(', ')} now.` : ''}</p></div>`;
+      const art = artOf(set.species);
+      const tools = A.regional && infoReturn !== 'battle' ? `<div class="teamtools">${i > 0 ? `<button class="btn" id="tofront-${i}" data-tofront="${i}">Make lead</button>` : '<span class="note">Leads your team</span>'}${A.team.length > 1 ? `<button class="btn" id="tobox-${i}" data-tobox="${i}">Send to box</button>` : ''}</div>` : '';
+      return `<div class="teamslot">${teamCard(set, i, `Lv ${m.level}`, (art ? `<div style="width:120px;height:120px;margin:0 auto">${art}</div>` : '') + extra)}${tools}</div>`;
+    });
+    if (A.regional) cards.push(boxSectionHTML(infoReturn === 'battle'));
+  } else if (J) {
+    cards = E.parseTeam(J.teamText).team.map((set, i) => {
+      const st = J.team[set.name || set.species] || {hp: 1, maxhp: 1};
+      return teamCard(set, i, '', hpBlock(st.hp / st.maxhp, st.hp <= 0 ? 'Fainted' : `${st.hp}/${st.maxhp} HP`));
+    });
+  }
+  $('info').querySelector('h1').textContent = 'Your team';
+  $('infoChips').innerHTML = '';
+  $('infoBody').innerHTML = cards.join('');
+  show('info');
+  $('info').querySelector('.scroll').scrollTop = 0;
+}
+$('mapTeam').addEventListener('click', () => openTeamView('map'));
+$('questTeam').addEventListener('click', () => openTeamView(questIdx()));
+
+
+// ================= Neofield regional adventure: professor, routes, catching, Pokédex =================
+const toId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const REG_START_LV = 6;
+const artOf = name => (E && E.isRegional(name)) ? E.monArt(toId(name)) : '';
+const BALL_SVG = `<svg class="ballicon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/><path d="M1.5 10a8.5 8.5 0 0 1 17 0Z" fill="#e25b4f" stroke="#1b1f2a" stroke-width="1.6"/><circle cx="10" cy="10" r="2.6" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/></svg>`;
+
+// --- the professor (an original character) ---
+const PROF_SVG = `<svg viewBox="0 0 120 150" aria-hidden="true" style="width:100%;height:100%">
+  <path d="M14 150 q4 -46 46 -50 q42 4 46 50Z" fill="#eef2f7" stroke="#1b1f2a" stroke-width="3"/>
+  <path d="M44 104 l16 30 l16 -30 q-16 -6 -32 0Z" fill="#3d8f8a" stroke="#1b1f2a" stroke-width="2.5"/>
+  <path d="M44 104 l-8 46 M76 104 l8 46" stroke="#1b1f2a" stroke-width="2.5"/>
+  <rect x="80" y="120" width="12" height="16" rx="2" fill="#c9d4e4" stroke="#1b1f2a" stroke-width="2"/>
+  <path d="M50 92 l0 12 q10 6 20 0 l0 -12Z" fill="#f2c9a5" stroke="#1b1f2a" stroke-width="2.5"/>
+  <ellipse cx="60" cy="62" rx="27" ry="31" fill="#f5d1b0" stroke="#1b1f2a" stroke-width="3"/>
+  <path d="M32 58 q-4 -34 28 -36 q32 2 28 36 q-6 -16 -14 -18 q-10 10 -30 6 q-8 4 -12 12Z" fill="#c4c9d2" stroke="#1b1f2a" stroke-width="3"/>
+  <path d="M33 60 q-6 4 -2 14 q4 2 6 -2Z M87 60 q6 4 2 14 q-4 2 -6 -2Z" fill="#f5d1b0" stroke="#1b1f2a" stroke-width="2"/>
+  <circle cx="49" cy="64" r="8" fill="none" stroke="#1b1f2a" stroke-width="2.5"/><circle cx="71" cy="64" r="8" fill="none" stroke="#1b1f2a" stroke-width="2.5"/><path d="M57 64 h6" stroke="#1b1f2a" stroke-width="2.5"/>
+  <circle cx="49" cy="65" r="2.5" fill="#1b1f2a"/><circle cx="71" cy="65" r="2.5" fill="#1b1f2a"/>
+  <path d="M43 53 q6 -4 12 0 M65 53 q6 -4 12 0" fill="none" stroke="#8d939e" stroke-width="3" stroke-linecap="round"/>
+  <path d="M50 80 q10 8 20 0" fill="none" stroke="#1b1f2a" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M46 84 q14 10 28 0 q-2 8 -14 9 q-12 -1 -14 -9Z" fill="#c4c9d2" stroke="#1b1f2a" stroke-width="2"/>
+</svg>`;
+const PROF = {name: 'Professor Okla', key: null, color: '#7fb8e6', svg: PROF_SVG};
+
+function labSceneHTML() {
+  const jars = ['#72c25a', '#f08a4b', '#5f9cf0', '#ee9ad0', '#f2d04a'].map((c, i) => `<span class="jar" style="left:${20 + i * 18}px;top:${14}px;background:${c}"></span>`).join('');
+  return `<div class="labscene" aria-hidden="true"><span class="shelf" style="left:16px"></span>${jars}<span class="shelf" style="right:16px;width:80px"></span>
+    <div class="prof">${PROF_SVG}</div><div class="ballrow">${BALL_SVG.repeat(3).replace(/ballicon/g, 'ballicon" style="width:26px;height:26px')}</div></div>`;
+}
+let introName = '', introPick = null;
+async function openProfessor() {
+  introPick = null; introName = '';
+  setAccent(PROF.color);
+  $('introStage').innerHTML = labSceneHTML();
+  show('intro');
+  await talk(PROF, [
+    'Hello there! Welcome to the world of Pokémon!',
+    "My name is Okla. Everyone around here calls me the Pokémon Professor.",
+    'This is the Neofield Region. Pokémon live everywhere: in the tall grass along the routes, deep in the forests and caves, even out at sea.',
+    "Seventeen Gym Leaders guard the region's towns. Beat them all to earn their badges, then climb Victory Summit to face the Elite Four and the Champion.",
+    'Tap a route on your map to walk it. Every route has its own wild Pokémon, and some live nowhere else.',
+    "Battle a wild Pokémon until it's down to 1 HP and you can throw Poké Balls to catch it. Keep trying as long as you have balls, but watch out. It fights back between throws!",
+    'Train to level up your team, clear side quests for money and items, and stock up at the shop.',
+    'Every Pokémon you meet is recorded in your Pokédex, so you always know what you are up against.',
+    "But first, tell me a little about yourself. What's your name?",
+  ]);
+  showNameCard();
+}
+function showNameCard() {
+  const guess = LEADERS[myKey] ? LEADERS[myKey].first : '';
+  $('introStage').innerHTML = labSceneHTML() + `<form class="namecard" id="nameForm" autocomplete="off">
+    <label for="nameInput"><b>Your name</b></label><input id="nameInput" maxlength="14" value="${esc(introName || guess)}">
+    <button class="btn primary" type="submit" id="nameGo">That's me!</button><p class="note" id="nameNote">Up to 14 letters.</p></form>`;
+  $('nameInput').focus(); $('nameInput').select();
+}
+$('introStage').addEventListener('submit', async e => {
+  if (e.target.id !== 'nameForm') return;
+  e.preventDefault();
+  const name = $('nameInput').value.trim().replace(/\s+/g, ' ');
+  if (!name) { $('nameNote').textContent = 'Type a name first.'; return; }
+  introName = name;
+  $('introStage').innerHTML = labSceneHTML();
+  await talk(PROF, [`${name}! What a great name.`, 'Now, I have three Pokémon here with me. They were all born right here in Neofield, and each one is looking for a partner.', 'Take a look and choose the one you like best!']);
+  showStarters();
+});
+function showStarters() {
+  const cards = E.STARTERS.map(f => {
+    const st = f.stages[0];
+    return `<button class="starter" id="starter-${f.key}" data-starter="${f.key}" style="--c:${f.color}" aria-pressed="${introPick === f.key}">${E.monArt(st.id)}<b>${esc(st.name)}</b>${typesHTML(st.types)}</button>`;
+  }).join('');
+  let info = '<p class="starterinfo">Tap a Pokémon to learn about it.</p>';
+  if (introPick) {
+    const f = E.familyOf(introPick), st = f.stages[0];
+    info = `<p class="starterinfo"><b style="color:var(--fg)">${esc(st.name)}</b>: ${esc(st.entry)}</p>
+      <p class="starterinfo">Evolves into ${f.stages.slice(1).map(s => `${esc(s.name)} at level ${s.at}`).join(', then ')}.</p>
+      <div class="row"><button class="btn primary" id="starterGo" style="--accent:${f.color}">Choose ${esc(st.name)}</button></div>`;
+  }
+  $('introStage').innerHTML = labSceneHTML() + `<div class="startercard"><b>Choose your first Pokémon</b><div class="starters">${cards}</div>${info}</div>`;
+}
+$('introStage').addEventListener('click', async e => {
+  const b = e.target.closest('[data-starter]');
+  if (b) { introPick = b.dataset.starter; setAccent(E.familyOf(introPick).color); showStarters(); return; }
+  if (e.target.id === 'starterGo' && introPick) {
+    const st = E.familyOf(introPick).stages[0];
+    $('introStage').innerHTML = labSceneHTML();
+    await talk(PROF, [`So you've chosen ${st.name}! It already looks happy to be with you.`,
+      'Take these too: five Poké Balls for catching wild Pokémon, and your very own Pokédex.',
+      `Your adventure starts now, ${introName}. Go make the Neofield Region proud!`]);
+    startRegionalAdventure(introName, introPick);
+  }
+});
+function startRegionalAdventure(name, famKey) {
+  A = {
+    v: 2, regional: true, difficulty, teamKey: 'regional', playerName: name,
+    team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
+    order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
+    money: 1500, bag: {...ADV_START_BAG, pokeball: 5}, quests: {}, travelled: -1, done: false,
+  };
+  saveA();
+  openAdvMap({msg: 'Tap Route 1 on the map to look for wild Pokémon.'});
+}
+function migrateA() {
+  if (!A) return;
+  A.box = A.box || []; A.dex = A.dex || {seen: {}, caught: {}};
+  if (A.loc === undefined) A.loc = null;
+  const RENAMED = {brightwatercharmander: 'shardmander', neofieldcharmander: 'shardmander', opalisk: 'shardmander', starter1: 'bulbazilla', starter3: 'grrtle', grimshell: 'grrtle'};
+  for (const k of ['seen', 'caught']) for (const [old, now] of Object.entries(RENAMED)) if (A.dex[k][old]) { A.dex[k][now] = 1; delete A.dex[k][old]; } // renamed
+}
+function markSeen(species) { if (A && A.dex && species) A.dex.seen[toId(species)] = 1; }
+function syncDexFromTeam() {
+  if (!A || !A.dex) return;
+  for (const m of [...A.team, ...(A.box || [])]) { const id = toId(mset(m).species); A.dex.seen[id] = 1; A.dex.caught[id] = 1; }
+}
+
+// --- routes ---
+const routeOpen = r => A && A.regional && (A.done || r <= Math.min(A.pos, 17));
+const routeLevel = r => r === 0 ? 5 : r >= 17 ? 58 : GYM_LV[r - 1];
+const placeName = i => i === 0 ? HOME : i <= 17 ? TOWNS[A.order[i - 1]] : LEAGUE;
+function routeOverlay() {
+  if (!A || !A.regional) return '';
+  const pts = mapPoints();
+  let svg = '';
+  for (let r = 0; r < E.ROUTES.length; r++) {
+    if (!routeOpen(r)) continue;
+    const a = pts[r], b = pts[r + 1], c = segCtrl(a, b, r + 1);
+    const mx = .25 * a.x + .5 * c.x + .25 * b.x, my = .25 * a.y + .5 * c.y + .25 * b.y;
+    const here = A.loc === r;
+    const label = r === 17 ? 'VR' : 'R' + (r + 1);
+    svg += `<g data-route="${r}" role="button" aria-label="${esc(E.ROUTES[r].name)}"><path d="${segPath(a, b, r + 1)}" stroke="transparent" stroke-width="22" fill="none"/>
+      <rect x="${mx - 14}" y="${my - 9}" width="28" height="18" rx="9" fill="${here ? '#8fb36a' : '#1d2633'}" stroke="#8fb36a" stroke-width="1.5"/>
+      <text x="${mx}" y="${my + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${here ? '#10131a' : '#cfe6b8'}">${label}</text></g>`;
+  }
+  return svg;
+}
+function routeMid(r) {
+  const path = $('mapSvg').querySelector(`#seg-${r + 1}`);
+  if (!path) return null;
+  return path.getPointAtLength(path.getTotalLength() / 2);
+}
+function placeMarkerOnRoute(r) {
+  const pt = routeMid(r), mk = $('mapSvg').querySelector('#marker');
+  if (!pt || !mk) return;
+  mk.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+  scrollMapTo(pt.y);
+}
+function openRoute(r) {
+  if (!routeOpen(r)) return;
+  A.loc = r;
+  A.travelled = Math.max(A.travelled, A.done ? 18 : Math.min(A.pos, 17) + 1); // tapping a route skips the travel animation
+  saveA();
+  openAdvMap({});
+}
+function routeCardHTML(r) {
+  const R = E.ROUTES[r], lv = routeLevel(r);
+  const mons = R.families.map(k => {
+    const f = E.familyOf(k);
+    const st = f.stages[E.stageAt(E.chainOf(f.finalSet.species), lv)] || f.stages[0];
+    const seen = A.dex.seen[st.id], caught = A.dex.caught[st.id];
+    return `<div class="routemon ${seen ? '' : 'unseen'}">${E.monArt(st.id)}<span>${seen ? esc(st.name) : '???'}</span><small>${caught ? '<span class="caughtdot">●</span> Caught' : seen ? 'Seen' : 'Not seen yet'}</small></div>`;
+  }).join('');
+  return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Pokémon around level ${lv} · ${A.bag.pokeball || 0} Poké Balls</small></div></div>
+    <div class="routemons">${mons}</div>
+    <div class="row"><button class="btn primary" id="rGrass">Walk in the tall grass</button><button class="btn" id="rLeave">Back to town</button></div>`;
+}
+function routeBattle(r) {
+  const lv = Math.max(2, routeLevel(r) - 2 + Math.floor(Math.random() * 4));
+  const set = E.regionalWild(r, lv);
+  const f = E.familyOf(set.family);
+  advFight({type: 'route', route: r, catchable: true, sets: [set], foe: {name: 'Wild', wild: true, key: null, color: f.color, icon: 'leaf', title: `Wild ${set.species}`, subtitle: `${E.ROUTES[r].name} · level ${lv}`}});
+}
+function addCaught(c) {
+  const m = E.newMember(c.family, c.level);
+  m.frac = Math.max(0.01, c.frac);
+  const name = mset(m).species;
+  if (A.team.length < 6) { A.team.push(m); syncDexFromTeam(); return `${name} joined your team!`; }
+  A.box.push(m); syncDexFromTeam();
+  return `Your team is full, so ${name} was sent to your box. Swap it in from the Team screen.`;
+}
+
+// --- catching in battle ---
+function catchPending() { return !!(ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.catchable && battle && !battle.ended && E.catchReady(battle)); }
+function catchHTML() {
+  const mon = battle.p2.active[0], balls = A.bag.pokeball || 0;
+  return `<div class="catchbox"><p>The wild <b>${esc(mon.species.name)}</b> is barely hanging on!</p><p>Would you like to try and catch this Pokémon?</p>
+    <div class="row">${balls ? `<button class="btn primary" id="catchThrow">${BALL_SVG} Throw a Poké Ball (${balls} left)</button>` : ''}<button class="btn" id="catchNo">${balls ? 'No, finish it' : 'Out of Poké Balls. Finish it'}</button></div></div>`;
+}
+async function throwBall() {
+  if (playing || !battle || !(A.bag.pokeball > 0) || !catchPending()) return;
+  playing = true;
+  const mon = battle.p2.active[0], fight = ctx.fight;
+  A.bag.pokeball--; saveA();
+  $('controls').innerHTML = '<div class="waiting">…</div>';
+  const fam = E.familyOf(fight.sets[0].family);
+  const ok = Math.random() < E.catchChance(fam.catchRate, mon.hp / mon.maxhp, mon.status);
+  const shakes = ok ? 3 : Math.floor(Math.random() * 3);
+  addLine(`${BALL_SVG} You threw a Poké Ball!`);
+  await sleep(700);
+  const card = $('foeCard');
+  for (let k = 0; k < shakes; k++) {
+    card.classList.remove('fx-ball'); void card.offsetWidth; card.classList.add('fx-ball');
+    addLine(`${'…'.repeat(k + 1)} the ball wobbles`, 'info');
+    await sleep(750);
+  }
+  if (ok) {
+    addLine(`Gotcha! The wild <span class="key">${esc(mon.species.name)}</span> was caught!`, 'good');
+    fight.caught = {family: fight.sets[0].family, level: mon.level, frac: mon.hp / mon.maxhp, species: mon.species.name};
+    playing = false;
+    battle.forceWin('p1');
+    await refresh();
+    return;
+  }
+  addLine(['Oh no! The Pokémon broke free!', 'Aww! It appeared to be caught!', 'Argh! Almost had it!'][shakes], 'bad');
+  if (!A.bag.pokeball) addLine("That was your last Poké Ball.", 'info');
+  playing = false;
+  // throwing takes your turn, so the wild Pokémon attacks
+  runAI();
+  E.spendTurnOnItem(battle, 'p1');
+  E.recountLeft(battle.p1);
+  await refresh();
+}
+async function finishWild() {
+  if (playing || !battle) return;
+  const mon = battle.p2.active[0];
+  E.armCatch(battle, false);
+  ctx.fight.finished = true;
+  addLine(`The wild <span class="key">${esc(mon.species.name)}</span> fainted!`, 'good');
+  applyFx({side: FOE, kind: 'faint'});
+  battle.forceWin('p1');
+  await refresh();
+}
+
+// --- Pokédex ---
+let dexMode = 'main', dexTab = 'regional', dexFrom = 'setup', dexListTop = 0, natList = null;
+const pad3 = n => String(n).padStart(3, '0');
+function nationalList() {
+  if (natList) return natList;
+  natList = E.Dex.species.all().filter(s => s.exists && s.num > 0 && (!s.isNonstandard || s.isNonstandard === 'Past' || s.isNonstandard === 'Unobtainable')
+    && !(s.forme && /Totem|Gmax/.test(s.forme))).sort((a, b) => a.num - b.num || (a.forme ? 1 : 0) - (b.forme ? 1 : 0) || a.name.localeCompare(b.name));
+  return natList;
+}
+function openDex(mode, from) {
+  dexMode = mode; dexFrom = from; dexTab = 'regional';
+  $('dexSearch').value = '';
+  setAccent('#e25b4f');
+  renderDexList();
+  $('dexEntryView').hidden = true; $('dexListView').hidden = false;
+  show('dex');
+  $('dexScroll').scrollTop = 0;
+}
+function renderDexList() {
+  const q = $('dexSearch').value.trim().toLowerCase();
+  const adv = dexMode === 'adventure';
+  $('dexTitle').textContent = adv ? `${A.playerName}'s Pokédex` : 'Pokédex';
+  if (adv) {
+    const reg = E.SPECIES, seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id]).length;
+    $('dexSub').textContent = `Neofield Pokémon: ${seen} of ${reg.length} seen, ${caught} caught. Tap one you've seen for everything about it.`;
+  } else $('dexSub').textContent = `${E.SPECIES.length} Neofield Pokémon and ${nationalList().length} Pokémon from the main games.`;
+  $('dexTabs').innerHTML = [['regional', 'Neofield'], ['national', adv ? 'Others you have seen' : 'National']].map(([k, l]) => `<button class="chip" id="dextab-${k}" data-dextab="${k}" aria-pressed="${dexTab === k}">${l}</button>`).join('');
+  const match = (name, num, types) => !q || name.toLowerCase().includes(q) || String(num) === q.replace(/^#?0*/, '') || types.some(t => t.toLowerCase() === q);
+  let rows = [];
+  if (dexTab === 'regional') {
+    rows = E.SPECIES.filter(s => match(s.name, s.num, s.types)).map(s => {
+      const known = !adv || A.dex.seen[s.id];
+      const c = E.regionalInfo(s.name).color;
+      return `<button class="dexrow ${known ? '' : 'unseen'}" style="--c:${c}" data-dex="${esc(s.name)}" ${known ? '' : 'disabled'}><span class="thumb">${E.monArt(s.id)}</span><span><small>#${pad3(s.num)}${adv && A.dex.caught[s.id] ? ' <span class="caughtdot">●</span>' : ''}</small><b>${known ? esc(s.name) : '???'}</b>${known ? typesHTML(s.types) : '<small>Not seen yet</small>'}</span></button>`;
+    });
+  } else {
+    let list = nationalList();
+    if (adv) list = list.filter(s => A.dex.seen[s.id] && !E.isRegional(s.name));
+    rows = list.filter(s => match(s.name, s.num, s.types)).map(s => `<button class="dexrow" style="--c:${TYPE_COLORS[s.types[0]] || '#999'}" data-dex="${esc(s.name)}"><span class="thumb">${s.num}</span><span><small>#${pad3(s.num)}</small><b>${esc(s.name)}</b>${typesHTML(s.types)}</span></button>`);
+    if (adv && !rows.length && !q) rows = ['<p class="note">Pokémon you meet in gym battles and training show up here.</p>'];
+  }
+  $('dexList').innerHTML = rows.join('') || '<p class="note">No Pokémon match that search.</p>';
+}
+$('dexSearch').addEventListener('input', renderDexList);
+$('dexTabs').addEventListener('click', e => { const b = e.target.closest('[data-dextab]'); if (!b) return; dexTab = b.dataset.dextab; renderDexList(); });
+$('dexList').addEventListener('click', e => { const b = e.target.closest('[data-dex]'); if (!b || b.disabled) return; dexListTop = $('dexScroll').scrollTop; showDexEntry(b.dataset.dex); });
+$('dexBack').addEventListener('click', () => {
+  if (!$('dexEntryView').hidden) { $('dexEntryView').hidden = true; $('dexListView').hidden = false; $('dexScroll').scrollTop = dexListTop; return; }
+  if (dexFrom === 'map') openAdvMap({}); else { setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); }
+});
+function familyRows(sp) {
+  let root = sp;
+  while (root.prevo) root = E.Dex.species.get(root.prevo);
+  const how = s => s.evoLevel ? `level ${s.evoLevel}` : s.evoItem ? `use ${s.evoItem}` : s.evoType === 'trade' ? 'trade' : s.evoType === 'levelFriendship' ? 'high friendship' : s.evoCondition ? s.evoCondition : s.evoType ? s.evoType.replace(/([A-Z])/g, ' $1').toLowerCase() : 'special';
+  const out = [];
+  const walk = s => { for (const n of s.evos || []) { const e = E.Dex.species.get(n); if (!e.exists) continue; out.push(`${esc(s.name)} → <b>${esc(e.name)}</b> <span>(${esc(how(e))})</span>`); walk(e); } };
+  walk(root);
+  return out.length ? out.map(l => `<p>${l}</p>`).join('') : '<p><span>Does not evolve.</span></p>';
+}
+function matchupRows(types) {
+  const groups = {4: [], 2: [], 0.5: [], 0.25: [], 0: []};
+  for (const t of E.Dex.types.names()) {
+    if (t === 'Stellar') continue;
+    const m = !E.Dex.getImmunity(t, types) ? 0 : Math.pow(2, E.Dex.getEffectiveness(t, types));
+    if (groups[m]) groups[m].push(t);
+  }
+  const lbl = {4: ['×4', 'w'], 2: ['×2', 'w'], 0.5: ['×½', 'r'], 0.25: ['×¼', 'r'], 0: ['×0', 'i']};
+  return [4, 2, 0.5, 0.25, 0].filter(k => groups[k].length).map(k => `<div><span class="k ${lbl[k][1]}">${lbl[k][0]}</span>${typesHTML(groups[k])}</div>`).join('');
+}
+function showDexEntry(name) {
+  const sp = E.Dex.species.get(name), reg = E.regionalInfo(name);
+  const color = reg ? reg.color : TYPE_COLORS[sp.types[0]] || '#999';
+  const adv = dexMode === 'adventure';
+  const stats = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'], lbl = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
+  const total = stats.reduce((a, k) => a + sp.baseStats[k], 0);
+  const statHTML = stats.map(k => `<span class="s">${lbl[k]}</span><span class="v">${sp.baseStats[k]}</span><span class="bar"><i style="width:${Math.min(100, sp.baseStats[k] / 1.6)}%;background:${sp.baseStats[k] >= 100 ? 'var(--hp-good)' : sp.baseStats[k] >= 60 ? 'var(--hp-mid)' : 'var(--hp-low)'}"></i></span>`).join('');
+  const abil = Object.entries(sp.abilities).map(([k, a]) => `${esc(a)}${k === 'H' ? ' <span>(hidden)</span>' : ''}`).join(', ');
+  let moves = [];
+  try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
+  const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
+  const status = adv && reg ? (A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : 'Seen') : '';
+  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
+  $('dexEntryView').innerHTML = `<div class="dexentry">
+    <div class="dexhero" style="--c:${color}"><div class="pic">${reg ? E.monArt(reg.id) : '#' + sp.num}</div><div>
+      <div class="num">${reg ? `Neofield #${pad3(reg.num)}` : `National #${pad3(sp.num)}`}${status ? ' · ' + status : ''}</div><h2>${esc(sp.name)}</h2>${typesHTML(sp.types)}</div></div>
+    ${reg ? `<p class="flavor">${esc(reg.entry)}</p>` : ''}
+    <div class="kv"><div class="lbl">Facts</div><p>Height <b>${sp.heightm} m</b> · Weight <b>${sp.weightkg} kg</b>${reg ? ` · Catch rate <b>${reg.catchRate}</b>` : ''}</p><p>Abilities: ${abil}</p></div>
+    ${where ? `<div class="kv"><div class="lbl">Where to find it</div><p>${where}</p></div>` : ''}
+    <div class="kv"><div class="lbl">Base stats · total ${total}</div><div class="statgrid">${statHTML}</div></div>
+    <div class="kv"><div class="lbl">Evolution</div>${familyRows(sp)}</div>
+    <div class="kv"><div class="lbl">Type matchups when defending</div><div class="mults">${matchupRows(sp.types)}</div></div>
+    <div class="kv"><div class="lbl">Level-up moves</div>${moveHTML}</div>
+  </div>`;
+  $('dexListView').hidden = true; $('dexEntryView').hidden = false;
+  setAccent(color);
+  $('dexScroll').scrollTop = 0;
+}
+$('openDexMain').addEventListener('click', () => { if (E) openDex('main', 'setup'); });
+$('mapDex').addEventListener('click', () => { if (A) openDex('adventure', 'map'); });
+
+// --- box (from the Team screen) ---
+function boxSectionHTML(inBattle) {
+  if (!A || !A.regional) return '';
+  const tools = A.box.length ? A.box.map((m, i) => {
+    const set = mset(m);
+    return `<div class="boxmon">${artOf(set.species)}<b>${esc(set.species)} <span class="lvl">Lv ${m.level}</span></b>${typesHTML(E.Dex.species.get(set.species).types)}
+      <button class="btn" id="boxin-${i}" data-boxin="${i}" ${inBattle || A.team.length >= 6 ? 'disabled' : ''}>Add to team</button></div>`;
+  }).join('') : '<p class="note">Pokémon you catch when your team already has six go here.</p>';
+  return `<div class="section"><h2>Box · ${A.box.length}</h2>${A.team.length >= 6 && A.box.length ? '<p class="note">Your team is full. Send one to the box to make room.</p>' : ''}<div class="boxgrid">${tools}</div></div>`;
+}
+$('infoBody').addEventListener('click', e => {
+  if (!A || !A.regional || infoReturn === 'battle') return;
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.boxin != null) { if (A.team.length >= 6) return; A.team.push(A.box.splice(+t.dataset.boxin, 1)[0]); }
+  else if (t.dataset.tobox != null) { if (A.team.length <= 1) return; A.box.push(A.team.splice(+t.dataset.tobox, 1)[0]); }
+  else if (t.dataset.tofront != null) { const i = +t.dataset.tofront; A.team.unshift(A.team.splice(i, 1)[0]); }
+  else return;
+  saveA();
+  const top = $('info').querySelector('.scroll').scrollTop;
+  openTeamView(infoReturn);
+  $('info').querySelector('.scroll').scrollTop = top;
+});
+
+// ---------- save backup ----------
+const SAVE_KEYS = ['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'adventure', 'evoSound'];
+function saveCode() {
+  const data = {};
+  for (const k of SAVE_KEYS) { try { const v = localStorage.getItem(k); if (v != null) data[k] = v; } catch (e) { /* storage unavailable */ } }
+  return 'GLB1:' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+}
+$('saveCopy').addEventListener('click', async () => {
+  const code = saveCode();
+  $('saveBox').hidden = false; $('saveLoadRow').hidden = true;
+  $('saveText').value = code; $('saveText').readOnly = true;
+  let copied = false;
+  try { await navigator.clipboard.writeText(code); copied = true; } catch (e) { /* clipboard blocked */ }
+  if (!copied) { $('saveText').select(); try { copied = document.execCommand('copy'); } catch (e) { copied = false; } }
+  $('saveNote').textContent = copied ? 'Save code copied. Paste it into a message to yourself.' : 'Select all the text above and copy it.';
+});
+$('saveLoadOpen').addEventListener('click', () => {
+  $('saveBox').hidden = false; $('saveLoadRow').hidden = false;
+  $('saveText').readOnly = false; $('saveText').value = ''; $('saveText').placeholder = 'Paste a save code that starts with GLB1:';
+  $('saveNote').textContent = 'Loading a code replaces everything saved on this device.';
+  $('saveText').focus();
+});
+$('saveLoad').addEventListener('click', () => {
+  const raw = $('saveText').value.trim();
+  let data = null;
+  try { if (raw.startsWith('GLB1:')) data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(5))))); } catch (e) { data = null; }
+  if (!data || typeof data !== 'object') { $('saveNote').textContent = "That doesn't look like a save code. Copy the whole thing, starting with GLB1:"; return; }
+  try {
+    for (const k of SAVE_KEYS) localStorage.removeItem(k);
+    for (const [k, v] of Object.entries(data)) if (SAVE_KEYS.includes(k)) localStorage.setItem(k, v);
+  } catch (e) { $('saveNote').textContent = "This device won't let the game save. Check that private browsing is off."; return; }
+  $('saveNote').textContent = 'Save loaded. Restarting the game…';
+  setTimeout(() => location.reload(), 600);
+});
+
+// ---------- boot ----------
+renderDifficulty(); renderBadges(); renderTeamChips(); renderLeaders(); renderJourneyCard(); renderAdvCard();
+setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR);
+db = undefined;
+
+async function connectOnline() {
+  const c = window.claude;
+  if (!c || !c.use) { db = null; renderOnline(); return; }
+  try {
+    const [d, u] = await Promise.all([c.use('db'), c.use('user')]);
+    db = d; user = u;
+    myUid = u ? await u.id() : null;
+    if (u && u.can) { try { canWrite = await u.can('data.write'); } catch (e) { canWrite = null; } }
+  } catch (e) { db = null; }
+  renderOnline();
+  if (!db || !myUid) return;
+  db.collection('matches').orderBy('createdAt', 'desc').limit(60).onSnapshot(snap => {
+    const prev = new Map(matches.map(m => [m.id, m.data.status]));
+    matches = snap.docs.filter(d => d.exists).map(d => ({id: d.id, data: d.data()}));
+    // When someone joins my open challenge, jump straight into the battle
+    const started = matches.find(m => m.data.status === 'active' && m.data.p1 && m.data.p1.uid === myUid && prev.get(m.id) === 'open');
+    if (started && !battle) { openMatch(started.id, started.data); return; }
+    if ($('setup').hidden === false) renderOnline();
+  }, () => { $('online').innerHTML = '<div class="note err">Lost the connection to the lobby. Reload the page to reconnect.</div>'; });
+}
+
+function boot() {
+  E = window.Engine;
+  if (!E) { $('loading').textContent = 'The battle engine did not load. Reload the page to try again.'; return; }
+  $('loading').hidden = true;
+  renderTeamChips(); renderLeaders(); renderOnline(); renderJourneyCard(); renderAdvCard();
+}
+if (window.Engine) boot(); else window.addEventListener('load', boot);
+connectOnline();
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.claude) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>

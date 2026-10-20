@@ -1,0 +1,59 @@
+=== [gen9nationaldex] Scribe Rachel - Mythicbadge ===
+
+Blissey @ Heavy-Duty Boots
+Ability: Natural Cure
+EVs: 252 HP / 252 Def / 4 SpD
+Bold Nature
+IVs: 0 Atk
+- Stealth Rock
+- Seismic Toss
+- Soft-Boiled
+- Toxic
+
+Togekiss @ Leftovers
+Ability: Serene Grace
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Nasty Plot
+- Air Slash
+- Dazzling Gleam
+- Roost
+
+Azumarill @ Choice Band
+Ability: Huge Power
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Aqua Jet
+- Play Rough
+- Liquidation
+- Knock Off
+
+Sylveon @ Leftovers
+Ability: Pixilate
+EVs: 252 HP / 4 SpA / 252 SpD
+Calm Nature
+IVs: 0 Atk
+- Hyper Voice
+- Psyshock
+- Wish
+- Protect
+
+Mimikyu @ Life Orb
+Ability: Disguise
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Swords Dance
+- Play Rough
+- Shadow Claw
+- Shadow Sneak
+
+Gardevoir @ Gardevoirite
+Ability: Trace
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Calm Mind
+- Hyper Voice
+- Psyshock
+- Mystical Fire

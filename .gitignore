@@ -1,0 +1,5 @@
+node_modules/
+# built by `npm run build` (GitHub builds these automatically)
+www/index.html
+www/engine.js
+.DS_Store

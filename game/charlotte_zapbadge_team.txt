@@ -1,0 +1,58 @@
+=== [gen9nationaldex] Pokéfan Charlotte - Zapbadge ===
+
+Pikachu @ Light Ball
+Ability: Lightning Rod
+EVs: 252 Atk / 4 SpA / 252 Spe
+Naive Nature
+- Volt Tackle
+- Surf
+- Knock Off
+- Fake Out
+
+Kilowattrel @ Heavy-Duty Boots
+Ability: Volt Absorb
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Thunderbolt
+- Hurricane
+- Volt Switch
+- Roost
+
+Pawmot @ Life Orb
+Ability: Iron Fist
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Double Shock
+- Close Combat
+- Mach Punch
+- Ice Punch
+
+Morpeko @ Choice Scarf
+Ability: Hunger Switch
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Aura Wheel
+- Crunch
+- Psychic Fangs
+- Parting Shot
+
+Jolteon @ Choice Specs
+Ability: Volt Absorb
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Thunderbolt
+- Volt Switch
+- Shadow Ball
+- Hyper Voice
+
+Lanturn @ Leftovers
+Ability: Volt Absorb
+EVs: 252 HP / 4 Def / 252 SpD
+Calm Nature
+IVs: 0 Atk
+- Scald
+- Volt Switch
+- Ice Beam
+- Heal Bell

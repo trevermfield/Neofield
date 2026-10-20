@@ -1,0 +1,56 @@
+=== [gen9nationaldexubers] Matriarch Lynne - Foundationbadge ===
+
+Nidoqueen @ Black Sludge
+Ability: Sheer Force
+EVs: 252 HP / 252 SpA / 4 SpD
+Modest Nature
+IVs: 0 Atk
+- Stealth Rock
+- Earth Power
+- Sludge Wave
+- Ice Beam
+
+Dugtrio @ Focus Sash
+Ability: Arena Trap
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Swords Dance
+- Earthquake
+- Stone Edge
+- Sucker Punch
+
+Mudsdale @ Leftovers
+Ability: Stamina
+EVs: 252 HP / 4 Atk / 252 SpD
+Careful Nature
+- High Horsepower
+- Heavy Slam
+- Body Press
+- Rock Slide
+
+Marowak @ Thick Club
+Ability: Rock Head
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Swords Dance
+- Bonemerang
+- Double-Edge
+- Knock Off
+
+Flygon @ Choice Scarf
+Ability: Levitate
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Earthquake
+- Dragon Claw
+- U-turn
+- Fire Punch
+
+Swampert @ Swampertite
+Ability: Torrent
+EVs: 4 HP / 252 Atk / 252 Spe
+Adamant Nature
+- Waterfall
+- Earthquake
+- Ice Punch
+- Superpower

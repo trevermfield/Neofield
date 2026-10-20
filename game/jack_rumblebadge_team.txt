@@ -1,0 +1,56 @@
+=== [gen9nationaldexubers] Brawler Jack - Rumblebadge ===
+
+Hitmonchan @ Assault Vest
+Ability: Iron Fist
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Drain Punch
+- Mach Punch
+- Ice Punch
+- Rapid Spin
+
+Machamp @ Assault Vest
+Ability: No Guard
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Dynamic Punch
+- Knock Off
+- Stone Edge
+- Bullet Punch
+
+Poliwrath @ Leftovers
+Ability: Water Absorb
+EVs: 252 HP / 252 Atk / 4 SpD
+Adamant Nature
+- Bulk Up
+- Liquidation
+- Close Combat
+- Ice Punch
+
+Scrafty @ Leftovers
+Ability: Intimidate
+EVs: 252 HP / 4 Atk / 252 SpD
+Careful Nature
+- Bulk Up
+- Drain Punch
+- Knock Off
+- Ice Punch
+
+Blaziken @ Life Orb
+Ability: Speed Boost
+EVs: 4 HP / 252 Atk / 252 Spe
+Adamant Nature
+- Swords Dance
+- Close Combat
+- Flare Blitz
+- Protect
+
+Lucario @ Lucarionite
+Ability: Justified
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Nasty Plot
+- Aura Sphere
+- Flash Cannon
+- Vacuum Wave

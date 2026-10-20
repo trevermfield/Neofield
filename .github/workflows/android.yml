@@ -1,0 +1,64 @@
+# Builds the Android app (APK) and attaches it to a GitHub release.
+# The app opens the website, so game updates reach it without a new APK.
+# A new APK is only built when the app shell itself changes, or when run by hand from the Actions tab.
+name: Android app
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - android/**
+      - capacitor.config.json
+      - package.json
+      - .github/workflows/android.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run build
+
+      - name: Point the app at this repo's website
+        run: |
+          owner="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          repo='${{ github.event.repository.name }}'
+          if [ "$repo" = "$owner.github.io" ]; then url="https://$owner.github.io/"; else url="https://$owner.github.io/$repo/"; fi
+          node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync('capacitor.config.json'));c.server.url=process.argv[1];fs.writeFileSync('capacitor.config.json',JSON.stringify(c,null,2))" "$url"
+          echo "App opens $url"
+
+      - run: npx cap sync android
+
+      - name: Build the APK
+        working-directory: android
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 1.${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk ../gym-battles.apk
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: app-v1.${{ github.run_number }}
+          name: Gym Battles app 1.${{ github.run_number }}
+          make_latest: true
+          files: gym-battles.apk
+          body: |
+            Download **gym-battles.apk** below on an Android phone, open it, and allow the install when Android asks.
+            New versions install right over the old one, and your saves stay.

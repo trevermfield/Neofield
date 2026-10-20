@@ -1,0 +1,58 @@
+=== [gen9nationaldex] Ninja Makenna - Moonbadge ===
+
+Zoroark @ Life Orb
+Ability: Illusion
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Nasty Plot
+- Dark Pulse
+- Flamethrower
+- Focus Blast
+
+Greninja @ Life Orb
+Ability: Protean
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Hydro Pump
+- Dark Pulse
+- Ice Beam
+- Grass Knot
+
+Meowscarada @ Choice Band
+Ability: Protean
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Flower Trick
+- Knock Off
+- Triple Axel
+- U-turn
+
+Hydreigon @ Choice Specs
+Ability: Levitate
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Draco Meteor
+- Dark Pulse
+- Flamethrower
+- Flash Cannon
+
+Umbreon @ Leftovers
+Ability: Inner Focus
+EVs: 252 HP / 4 Def / 252 SpD
+Careful Nature
+- Foul Play
+- Wish
+- Protect
+- Toxic
+
+Absol @ Absolite
+Ability: Justified
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Swords Dance
+- Knock Off
+- Sucker Punch
+- Play Rough

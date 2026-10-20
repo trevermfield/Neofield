@@ -1,0 +1,60 @@
+=== [gen9nationaldexubers] Reader Tali - Visionbadge ===
+
+Claydol @ Leftovers
+Ability: Levitate
+EVs: 252 HP / 252 Def / 4 SpA
+Bold Nature
+IVs: 0 Atk
+- Stealth Rock
+- Earth Power
+- Psychic
+- Rapid Spin
+
+Starmie @ Life Orb
+Ability: Natural Cure
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Hydro Pump
+- Psyshock
+- Ice Beam
+- Rapid Spin
+
+Espeon @ Leftovers
+Ability: Magic Bounce
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Calm Mind
+- Psychic
+- Dazzling Gleam
+- Morning Sun
+
+Rapidash-Galar @ Life Orb
+Ability: Pastel Veil
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Swords Dance
+- Psycho Cut
+- Play Rough
+- High Horsepower
+
+Delphox @ Choice Specs
+Ability: Blaze
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Fire Blast
+- Psyshock
+- Dazzling Gleam
+- Grass Knot
+
+Alakazam @ Alakazite
+Ability: Magic Guard
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Nasty Plot
+- Psyshock
+- Focus Blast
+- Shadow Ball

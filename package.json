@@ -1,0 +1,22 @@
+{
+  "name": "gym-leader-battles",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Gym Leader Battles: the Neofield Region fan game, as a website and an Android app.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:artifact": "node scripts/build.mjs --artifact",
+    "serve": "python3 -m http.server 8080 --directory www",
+    "check-teams": "cd game && node validate.mjs"
+  },
+  "dependencies": {
+    "@pkmn/sim": "0.10.11"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/cli": "^7.4.0",
+    "@capacitor/core": "^7.4.0",
+    "esbuild": "0.28.2"
+  }
+}

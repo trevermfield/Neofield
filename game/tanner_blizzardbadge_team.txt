@@ -1,0 +1,58 @@
+=== [gen9nationaldex] Coach Tanner - Blizzardbadge ===
+
+Ninetales-Alola @ Light Clay
+Ability: Snow Warning
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Aurora Veil
+- Blizzard
+- Freeze-Dry
+- Moonblast
+
+Sandslash-Alola @ Heavy-Duty Boots
+Ability: Slush Rush
+EVs: 4 HP / 252 Atk / 252 Spe
+Adamant Nature
+- Triple Axel
+- Iron Head
+- Earthquake
+- Rapid Spin
+
+Mamoswine @ Life Orb
+Ability: Thick Fat
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Icicle Crash
+- Earthquake
+- Ice Shard
+- Knock Off
+
+Weavile @ Choice Band
+Ability: Pressure
+EVs: 4 HP / 252 Atk / 252 Spe
+Jolly Nature
+- Triple Axel
+- Knock Off
+- Ice Shard
+- Low Kick
+
+Lapras @ Leftovers
+Ability: Water Absorb
+EVs: 252 HP / 252 SpA / 4 SpD
+Modest Nature
+IVs: 0 Atk
+- Freeze-Dry
+- Surf
+- Thunderbolt
+- Sing
+
+Jynx @ Life Orb
+Ability: Dry Skin
+EVs: 4 HP / 252 SpA / 252 Spe
+Timid Nature
+IVs: 0 Atk
+- Lovely Kiss
+- Nasty Plot
+- Blizzard
+- Psyshock
