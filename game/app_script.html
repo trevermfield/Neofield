@@ -1768,7 +1768,7 @@ function renderAdvNextBar() {
   if (mapFromBattle) { bar.innerHTML = `<button class="btn primary" id="mapBackBattle">Back to battle</button>`; return; }
   if (A.regional && A.loc != null) { bar.innerHTML = routeCardHTML(A.loc); return; }
   const st = aStage();
-  const actions = `<div class="advactions"><button class="btn" id="aTrain">Train</button><button class="btn" id="aShop">Shop</button><button class="btn" id="aCenter">Heal team</button></div>`;
+  const actions = `<div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aCenter">Heal team</button></div>`;
   if (st.kind === 'done') {
     bar.innerHTML = `<div class="nextcard" style="--c:${CHAMP.color}"><span class="face">${emblem('crown', CHAMP.color)}</span><div><b>Adventure complete</b><small>You beat the level ${CHAMP_LV} Champion.</small></div></div>${actions}`;
     return;

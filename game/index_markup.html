@@ -25,7 +25,9 @@
   --r: 10px;
   color-scheme: dark;
 }
-html, body { height: 100%; }
+/* the game is exactly one screen tall: only the parts meant to scroll (lists, the map, the battle log) ever move */
+html { height: 100%; box-sizing: border-box; overflow: hidden; overscroll-behavior: none; }
+body { height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
 [hidden] { display: none !important; }
 body {
   background: var(--bg);
@@ -41,7 +43,10 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
 .app { height: 100%; display: flex; flex-direction: column; max-width: 560px; margin: 0 auto;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .screen { display: flex; flex-direction: column; min-height: 0; flex: 1; }
-.scroll { overflow-y: auto; padding-block: 18px 28px; display: flex; flex-direction: column; gap: 22px; }
+.scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-block: 18px 28px; display: flex; flex-direction: column; gap: 22px; }
+.scroll > * { flex-shrink: 0; }
+.screen > * { flex-shrink: 0; }
+.screen > .scroll, .screen > .mapwrap, .battle > .log, .battle > .controls { flex-shrink: 1; }
 h1, h2, h3 { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .02em; margin: 0; text-wrap: balance; }
 h1 { font-size: 34px; line-height: 1; font-weight: 800; }
 h2 { font-size: 15px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
@@ -121,7 +126,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 160px; background: v
 .balls i.out { background: transparent; border: 1px solid var(--dim); opacity: 1; box-sizing: border-box; }
 .balls i.active { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--fg); }
 
-.log { flex: 1; min-height: 70px; overflow-y: auto; padding: 8px 4px; font-size: 14px; display: flex; flex-direction: column; gap: 3px; }
+.log { flex: 1 1 0; min-height: 44px; overflow-y: auto; padding: 8px 4px; font-size: 14px; display: flex; flex-direction: column; gap: 3px; }
 .log p { margin: 0; }
 .log .turn { font-family: var(--font-display); text-transform: uppercase; letter-spacing: .14em; font-size: 12px; color: var(--dim); margin-top: 8px; font-weight: 700; }
 .log .key { font-weight: 700; }
@@ -214,7 +219,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 160px; background: v
 .maphead { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-block: 10px 6px; }
 .mapttl { font-family: var(--font-display); font-weight: 800; font-size: 20px; text-transform: uppercase; line-height: 1.05; }
 .mapttl small { display: block; font-family: var(--font-body); font-size: 11px; letter-spacing: .1em; color: var(--accent); font-weight: 700; }
-.mapwrap { flex: 1; min-height: 0; overflow-y: auto; border-radius: var(--r); border: 1px solid var(--line); background: #141c26; }
+.mapwrap { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; border-radius: var(--r); border: 1px solid var(--line); background: #141c26; }
 #mapSvg { display: block; width: 100%; height: auto; }
 #mapSvg text { font-family: var(--font-body); }
 .nextbar { padding-block: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -262,13 +267,14 @@ textarea { width: 100%; box-sizing: border-box; min-height: 160px; background: v
 .bagrow.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .bagrow.compact .bagitem { padding: 8px; }
 .bagrow.compact .bagitem b { flex-direction: column; gap: 0; font-size: 13px; line-height: 1.2; }
-.controls { max-height: 52vh; overflow-y: auto; }
+.controls { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.mapwrap::-webkit-scrollbar, .controls::-webkit-scrollbar { display: none; }
 .battle .mon { flex-shrink: 0; }
 .topbar .row, .maphead .row { flex-wrap: nowrap; gap: 6px; }
 .topbar .ghost, .maphead .ghost { padding: 6px 9px; font-size: 13px; white-space: nowrap; }
 .topbar .vs { font-size: 17px; }
 /* Adventure */
-.advactions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.advactions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .advactions .btn { padding: 11px 6px; }
 .wallet { display: flex; justify-content: space-between; align-items: baseline; border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; background: var(--panel); }
 .wallet span { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
@@ -386,9 +392,9 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .starter b { overflow-wrap: anywhere; line-height: 1.1; }
 /* ---------- routes ---------- */
 #mapSvg [data-route] { cursor: pointer; }
-.routemons { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
-.routemon { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 4px 4px 6px; text-align: center; font-size: 12px; display: flex; flex-direction: column; align-items: center; }
-.routemon .monart { width: 60px; height: 60px; }
+.routemons { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.routemon { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 3px 8px 3px 3px; text-align: left; font-size: 12px; line-height: 1.25; display: grid; grid-template-columns: 42px 1fr; column-gap: 6px; align-items: center; }
+.routemon .monart { width: 42px; height: 42px; grid-row: span 2; }
 .routemon small { color: var(--muted); font-size: 11px; }
 .caughtdot { color: #e25b4f; font-weight: 800; }
 /* ---------- catching ---------- */
@@ -453,15 +459,15 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .twinkle { animation: twinkle 3.2s ease-in-out infinite; }
 @keyframes twinkle { 50% { opacity: .25; } }
 .titlefade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,18,24,0) 40%, rgba(15,18,24,.92) 78%); }
-.titlemain { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; padding: 16vh 32px calc(32px + env(safe-area-inset-bottom, 0px)); }
+.titlemain { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; padding: clamp(24px, 14vh, 140px) 32px clamp(16px, 4vh, 32px); }
 .titlekick { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .3em; color: var(--muted); }
 .wordmark { margin-top: 6px; max-width: 100%; font-size: clamp(44px, 15vw, 84px); line-height: .95; letter-spacing: .06em; font-weight: 800; color: #f4f1e8; }
 .titlebar { margin-top: 14px; width: 64px; height: 3px; border-radius: 2px; background: #e8c76a; }
-.titlespace { flex: 1; min-height: 32px; }
+.titlespace { flex: 1; min-height: 16px; }
 .titlenav { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; }
 .bigbtn { min-height: 58px; border-radius: 12px; border: 1px solid #3a4658; background: rgba(28,34,45,.85); color: var(--fg); font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: .08em; text-transform: uppercase; }
 .bigbtn.gold { background: #e8c76a; border-color: #e8c76a; color: #10131a; }
-.titleicons { margin-top: 28px; display: flex; gap: 40px; justify-content: center; }
+.titleicons { margin-top: clamp(12px, 3vh, 28px); display: flex; gap: 40px; justify-content: center; }
 .iconlbl { background: transparent; border: 0; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 64px; min-height: 56px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 @media (prefers-reduced-motion: reduce) { .titlemap, .twinkle { animation: none; } #whoisImg { transition: none; } .whoisa { animation: none; } }
 
@@ -593,7 +599,10 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 @keyframes zfloat { 0% { opacity: 0; transform: translate(0, 8px); } 30% { opacity: .9; } 100% { opacity: 0; transform: translate(6px, -14px); } }
 @keyframes bubble { 0% { opacity: 0; transform: translateY(0) scale(.6); } 25% { opacity: .9; } 100% { opacity: 0; transform: translateY(-60px) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .stpill, .mon .cardart .monart, .mon .stfx, .mon .stfx::before, .mon .stfx::after { animation: none !important; } }
-@media (max-height: 700px) { .mon.hasart { padding-left: 112px; min-height: 106px; } .mon.foe.hasart { padding-left: 12px; padding-right: 112px; } .mon .cardart { width: 100px; height: 100px; } }
+@media (max-height: 700px) { .mon.hasart { padding-left: 112px; min-height: 106px; } .mon.foe.hasart { padding-left: 12px; padding-right: 112px; } .mon .cardart { width: 100px; height: 100px; }
+  .battle { gap: 6px; } .battle .topbar { padding-block: 6px 2px; } .mon .name { font-size: 20px; } .battle .mon { padding-block: 8px; gap: 4px; }
+  .controls { gap: 6px; padding-block: 2px 8px; } .controls .tab { padding: 4px 10px; } .moves { gap: 6px; }
+  .move { min-height: 50px; padding: 6px 9px; gap: 1px; } .move b { font-size: 14px; } .weather { min-height: 0; } }
 
 /* ---------- link battle ---------- */
 .linkcode, .modecard .linkcode { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 54px; letter-spacing: .3em; color: #e8c76a; text-align: center; line-height: 1.1; }
