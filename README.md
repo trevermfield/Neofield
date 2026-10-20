@@ -7,7 +7,7 @@ Trever and Tyler's Neofield Region game: 17 gym leaders, a Journey mode, an Adve
 - **Website:** `https://<your-github-name>.github.io/<this-repo>/` (it updates by itself a minute or two after every change).
   - **Android:** open it in Chrome, tap ⋮, then **Install app**.
   - **iPhone:** open it in Safari, tap Share, then **Add to Home Screen**.
-- **Android app (APK):** [download the latest gym-battles.apk](../../releases/latest/download/gym-battles.apk). Open it and allow the install when Android asks. The app loads the website, so it gets game updates without a new download.
+- **Android app (APK):** [download the latest neofield.apk](../../releases/latest/download/neofield.apk). Open it and allow the install when Android asks. The app loads the website, so it gets game updates without a new download.
 
 Saves live on each device. To move them between phones, or between the app and the browser, use **Save backup** at the bottom of the main menu.
 
