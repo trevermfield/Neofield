@@ -11,7 +11,7 @@ Trever and Tyler's Neofield Region game. **Adventure** is the main game: Profess
 
 Saves live on each device. To move them between phones, or between the app and the browser, use **Options → Save backup** on the title screen.
 
-Online battles only work inside the Claude version of the game for now.
+**Link Battle** (Battle Hall) connects two phones with a 4-letter code: one hosts, the other joins. The phones talk directly, introduced by the free PeerJS matchmaking service, so both need internet. The Claude version keeps its own online lobby.
 
 ## What's where
 

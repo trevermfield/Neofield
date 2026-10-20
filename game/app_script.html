@@ -27,7 +27,8 @@ const TYPE_COLORS = {
   Fighting: '#d0574b', Poison: '#b06ee0', Ground: '#d9b45f', Flying: '#a6a4f2', Psychic: '#f2668f', Bug: '#a8bd36',
   Rock: '#c2a95c', Ghost: '#7f6bb0', Dragon: '#7b63f2', Dark: '#8a7466', Steel: '#9fb3d4', Fairy: '#ee9ad0', Stellar: '#ffffff',
 };
-const STATUS = {psn: ['PSN', '#b06ee0'], tox: ['TOX', '#b06ee0'], brn: ['BRN', '#f08a4b'], par: ['PAR', '#f2d04a'], slp: ['SLP', '#9aa3b2'], frz: ['FRZ', '#86d8ec']};
+const STATUS = {psn: ['Poisoned', '#b06ee0', 'drop'], tox: ['Badly poisoned', '#b06ee0', 'drop'], brn: ['Burned', '#f08a4b', 'flame'], par: ['Paralyzed', '#f2d04a', 'bolt'], slp: ['Asleep', '#b8c0cc', 'moon'], frz: ['Frozen', '#86d8ec', 'flake']};
+const statusPill = (st, small) => STATUS[st] ? `<span class="stpill st-${st}${small ? ' small' : ''}">${emblem(STATUS[st][2], '#10131a')}${STATUS[st][0]}</span>` : '';
 const STAT_NAMES = {atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed', accuracy: 'accuracy', evasion: 'evasiveness'};
 const STAT_SHORT = {atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe', accuracy: 'Acc', evasion: 'Eva'};
 
@@ -177,6 +178,7 @@ function beginBattle(p1, p2, seed) {
   battle = E.createBattle(p1, p2, seed);
   logIdx = battle.log.length;
   view = {p1: blankMon(), p2: blankMon()};
+  hpAnim.p1 = hpAnim.p2 = null;
   panel = 'fight'; resultShown = false;
   $('log').innerHTML = '';
   $('overlay').hidden = true;
@@ -194,7 +196,7 @@ function showLeadScreen() {
   const carry = ctx && ctx.kind !== undefined;
   $('leadList').innerHTML = battle[ME].pokemon.map((p, i) => {
     const pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
-    const hpBar = carry ? `<span class="hpmini"><i style="width:${pct}%;background:${hpColor(pct)}"></i></span><small>${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`}</small>` : '';
+    const hpBar = carry ? `<span class="hpmini"><i style="width:${pct}%;background:${hpColor(pct)}"></i></span><small>${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`} ${p.status && !p.fainted ? statusPill(p.status, true) : ''}</small>` : '';
     return `<button class="pick" id="lead-${i}" data-i="${i + 1}" ${p.fainted ? 'disabled' : ''}><div><b>${esc(p.species.name)}</b><small>${esc(p.item ? E.Dex.items.get(p.item).name : '')} · ${p.moveSlots.map(m => esc(m.move)).join(', ')}</small>${hpBar}</div>${typesHTML(p.species.types)}</button>`;
   }).join('');
   $('leadBack').textContent = mode !== 'cpu' ? 'Back to lobby' : ctx && ctx.kind === 'journey' ? 'Back to map' : 'Back';
@@ -269,6 +271,7 @@ async function commit(choice) {
   choices[ME] = [...choices[ME], choice];
   applied[ME] = choices[ME].length;
   renderControls();
+  if (match.link) { linkSend({t: 'moves', side: ME, list: choices[ME]}); await refresh(); return; }
   try {
     await db.doc(`matches/${match.id}/moves/${ME}`).set({list: choices[ME], at: Date.now()});
   } catch (e) {
@@ -328,7 +331,8 @@ async function refresh() {
   if (battle.ended && !resultShown) {
     resultShown = true;
     if (mode === 'online' && match && match.data.status !== 'done') {
-      db.doc('matches/' + match.id).update({status: 'done', winner: battle.winner || ''}).catch(() => {});
+      if (match.link) match.data.status = 'done';
+      else db.doc('matches/' + match.id).update({status: 'done', winner: battle.winner || ''}).catch(() => {});
     }
     setTimeout(showResult, skip ? 0 : 500);
   }
@@ -347,7 +351,7 @@ async function play() {
     if (ev.text) addLine(ev.text, ev.cls);
     renderCards();
     if (ev.fx) applyFx(ev.fx);
-    if (ev.text && !skip) await sleep(ev.cls === 'turn' ? 150 : 520);
+    if (ev.text && !skip) await sleep(ev.wait || (ev.cls === 'turn' ? 150 : 520));
   }
   playing = false;
   skip = false;
@@ -431,7 +435,7 @@ function translate(lines) {
             this.lost = drop > 0 ? Math.max(1, Math.round(drop)) : 0;
           },
           get text() { return this.lost === undefined || this.lost === 0 ? '' : `${Nm(id)} lost ${this.lost}% of its health${from ? ` <span class="info">(${esc(from === 'psn' || from === 'tox' ? 'poison' : from === 'brn' ? 'burn' : from)})</span>` : ''}.`; },
-          cls: s === ME ? 'bad' : ''});
+          cls: s === ME ? 'bad' : '', wait: 1000});
         break;
       }
       case '-heal': {
@@ -439,7 +443,7 @@ function translate(lines) {
         const from = fromTag(parts);
         out.push({apply() { const before = pctOf(s); view[s].hp = hp.hp; view[s].maxhp = hp.maxhp; const up = pctOf(s) - before; this.gain = up > 0 ? Math.max(1, Math.round(up)) : 0; },
           get text() { return this.gain === undefined ? '' : (this.gain ? `${Nm(id)} restored ${this.gain}% HP${from ? ` <span class="info">(${esc(from)})</span>` : ''}.` : ''); },
-          cls: s === ME ? 'good' : ''});
+          cls: s === ME ? 'good' : '', wait: 1000});
         break;
       }
       case 'faint':
@@ -455,7 +459,8 @@ function translate(lines) {
       case '-status': {
         const st = parts[2];
         const msg = {psn: 'was poisoned', tox: 'was badly poisoned', brn: 'was burned', par: 'is paralyzed! It may be unable to move', slp: 'fell asleep', frz: 'was frozen solid'}[st] || 'got a status condition';
-        out.push({apply() { view[s].status = st; }, text: `${Nm(id)} ${msg}!`});
+        out.push({apply() { view[s].status = st; }, text: `${Nm(id)} ${msg}! ${statusPill(st, true)}`,
+          fx: {side: s, kind: 'hit', color: STATUS[st] ? STATUS[st][1] : '#ffffff'}});
         break;
       }
       case '-curestatus': {
@@ -547,10 +552,8 @@ function cardHTML(side) {
   const v = view[side];
   if (!v.species) return `<div class="head"><span class="name">${side === ME ? 'Your side' : esc(foe.name)}</span><span class="owner">${side === ME ? 'You' : 'Opponent'}</span></div><div class="note">Waiting for the first Pokémon…</div>`;
   const sp = E.Dex.species.get(v.species);
-  const pct = Math.max(0, pctOf(side));
-  const shownPct = v.hp > 0 ? Math.max(1, Math.round(pct)) : 0;
-  const hpText = side === ME ? `${Math.max(0, v.hp)}/${v.maxhp}` : `${shownPct}%`;
-  const st = STATUS[v.status];
+  const pct = hpTrack(side, v.ident, Math.max(0, pctOf(side)));
+  const hpText = hpLabel(side, pct);
   const boosts = Object.entries(v.boosts).filter(([, n]) => n).map(([k, n]) => `<span class="boost ${n > 0 ? 'up' : 'down'}">${STAT_SHORT[k] || k} ${n > 0 ? '+' : ''}${n}</span>`).join('');
   const sideObj = battle[side];
   const hazards = Object.keys(sideObj.sideConditions).filter(k => k !== 'catchguard').map(k => {
@@ -560,16 +563,61 @@ function cardHTML(side) {
   }).join('');
   const balls = sideObj.pokemon.map(p => `<i class="${p.fainted || p.hp <= 0 ? 'out' : p.hp < p.maxhp / 2 ? 'hurt' : ''} ${p.isActive ? 'active' : ''}"></i>`).join('');
   const art = artOf(sp.name);
-  return `${art ? `<span class="cardart">${art}</span>` : ''}
+  return `${art ? `<span class="cardart">${art}<span class="stfx"></span></span>` : ''}
     <div class="head"><span class="name">${sp.isMega ? 'Mega ' : ''}${esc(sp.isMega ? sp.baseSpecies : sp.name)}${battle[side].active[0] && battle[side].active[0].level !== 100 ? ` <small class="lvl">Lv ${battle[side].active[0].level}</small>` : ''}</span><span class="owner">${side === ME ? 'You' : esc(foe.name)}</span></div>
     <div class="row" style="justify-content:space-between">${typesHTML(sp.types)}<span class="balls" aria-label="Team status">${balls}</span></div>
     <div class="hpwrap"><div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><span class="hptext">${hpText}</span></div>
-    <div class="tags">${st ? `<span class="status" style="background:${st[1]}">${st[0]}</span>` : ''}${boosts}${hazards}</div>`;
+    <div class="tags">${statusPill(v.status)}${boosts}${hazards}</div>`;
+}
+
+// Health bars move smoothly: every change takes 1 second from start to finish.
+const hpAnim = {p1: null, p2: null}; // {ident, from, to, t0, dur}
+function hpShown(side) {
+  const a = hpAnim[side];
+  if (!a) return null;
+  if (skip || !a.dur) return a.to;
+  const k = Math.min(1, (performance.now() - a.t0) / a.dur);
+  return a.from + (a.to - a.from) * k;
+}
+function hpTrack(side, ident, target) {
+  const a = hpAnim[side];
+  if (!a || a.ident !== ident) { hpAnim[side] = {ident, from: target, to: target, t0: 0, dur: 0}; return target; }
+  if (Math.abs(a.to - target) > 0.6) {
+    hpAnim[side] = {ident, from: hpShown(side), to: target, t0: performance.now(), dur: skip || reducedMotion() ? 0 : 1000};
+    if (!hpRaf) hpRaf = requestAnimationFrame(hpTick);
+  }
+  return hpShown(side);
+}
+function hpLabel(side, pct) {
+  const v = view[side], a = hpAnim[side], done = !a || hpShown(side) === a.to;
+  if (side === ME) return `${done ? Math.max(0, v.hp) : Math.max(0, Math.round(pct * v.maxhp / 100))}/${v.maxhp}`;
+  return `${pct > 0 ? Math.max(1, Math.round(pct)) : 0}%`;
+}
+let hpRaf = 0;
+function hpTick() {
+  hpRaf = 0;
+  let busy = false;
+  for (const side of ['p1', 'p2']) {
+    const a = hpAnim[side];
+    if (!a || !view || !view[side]) continue;
+    const pct = hpShown(side);
+    const el = $(side === ME ? 'myCard' : 'foeCard');
+    const bar = el.querySelector('.hp i'), txt = el.querySelector('.hptext');
+    if (bar) { bar.style.width = pct + '%'; bar.style.backgroundColor = hpColor(pct); }
+    if (txt) txt.textContent = hpLabel(side, pct);
+    if (pct !== a.to) busy = true;
+  }
+  if (busy) hpRaf = requestAnimationFrame(hpTick);
 }
 
 function renderCards() {
   $('foeCard').innerHTML = cardHTML(FOE);
   $('myCard').innerHTML = cardHTML(ME);
+  for (const [side, id] of [[FOE, 'foeCard'], [ME, 'myCard']]) {
+    const el = $(id), st = view[side].status;
+    for (const c of [...el.classList]) if (c.startsWith('st-')) el.classList.remove(c);
+    if (STATUS[st] && view[side].hp > 0) el.classList.add('st-' + st);
+  }
   $('foeCard').classList.toggle('hasart', !!(view[FOE].species && artOf(view[FOE].species)));
   $('myCard').classList.toggle('hasart', !!(view[ME].species && artOf(view[ME].species)));
   const w = battle.field.weather;
@@ -638,7 +686,7 @@ function renderControls() {
         const pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
         return `<button class="swap" id="use-${i}" data-use="${i}" ${prob ? 'disabled' : ''} title="${esc(prob)}"><b>${esc(p.name)}${p.isActive ? ' · in battle' : ''}</b>
           <div class="hp"><i style="width:${p.fainted ? 0 : pct}%;background-color:${hpColor(pct)}"></i></div>
-          <small class="note">${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`}${p.status && p.status !== 'fnt' ? ' · ' + p.status.toUpperCase() : ''}</small></button>`;
+          <small class="note">${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`} ${p.status && p.status !== 'fnt' ? statusPill(p.status, true) : ''}</small></button>`;
       }).join('') + '</div>';
     }
   } else if (panel === 'fight' && act) {
@@ -668,7 +716,7 @@ function renderControls() {
       return `<button class="swap" id="swap-${i + 1}" data-i="${i + 1}" ${disabled ? 'disabled' : ''}>
         <b>${esc(name)}${p.active ? ' · in battle' : ''}</b>
         <div class="hp"><i style="width:${fainted ? 0 : pct}%;background-color:${hpColor(pct)}"></i></div>
-        <small class="note">${fainted ? 'Fainted' : `${Math.max(0, a)}/${b} HP`}${st && st !== 'fnt' ? ' · ' + st.toUpperCase() : ''}</small></button>`;
+        <small class="note">${fainted ? 'Fainted' : `${Math.max(0, a)}/${b} HP`} ${st && st !== 'fnt' ? statusPill(st, true) : ''}</small></button>`;
     }).join('') + '</div>';
     if (!forced && trapped) html += '<div class="prompt">You are trapped and cannot switch out.</div>';
   }
@@ -698,8 +746,11 @@ $('forfeit').addEventListener('click', async () => {
   if (!forfeitArmed) { forfeitArmed = true; $('forfeit').textContent = 'Tap again to forfeit'; setTimeout(() => { forfeitArmed = false; $('forfeit').textContent = 'Forfeit'; }, 2500); return; }
   forfeitArmed = false; $('forfeit').textContent = 'Forfeit';
   if (mode === 'online') {
-    try { await db.doc('matches/' + match.id).update({forfeit: ME, status: 'done'}); }
-    catch (e) { addLine("Couldn't reach the server to forfeit. Try again.", 'bad'); return; }
+    if (match.link) linkSend({t: 'forfeit', side: ME});
+    else {
+      try { await db.doc('matches/' + match.id).update({forfeit: ME, status: 'done'}); }
+      catch (e) { addLine("Couldn't reach the server to forfeit. Try again.", 'bad'); return; }
+    }
     match.data = {...match.data, forfeit: ME, status: 'done'};
   }
   battle.forceWin(FOE);
@@ -748,6 +799,7 @@ $('result').addEventListener('click', e => {
 });
 
 function endBattleQuietly() {
+  if (match && match.link) linkEnd();
   if (unsubMoves) { unsubMoves(); unsubMoves = null; }
   if (unsubMatch) { unsubMatch(); unsubMatch = null; }
   battle = null; match = null;
@@ -772,6 +824,7 @@ function teamLabel(p) {
 }
 
 function renderOnline() {
+  if (!window.claude) { renderLink(); return; }
   const box = $('online');
   if (!box) return;
   if (!E) { box.innerHTML = '<div class="note">Loading the battle engine…</div>'; return; }
@@ -3232,6 +3285,206 @@ $('monedBody').addEventListener('click', e => {
   if (m && m.moves) m.moves = m.moves.filter(Boolean);
   renderBuilder(); show('builder');
 });
+
+// ---------- Link Battle in the app: phone to phone with a 4-letter code ----------
+// The two phones connect directly (PeerJS's free matchmaking service introduces them). Both run the
+// same battle from the same seed and send each other only their choices, like the Claude version does.
+let link = null;      // {role: 'host' | 'guest' | 'join', code, peer, conn, status, error, tries}
+let linkNote = '';    // last problem, shown in the Link Battle card
+const LINK_ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const linkId = code => `neofield-v1-${code}`;
+function peerOpts() {
+  const q = new URLSearchParams(location.search), o = {debug: 0};
+  if (q.get('peerhost')) { o.host = q.get('peerhost'); o.port = +q.get('peerport') || 9000; o.path = q.get('peerpath') || '/'; o.secure = q.get('peersecure') === '1'; }
+  return o;
+}
+function renderLink() {
+  const box = $('online');
+  if (!box || !E) return;
+  const mine = myTeam();
+  let html;
+  if (!link) {
+    html = `<p class="note">Battle a friend on another phone. One of you hosts and shares the 4-letter code, the other joins with it. Both phones need internet.</p>
+      <div class="row"><button class="btn primary" type="button" data-link="host" ${mine ? '' : 'disabled'}>Host a battle</button><button class="btn" type="button" data-link="joinask" ${mine ? '' : 'disabled'}>Join with a code</button></div>
+      <p class="note">${mine ? `You'll battle with ${esc(mine.label)}.` : 'Pick a team above first.'}</p>`;
+  } else if (link.role === 'join') {
+    html = `<label class="note" for="linkCode">Battle code from your friend</label>
+      <input id="linkCode" class="linkinput" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" value="${esc(link.code || '')}">
+      <div class="row"><button class="btn primary" type="button" data-link="join">Join</button><button class="btn" type="button" data-link="cancel">Cancel</button></div>`;
+  } else if (link.role === 'host') {
+    html = link.status === 'opening' ? '<p class="note"><span class="pulse"></span>Getting a battle code…</p>'
+      : `<p class="note">Your battle code</p><p class="linkcode">${esc(link.code)}</p>
+        <p class="note"><span class="pulse"></span>Waiting for your friend. They tap Join with a code in their Battle Hall and type this in.</p>`;
+    html += `<div class="row"><button class="btn" type="button" data-link="cancel">Cancel</button></div>`;
+  } else {
+    html = `<p class="note"><span class="pulse"></span>Connecting to battle ${esc(link.code)}…</p><div class="row"><button class="btn" type="button" data-link="cancel">Cancel</button></div>`;
+  }
+  if (linkNote) html += `<p class="note err">${esc(linkNote)}</p>`;
+  box.innerHTML = html;
+  if (link && link.role === 'join') $('linkCode').focus();
+}
+$('online').addEventListener('click', e => {
+  const b = e.target.closest('[data-link]'); if (!b || b.disabled || !E) return;
+  const act = b.dataset.link;
+  linkNote = '';
+  if (act === 'host') linkHost();
+  else if (act === 'joinask') { linkEnd(); link = {role: 'join', code: ''}; renderLink(); }
+  else if (act === 'join') {
+    const code = ($('linkCode').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length !== 4) { linkNote = 'Battle codes are 4 letters and numbers.'; renderLink(); return; }
+    linkJoin(code);
+  } else if (act === 'cancel') { linkEnd(); renderLink(); }
+});
+$('online').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'linkCode') { const b = $('online').querySelector('[data-link="join"]'); if (b) b.click(); } });
+function linkHost() {
+  linkEnd();
+  const code = Array.from({length: 4}, () => LINK_ALPHA[Math.floor(Math.random() * LINK_ALPHA.length)]).join('');
+  const peer = new E.Peer(linkId(code), peerOpts());
+  link = {role: 'host', code, peer, conn: null, status: 'opening'};
+  peer.on('open', () => { if (link && link.peer === peer) { link.status = 'waiting'; renderLink(); } });
+  peer.on('connection', c => {
+    if (!link || link.peer !== peer) return;
+    if (link.conn && link.conn.open) { c.on('open', () => { c.send({t: 'busy'}); setTimeout(() => c.close(), 400); }); return; }
+    link.conn = c; wireConn(c);
+  });
+  peer.on('disconnected', () => { if (link && link.peer === peer && !peer.destroyed) { try { peer.reconnect(); } catch (e) { /* try again later */ } } });
+  peer.on('error', err => linkError(peer, err));
+  renderLink();
+}
+function linkJoin(code) {
+  linkEnd();
+  const peer = new E.Peer(peerOpts());
+  link = {role: 'guest', code, peer, conn: null, status: 'connecting', tries: 0};
+  peer.on('open', () => linkConnect());
+  peer.on('disconnected', () => { if (link && link.peer === peer && !peer.destroyed) { try { peer.reconnect(); } catch (e) { /* try again later */ } } });
+  peer.on('error', err => linkError(peer, err));
+  renderLink();
+}
+function linkConnect() {
+  if (!link || link.role !== 'guest' || !link.peer || link.peer.destroyed) return;
+  const c = link.peer.connect(linkId(link.code), {reliable: true});
+  link.conn = c; wireConn(c);
+}
+function wireConn(c) {
+  c.on('open', () => {
+    if (!link || link.conn !== c) return;
+    link.tries = 0;
+    c.send({t: 'hello', v: 1, info: linkInfo()});
+    if (match && match.link) c.send({t: 'moves', side: ME, list: choices[ME]});
+    if (battle && !battle.ended) addLine('Connected.', 'good');
+  });
+  c.on('data', msg => { if (link && link.conn === c) onLinkData(msg); });
+  c.on('close', () => { if (link && link.conn === c) onLinkClose(); });
+  c.on('error', () => { /* 'close' follows */ });
+}
+function linkInfo() {
+  const mine = myTeam();
+  return mine ? {name: profileName() || mine.name, key: mine.kind === 'gym' ? mine.key : null, color: mine.color || CUSTOM_COLOR, team: myTeamText()} : null;
+}
+function linkSend(msg) { if (link && link.conn && link.conn.open) { try { link.conn.send(msg); } catch (e) { /* resent on reconnect */ } } }
+function linkError(peer, err) {
+  if (!link || link.peer !== peer) return;
+  const type = err && err.type;
+  if (type === 'unavailable-id' && link.role === 'host' && !(match && match.link)) { linkHost(); return; } // that code is taken
+  if (match && match.link && battle) {
+    if (link.role === 'guest' && type === 'peer-unavailable') linkRetry();
+    return;
+  }
+  linkNote = type === 'peer-unavailable' ? `No battle found with code ${link.code}. Check the code with your friend; they need to stay on the Battle Hall while you join.`
+    : type === 'browser-incompatible' ? "This browser can't do Link Battles."
+    : "Couldn't reach the matchmaking service. Check your internet connection and try again.";
+  const code = link.role === 'guest' ? link.code : '';
+  const wasGuest = link.role === 'guest';
+  linkEnd();
+  if (wasGuest) link = {role: 'join', code};
+  if (curScreen === 'setup') renderLink();
+}
+function linkRetry() {
+  if (!link || link.role !== 'guest') return;
+  link.tries = (link.tries || 0) + 1;
+  if (link.tries > 40) { addLine("Couldn't reconnect. Check your internet connection, then go back and join the same code again.", 'bad'); return; }
+  setTimeout(() => {
+    if (!link || link.role !== 'guest' || (link.conn && link.conn.open)) return;
+    if (link.peer.disconnected && !link.peer.destroyed) { try { link.peer.reconnect(); } catch (e) { /* next try */ } }
+    linkConnect();
+  }, 3000);
+}
+function onLinkClose() {
+  link.conn = null;
+  if (match && match.link && battle) {
+    if (battle.ended) return;
+    addLine(link.role === 'guest' ? 'Lost the connection. Reconnecting…' : `Lost the connection to ${esc(foe.name)}. Waiting for them to reconnect…`, 'bad');
+    if (link.role === 'guest') linkRetry();
+  } else if (link.role === 'guest') {
+    linkNote = 'The connection closed before the battle started. Try joining again.';
+    const code = link.code; linkEnd(); link = {role: 'join', code};
+    if (curScreen === 'setup') renderLink();
+  }
+}
+function onLinkData(msg) {
+  if (!msg || typeof msg !== 'object') return;
+  if (msg.t === 'hello') {
+    if (link.role !== 'host') return;
+    if (match && match.link) { linkSend({t: 'start', data: match.data, choices}); return; } // friend reconnected
+    const me = linkInfo(), them = msg.info;
+    if (!me || !them || !them.team) return;
+    const p2 = {...them};
+    if (p2.name === me.name) p2.name += ' 2';
+    const data = {status: 'active', seed: [0, 0, 0, 0].map(() => Math.floor(Math.random() * 0x10000)), p1: me, p2};
+    linkSend({t: 'start', data, choices: {p1: [], p2: []}});
+    openLinkMatch(data, {p1: [], p2: []});
+  } else if (msg.t === 'start') {
+    if (link.role !== 'guest' || !msg.data) return;
+    const same = match && match.link && battle && JSON.stringify(match.data.seed) === JSON.stringify(msg.data.seed);
+    if (same) { mergeChoices(msg.choices); linkSend({t: 'moves', side: ME, list: choices[ME]}); return; }
+    openLinkMatch(msg.data, msg.choices || {});
+  } else if (msg.t === 'moves') {
+    mergeChoices({[msg.side]: msg.list});
+  } else if (msg.t === 'forfeit') {
+    if (match && match.link && battle && !battle.ended) { match.data = {...match.data, forfeit: msg.side, status: 'done'}; refresh(); }
+  } else if (msg.t === 'leave') {
+    if (battle && !battle.ended) addLine(`${esc(foe.name)} left the battle.`, 'bad');
+  } else if (msg.t === 'busy') {
+    linkNote = 'That battle already has two players.';
+    linkEnd();
+    if (curScreen === 'setup') renderLink();
+  }
+}
+function mergeChoices(ch) {
+  if (!match || !match.link || !battle) return;
+  let changed = false;
+  for (const s of ['p1', 'p2']) {
+    if (s === ME) continue; // your own moves are only ever changed by you
+    const list = ch && ch[s];
+    if (Array.isArray(list) && list.length > choices[s].length) { choices[s] = list.slice(); changed = true; }
+  }
+  if (changed) refresh();
+}
+function openLinkMatch(data, initial) {
+  mode = 'online'; ctx = null;
+  match = {id: link.code, data, link: true};
+  ME = link.role === 'host' ? 'p1' : 'p2'; FOE = ME === 'p1' ? 'p2' : 'p1';
+  const opp = data[FOE];
+  foe = {name: opp.name, key: opp.key, color: opp.color || CUSTOM_COLOR};
+  setAccent(foe.color);
+  beginBattle({name: data.p1.name, team: E.parseTeam(data.p1.team).team}, {name: data.p2.name, team: E.parseTeam(data.p2.team).team}, data.seed);
+  choices = {p1: (initial.p1 || []).slice(), p2: (initial.p2 || []).slice()};
+  applied = {p1: 0, p2: 0};
+  show('battle');
+  $('controls').innerHTML = '<div class="waiting">Starting the battle…</div>';
+  skip = true;
+  refresh();
+}
+function linkEnd() {
+  if (!link) return;
+  const l = link;
+  link = null;
+  if (l.conn && l.conn.open) { try { l.conn.send({t: 'leave'}); } catch (e) { /* closing anyway */ } }
+  setTimeout(() => { try { if (l.conn) l.conn.close(); } catch (e) { /* already closed */ } try { if (l.peer) l.peer.destroy(); } catch (e) { /* already gone */ } }, 300);
+}
+
+// Automated tests open the game with ?test to read the battle state.
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close()};
 
 // ---------- intro: who's that Mon? ----------
 // Plays once each time the app opens: 3 seconds of silhouette, the reveal, 3 more seconds,

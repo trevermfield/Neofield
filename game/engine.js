@@ -528,3 +528,4 @@ function teamPreviewChoice(battle, side) {
 export * from './adventure.js';
 export * from './art.js';
 export * from './builder.js';
+export {Peer} from 'peerjs';
