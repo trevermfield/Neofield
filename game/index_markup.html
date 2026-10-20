@@ -1,4 +1,4 @@
-<title>Gym Leader Battles</title>
+<title>Neofield</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,7 +20,7 @@
   --hp-mid: #e6c14a;
   --hp-low: #e25b4f;
   --danger: #e25b4f;
-  --font-display: "Saira Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --font-display: "Saira Condensed", "Roboto Condensed", "Arial Narrow", sans-serif-condensed, system-ui, sans-serif;
   --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
   --r: 10px;
   color-scheme: dark;
@@ -424,16 +424,205 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .evo .orb .glyph .monart { width: 128%; height: 128%; filter: drop-shadow(0 4px 10px rgba(0,0,0,.4)); }
 .evo.charging .orb .glyph .monart { filter: brightness(0) invert(1) drop-shadow(0 0 12px #fff); }
 @media (max-width: 420px) { .mapttl { font-size: 16px; } .maphead .ghost { padding: 6px 7px; font-size: 12px; } }
+
+/* ---------- intro: who's that Mon? ---------- */
+.whois { position: fixed; inset: 0; z-index: 60; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: calc(56px + env(safe-area-inset-top, 0px)) 24px calc(40px + env(safe-area-inset-bottom, 0px)); text-align: center; transition: opacity .5s ease; }
+.whois.out { opacity: 0; pointer-events: none; }
+.whoiskick { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 16px; letter-spacing: .32em; color: var(--muted); }
+.whoisstage { position: relative; margin-top: 7vh; width: min(72vw, 300px); aspect-ratio: 1; display: grid; place-items: center; }
+.whoisglow { position: absolute; inset: -18%; border-radius: 50%; background: radial-gradient(circle, rgba(232,199,106,.16) 0%, rgba(232,199,106,0) 65%); }
+#whoisImg { position: relative; width: 100%; height: 100%; object-fit: contain; transition: filter .7s ease, transform .7s cubic-bezier(.2,1.5,.4,1); }
+#whoisImg.sil { filter: brightness(0) drop-shadow(0 0 22px rgba(232,199,106,.45)); transform: scale(.94); }
+#whoisImg.shown { filter: drop-shadow(0 10px 28px rgba(0,0,0,.55)); transform: none; }
+.whoistext { margin-top: 32px; min-height: 140px; display: flex; flex-direction: column; align-items: center; }
+.whoisq { font-size: clamp(34px, 10vw, 46px); line-height: 1; font-weight: 800; }
+.whoisa { display: flex; flex-direction: column; align-items: center; gap: 10px; animation: whoispop .6s cubic-bezier(.2,1.7,.4,1) both; }
+.whoisa p { margin: 0; font-weight: 700; font-size: 15px; letter-spacing: .08em; color: var(--muted); }
+.whoisa h1 { max-width: 100%; overflow-wrap: anywhere; font-size: clamp(32px, 10vw, 56px); line-height: 1; font-weight: 800; color: #fff; }
+.whoisa .type { font-size: 12px; padding: 4px 10px; border-radius: 6px; }
+@keyframes whoispop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.whoisbar { margin-top: auto; width: min(100%, 300px); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.whoistrack { width: 100%; height: 4px; border-radius: 4px; background: var(--panel-2); overflow: hidden; }
+.whoistrack i { display: block; height: 100%; width: 8%; background: #e8c76a; border-radius: 4px; transition: width .3s ease; }
+.whoisbar p { margin: 0; font-size: 13px; color: var(--muted); }
+
+/* ---------- title ---------- */
+.titlescreen { position: relative; overflow: hidden; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); }
+.titlemap { position: absolute; left: -6%; top: -3%; width: 112%; height: 106%; opacity: .55; animation: titledrift 40s ease-in-out infinite alternate; }
+@keyframes titledrift { from { transform: translate(-3%, 0); } to { transform: translate(3%, -3%); } }
+.twinkle { animation: twinkle 3.2s ease-in-out infinite; }
+@keyframes twinkle { 50% { opacity: .25; } }
+.titlefade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,18,24,0) 40%, rgba(15,18,24,.92) 78%); }
+.titlemain { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; padding: 16vh 32px calc(32px + env(safe-area-inset-bottom, 0px)); }
+.titlekick { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .3em; color: var(--muted); }
+.wordmark { margin-top: 6px; max-width: 100%; font-size: clamp(44px, 15vw, 84px); line-height: .95; letter-spacing: .06em; font-weight: 800; color: #f4f1e8; }
+.titlebar { margin-top: 14px; width: 64px; height: 3px; border-radius: 2px; background: #e8c76a; }
+.titlespace { flex: 1; min-height: 32px; }
+.titlenav { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; }
+.bigbtn { min-height: 58px; border-radius: 12px; border: 1px solid #3a4658; background: rgba(28,34,45,.85); color: var(--fg); font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: .08em; text-transform: uppercase; }
+.bigbtn.gold { background: #e8c76a; border-color: #e8c76a; color: #10131a; }
+.titleicons { margin-top: 28px; display: flex; gap: 40px; justify-content: center; }
+.iconlbl { background: transparent; border: 0; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 64px; min-height: 56px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .titlemap, .twinkle { animation: none; } #whoisImg { transition: none; } .whoisa { animation: none; } }
+
+/* ---------- shared screen header ---------- */
+.hallhead { display: flex; align-items: center; gap: 12px; }
+.hallhead h1 { font-size: 32px; }
+.hallhead .sub { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.hallhead .sub button { background: none; border: 0; padding: 0; color: #e8c76a; font-weight: 700; font-size: 13px; text-decoration: underline; }
+.iconbtn { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--fg); display: grid; place-items: center; }
+.togglerow { display: flex; gap: 10px; align-items: center; min-height: 44px; font-size: 15px; }
+.togglerow input { width: 20px; height: 20px; accent-color: #e8c76a; }
+
+/* ---------- save slots ---------- */
+.slotlist { display: flex; flex-direction: column; gap: 12px; }
+.slot { border-radius: 12px; border: 1px solid var(--line); background: var(--panel); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.slot.empty { border-style: dashed; background: transparent; }
+.slot.warn { border-color: var(--danger); }
+.slot.cont { border: 2px solid #e8c76a; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px 14px; align-items: center; }
+.slot.cont .lead { width: 96px; height: 96px; border-radius: 10px; background: var(--panel-2); display: grid; place-items: center; overflow: hidden; }
+.slot.cont .full { grid-column: 1 / -1; }
+.slot .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.slot .top b { font-size: 16px; }
+.slot .kicker { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #e8c76a; }
+.slot .big { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 24px; line-height: 1.05; }
+.slot p { margin: 0; font-size: 13px; color: var(--muted); }
+.slot p.next { color: #c9d1dd; }
+.slot .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.slot .acts .btn { flex: 1 1 0; min-height: 44px; }
+.btn.gold { background: #e8c76a; color: #10131a; }
+.btn.danger { background: var(--danger); color: #10131a; }
+.btn.ghostbtn { background: transparent; border: 1px solid var(--line); color: var(--fg); }
+.warnbox { border-radius: 10px; background: #2a1d20; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.warnbox p { color: #f2d6d3; font-size: 14px; line-height: 1.4; }
+.askbox { border-radius: 10px; background: var(--bg-2); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.askbox label { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--muted); }
+.askbox input, .field input, .field select { font: inherit; font-size: 16px; min-height: 46px; box-sizing: border-box; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); width: 100%; }
+.minis { display: flex; gap: 4px; flex-wrap: wrap; }
+.mini { width: 44px; height: 44px; border-radius: 8px; background: var(--panel-2); display: grid; place-items: center; overflow: hidden; }
+.mini .monart { width: 100%; height: 100%; }
+.numtile { font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--t, var(--muted)); }
+
+/* ---------- battle hall ---------- */
+.teampanel { border-radius: 12px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.teampanel p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.4; }
+.teampanel .chips { gap: 6px; }
+.teampanel .chip { padding: 6px 10px; font-size: 13px; }
+.advgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+.advgrid div { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 12px; font-weight: 700; }
+.advgrid .monart { width: 64px; height: 64px; }
+.modebtn, .modecard { text-align: left; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; color: var(--fg); display: flex; flex-direction: column; gap: 4px; }
+.modebtn b, .modecard h3 { font-family: var(--font-display); font-weight: 800; font-size: 22px; text-transform: uppercase; }
+.modebtn small { font-size: 13px; color: var(--muted); }
+.modecard.locked { background: var(--bg-2); border-style: dashed; }
+.modecard.locked h3 { color: var(--muted); }
+
+/* ---------- my teams and builder ---------- */
+.teamcard { border-radius: 12px; background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+.teamcard.sel { border-color: #e8c76a; }
+.teamcard .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.teamcard .top b { font-size: 16px; overflow-wrap: anywhere; }
+.teamcard p { margin: 0; font-size: 13px; color: var(--muted); }
+.teamcard p.err { color: var(--danger); }
+.star { width: 44px; height: 44px; flex-shrink: 0; border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; }
+.star[aria-pressed="true"] { color: #e8c76a; }
+.bslots { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.bslot { aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); padding: 2px; display: grid; place-items: center; color: var(--muted); overflow: hidden; }
+.bslot.open { border-style: dashed; background: transparent; }
+.bslot[aria-pressed="true"] { border: 2px solid #e8c76a; color: #e8c76a; }
+.bslot .monart { width: 100%; height: 100%; }
+.filters { display: flex; flex-direction: column; gap: 8px; }
+.typechips { display: flex; gap: 5px; flex-wrap: wrap; }
+.typechip { min-height: 32px; padding: 0 9px; border-radius: 6px; border: 2px solid transparent; background: var(--t); color: #10131a; font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; opacity: .55; }
+.typechip[aria-pressed="true"] { opacity: 1; border-color: #fff; }
+.results { display: flex; flex-direction: column; gap: 8px; }
+.monrow { text-align: left; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); padding: 8px 12px 8px 8px; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; align-items: center; color: var(--fg); }
+.monrow .pic { width: 56px; height: 56px; border-radius: 8px; background: var(--panel-2); display: grid; place-items: center; overflow: hidden; }
+.monrow .pic .monart { width: 100%; height: 100%; }
+.monrow small { color: var(--muted); font-size: 12px; display: block; }
+.monrow b { font-size: 15px; display: block; }
+.monhero { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 14px; align-items: center; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); padding: 12px; }
+.monhero .pic { width: 110px; height: 110px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 26px; color: var(--muted); }
+.monhero .pic .monart { width: 100%; height: 100%; }
+.monhero h1 { font-size: 30px; line-height: 1; }
+.monhero small { color: var(--muted); font-size: 12px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+.fieldgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.movepick { --t: var(--line); border-left: 4px solid var(--t); }
+.adv { border-radius: 12px; border: 1px solid var(--line); background: var(--bg-2); padding: 0 14px; }
+.adv summary { min-height: 48px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+.adv[open] { padding-bottom: 12px; }
+.problems { border-radius: 10px; background: #2a1d20; padding: 10px 12px; font-size: 13px; color: #f2d6d3; }
+.problems ul { margin: 6px 0 0; padding-left: 18px; }
+.pastebox { display: flex; flex-direction: column; gap: 8px; }
 </style>
 
 <div class="app">
-  <!-- SETUP -->
-  <section class="screen" id="setup">
+  <!-- TITLE -->
+  <section class="screen titlescreen" id="title" hidden>
+    <svg class="titlemap" aria-hidden="true" viewBox="0 0 440 900" preserveAspectRatio="xMidYMid slice">
+      <path d="M440 0 C410 90 425 180 400 270 C378 370 420 470 396 580 C376 670 414 740 440 900 Z" fill="#14263a"/>
+      <ellipse cx="90" cy="160" rx="34" ry="16" fill="#152437"/><ellipse cx="300" cy="610" rx="28" ry="13" fill="#152437"/>
+      <path d="M210 860 Q160 800 90 760 Q40 700 120 640 Q230 600 300 540 Q350 470 250 420 Q130 390 80 330 Q50 260 170 220 Q280 190 320 130 Q330 80 230 40" fill="none" stroke="#3a4658" stroke-width="2.5" stroke-dasharray="6 7" stroke-linecap="round"/>
+      <circle cx="90" cy="760" r="7" fill="#2b3442"/><circle cx="300" cy="540" r="7" fill="#2b3442"/><circle cx="80" cy="330" r="7" fill="#2b3442"/><circle cx="320" cy="130" r="7" fill="#2b3442"/>
+      <circle class="twinkle" cx="230" cy="40" r="9" fill="none" stroke="#e8c76a" stroke-width="2"/>
+      <path d="M60 480 l10 -18 l10 18 Z M330 300 l9 -16 l9 16 Z M170 140 l8 -14 l8 14 Z" fill="#2b3442"/>
+    </svg>
+    <div class="titlefade" aria-hidden="true"></div>
+    <div class="titlemain">
+      <p class="titlekick">THE REGION OF</p>
+      <h1 class="wordmark">NEOFIELD</h1>
+      <div class="titlebar" aria-hidden="true"></div>
+      <div class="titlespace"></div>
+      <nav class="titlenav" aria-label="Play">
+        <button class="bigbtn gold" id="goAdventure" type="button">Adventure</button>
+        <button class="bigbtn" id="goHall" type="button">Battle Hall</button>
+      </nav>
+      <div class="titleicons">
+        <button class="iconlbl" id="openDexMain" type="button"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="10" r="3.2"/><path d="M8 16h8"/></svg>Pokédex</button>
+        <button class="iconlbl" id="openOptions" type="button"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Options</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAVE SLOTS -->
+  <section class="screen" id="slots" hidden>
     <div class="scroll">
-      <header>
-        <h1>Gym Leader Battles</h1>
-        <p class="lede">Pick your team, then battle a brother online or challenge a gym leader played by the computer. Battles run on the real Pokémon Showdown engine with National Dex Ubers rules.</p>
-      </header>
+      <header class="hallhead"><button class="iconbtn" id="slotsBack" type="button" aria-label="Back to title"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div><h1 id="slotsTitle">Adventure</h1><p class="sub" id="slotsSub"></p></div></header>
+      <div class="slotlist" id="slotsBody"></div>
+    </div>
+  </section>
+
+  <!-- OPTIONS -->
+  <section class="screen" id="options" hidden>
+    <div class="scroll">
+      <header class="hallhead"><button class="iconbtn" id="optionsBack" type="button" aria-label="Back to title"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><h1>Options</h1></header>
+      <div class="section">
+        <h2>Sound</h2>
+        <label class="togglerow"><input type="checkbox" id="optSound"> <span>Evolution music and sound effects</span></label>
+      </div>
+      <div class="section">
+        <h2>Save backup</h2>
+        <p class="note">Moves all 4 save slots and your built teams to another phone, or between the app and the browser. Copy your save code, send it to yourself, then paste it on the other device.</p>
+        <div class="row"><button class="btn" id="saveCopy">Copy my save code</button><button class="btn" id="saveLoadOpen">Load a save code</button></div>
+        <div id="saveBox" hidden>
+          <textarea id="saveText" spellcheck="false" style="min-height:90px" aria-label="Save code"></textarea>
+          <div class="row" id="saveLoadRow" hidden><button class="btn primary" id="saveLoad">Replace my saves with this code</button></div>
+        </div>
+        <p class="note" id="saveNote"></p>
+      </div>
+      <div class="section">
+        <h2>About</h2>
+        <p class="note">Neofield. Neofield Mons designed by Tyler. Battles run on the Pokémon Showdown simulator.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BATTLE HALL -->
+  <section class="screen" id="setup" hidden>
+    <div class="scroll">
+      <header class="hallhead"><button class="iconbtn" id="hallBack" type="button" aria-label="Back to title"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div><h1>Battle Hall</h1><p class="sub" id="hallSlot"></p></div></header>
 
       <div class="section">
         <h2>Difficulty</h2>
@@ -446,63 +635,44 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       </div>
 
       <div class="section">
-        <h2>Journey</h2>
+        <h2>Your team</h2>
+        <div class="chips" id="teamTabs" role="group" aria-label="Where your team comes from"></div>
+        <div class="teampanel" id="teamPanel"></div>
+      </div>
+
+      <div class="section">
+        <h2>Play</h2>
+        <button class="modebtn" id="gymToggle" type="button" aria-expanded="false"><b>Gym Battle</b><small>Pick any of the 17 gym leaders for one battle</small></button>
+        <div class="leaders" id="leaders" hidden></div>
+        <div class="loading" id="loading" hidden>Loading the battle engine…</div>
         <div id="journeyCard"></div>
-      </div>
-
-      <div class="section">
-        <h2>Adventure</h2>
-        <div id="advCard"></div>
-      </div>
-
-      <div class="section">
-        <h2>Pokédex</h2>
-        <div class="modecard" style="--c:#e25b4f"><p>Look up every Pokémon: the new Neofield Pokémon and every Pokémon from the main games, with types, stats, abilities, evolutions and moves.</p>
-        <div class="row"><button class="btn primary" id="openDexMain">Open the Pokédex</button></div></div>
+        <div id="gauntletCard"></div>
+        <div class="modecard" id="onlineSection"><h3>Link Battle</h3><div id="online"><div class="note">Connecting…</div></div></div>
       </div>
 
       <div class="section">
         <div class="badgehead"><h2>Badge case</h2><span class="count" id="badgeCount"></span></div>
         <div class="badges" id="badges"></div>
       </div>
-
-      <div class="section">
-        <h2>Your team</h2>
-        <div class="chips" id="teamChips" role="group" aria-label="Your team"></div>
-        <div class="roster" id="teamRoster"></div>
-        <div class="row"><button class="btn" id="openGuide">Team guide: moves, items, stats</button></div>
-        <div id="customBox" hidden>
-          <div class="section">
-            <textarea id="customText" spellcheck="false" placeholder="Paste a team exported from Pokémon Showdown's Teambuilder"></textarea>
-            <div class="row"><button class="btn" id="customSave">Check and use this team</button></div>
-            <div class="note" id="customNote"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section" id="onlineSection">
-        <h2>Battle a friend online</h2>
-        <div id="online"><div class="note">Connecting…</div></div>
-      </div>
-
-      <div class="section">
-        <h2>Challenge a gym (computer)</h2>
-        <div id="gauntletCard"></div>
-        <div class="leaders" id="leaders"></div>
-        <div class="loading" id="loading">Loading the battle engine…</div>
-      </div>
-
-      <div class="section">
-        <h2>Save backup</h2>
-        <p class="note">Move your badges, journey and adventure to another phone, or between the app and the browser. Copy your save code, send it to yourself, then paste it on the other device.</p>
-        <div class="row"><button class="btn" id="saveCopy">Copy my save code</button><button class="btn" id="saveLoadOpen">Load a save code</button></div>
-        <div id="saveBox" hidden>
-          <textarea id="saveText" spellcheck="false" style="min-height:90px"></textarea>
-          <div class="row" id="saveLoadRow" hidden><button class="btn primary" id="saveLoad">Replace my save with this code</button></div>
-        </div>
-        <p class="note" id="saveNote"></p>
-      </div>
     </div>
+  </section>
+
+  <!-- MY TEAMS -->
+  <section class="screen" id="teams" hidden>
+    <div class="scroll" id="teamsScroll">
+      <header class="hallhead"><button class="iconbtn" id="teamsBack" type="button" aria-label="Back to Battle Hall"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><div><h1>My teams</h1><p class="sub">Shared by all 4 of your save slots</p></div></header>
+      <div id="teamsBody"></div>
+    </div>
+  </section>
+
+  <!-- TEAM BUILDER -->
+  <section class="screen" id="builder" hidden>
+    <div class="scroll" id="builderScroll"><div id="builderBody"></div></div>
+  </section>
+
+  <!-- MON EDITOR -->
+  <section class="screen" id="moned" hidden>
+    <div class="scroll" id="monedScroll"><div id="monedBody"></div></div>
   </section>
 
   <!-- LEAD SELECT -->
@@ -552,12 +722,12 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <!-- JOURNEY: START -->
   <section class="screen" id="jstart" hidden>
     <div class="scroll">
-      <header class="guidehead"><h1>New journey</h1><button class="btn" id="jstartBack">Back</button></header>
+      <header class="guidehead"><h1>New Badge Rush</h1><button class="btn" id="jstartBack">Back</button></header>
       <p class="lede">Travel the Neofield Region town by town, earn all 17 badges, then face the Elite Four and the Champion. Your team's HP carries over between battles, so use your bag.</p>
-      <div class="section"><h2>Pick your team</h2><div class="chips" id="jTeamChips" role="group" aria-label="Journey team"></div><div class="roster" id="jTeamRoster"></div></div>
+      <div class="section"><h2>Your team</h2><div class="roster" id="jTeamRoster"></div><p class="note" id="jTeamNote"></p></div>
       <div class="section"><h2>Difficulty</h2><p class="note" id="jDiffNote"></p></div>
       <div class="section"><h2>Starting bag</h2><div class="bagrow" id="jStartBag"></div></div>
-      <div class="row"><button class="btn primary" id="jBegin">Begin journey</button></div>
+      <div class="row"><button class="btn primary" id="jBegin">Begin Badge Rush</button></div>
     </div>
   </section>
 
@@ -619,6 +789,16 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       <div class="section"><h2>Your team</h2><div class="swaps" id="jbagTeam"></div></div>
     </div>
   </section>
+</div>
+
+<div class="whois" id="whois" aria-live="polite">
+  <p class="whoiskick">NEOFIELD</p>
+  <div class="whoisstage"><div class="whoisglow" aria-hidden="true"></div><img id="whoisImg" alt="" class="sil" hidden></div>
+  <div class="whoistext">
+    <h1 id="whoisQ" class="whoisq" hidden>Who's that Mon?</h1>
+    <div id="whoisA" class="whoisa" hidden><p id="whoisNum"></p><h1 id="whoisName"></h1><div class="types" id="whoisTypes"></div></div>
+  </div>
+  <div class="whoisbar"><div class="whoistrack"><i id="whoisFill"></i></div><p id="whoisStatus">Loading…</p></div>
 </div>
 
 <div class="talk" id="talk" hidden>

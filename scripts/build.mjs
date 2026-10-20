@@ -34,13 +34,20 @@ const HEAD = `<!doctype html>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gym Battles">
+<meta name="apple-mobile-web-app-title" content="Neofield">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>html,body{margin:0;padding:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
 `;
 
-const body = readFileSync(game('index_markup.html'), 'utf8') + readFileSync(game('app_script.html'), 'utf8');
+// Tyler's finished Mons, for the "Who's that Mon?" intro (it runs before the battle engine loads)
+const {SPECIES} = await import('../game/regional.js');
+const {MON_PICS} = await import('../game/art.js');
+const introMons = SPECIES.filter(sp => MON_PICS[sp.id]).map(sp => ({name: sp.name, num: sp.num, types: sp.types, pic: MON_PICS[sp.id]}));
+
+const script = readFileSync(game('app_script.html'), 'utf8');
+if (!script.includes('/*NEO_MONS*/[]')) throw new Error('app_script.html is missing the /*NEO_MONS*/[] marker');
+const body = readFileSync(game('index_markup.html'), 'utf8') + script.replace('/*NEO_MONS*/[]', JSON.stringify(introMons));
 writeFileSync(www('index.html'), forArtifact ? body : HEAD + body);
-console.log(`Built www/engine.js and www/index.html${forArtifact ? ' (artifact version)' : ''}.`);
+console.log(`Built www/engine.js and www/index.html${forArtifact ? ' (artifact version)' : ''} with ${introMons.length} Mons for the intro.`);

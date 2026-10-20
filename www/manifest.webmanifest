@@ -1,7 +1,7 @@
 {
-  "name": "Gym Leader Battles",
-  "short_name": "Gym Battles",
-  "description": "Neofield Region gym battles, journeys and adventures.",
+  "name": "Neofield",
+  "short_name": "Neofield",
+  "description": "The Neofield Region: an adventure with Tyler's Mons, plus the Battle Hall.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

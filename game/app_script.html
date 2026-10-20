@@ -33,9 +33,40 @@ const STAT_SHORT = {atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe', 
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-const store = {
+// ---------- storage and save slots ----------
+// Each phone has 4 save slots. A slot holds an Adventure half and a Battle Hall half; built teams,
+// recently used teams and settings are shared by all slots.
+const NSLOTS = 4;
+const SLOT_KEYS = new Set(['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'adventure', 'profile', 'hallTeam']);
+const ADV_KEYS = ['adventure'];
+const HALL_KEYS = ['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'hallTeam'];
+const ls = {
   get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } },
+  del(k) { try { localStorage.removeItem(k); } catch (e) { /* storage unavailable */ } },
+};
+const slotKey = (n, k) => `slot${n}.${k}`;
+// Saves from before save slots move into Slot 1, once.
+if (ls.get('saveVersion', 1) < 2) {
+  let had = false;
+  for (const k of SLOT_KEYS) {
+    try {
+      const v = localStorage.getItem(k);
+      if (v != null) { had = true; if (localStorage.getItem(slotKey(1, k)) == null) localStorage.setItem(slotKey(1, k), v); localStorage.removeItem(k); }
+    } catch (e) { /* storage unavailable */ }
+  }
+  if (had && !ls.get(slotKey(1, 'profile'), null)) {
+    const adv = ls.get(slotKey(1, 'adventure'), null);
+    ls.set(slotKey(1, 'profile'), {name: (adv && adv.playerName) || '', hall: true, lastPlayed: Date.now(), playMs: 0});
+  }
+  ls.set('saveVersion', 2);
+  if (had) ls.set('lastSlot', 1);
+}
+let curSlot = Math.min(NSLOTS, Math.max(1, +ls.get('lastSlot', 1) || 1));
+const store = {
+  get(k, d) { return ls.get(SLOT_KEYS.has(k) ? slotKey(curSlot, k) : k, d); },
+  set(k, v) { ls.set(SLOT_KEYS.has(k) ? slotKey(curSlot, k) : k, v); },
+  del(k) { ls.del(SLOT_KEYS.has(k) ? slotKey(curSlot, k) : k); },
 };
 
 function emblem(kind, color) {
@@ -66,18 +97,19 @@ function emblem(kind, color) {
 
 // ---------- state ----------
 let E = null;               // engine global
-let myKey = store.get('myTeam', 'trever');
-let customTeam = store.get('customTeam', null); // {text}
 const DIFFS = {
   easy:   {label: 'Easy',   note: 'The computer often picks random moves, never switches out and rarely Mega Evolves.'},
   normal: {label: 'Normal', note: 'The computer picks strong moves and sometimes switches out of bad matchups.'},
   hard:   {label: 'Hard',   note: 'The computer picks its strongest move every turn and always Mega Evolves.'},
 };
-let difficulty = store.get('difficulty', 'normal');
-if (!DIFFS[difficulty]) difficulty = 'normal';
-let badgeBook = store.get('badgeBook', null);
-if (!badgeBook) { badgeBook = {easy: {}, normal: store.get('badges', {}) || {}, hard: {}}; store.set('badgeBook', badgeBook); }
-let champions = store.get('champions', {});
+let difficulty, badgeBook, champions;
+function loadHallState() {
+  difficulty = store.get('difficulty', 'normal');
+  if (!DIFFS[difficulty]) difficulty = 'normal';
+  badgeBook = store.get('badgeBook', null) || {easy: {}, normal: store.get('badges', {}) || {}, hard: {}};
+  champions = store.get('champions', {});
+}
+loadHallState();
 const badgesFor = d => badgeBook[d] || (badgeBook[d] = {});
 let ctx = null;             // null = single gym battle, or {kind: 'gauntlet' | 'journey', ...}
 const fxType = {p1: 'Normal', p2: 'Normal'};
@@ -106,17 +138,8 @@ function renderBadges() {
   }).join('');
 }
 
-function renderTeamChips() {
-  const keys = [...ORDER, 'custom'];
-  $('teamChips').innerHTML = keys.map(k => `<button class="chip" id="chip-${k}" data-k="${k}" aria-pressed="${k === myKey}">${k === 'custom' ? 'Paste a team' : esc(LEADERS[k].first)}</button>`).join('');
-  $('customBox').hidden = myKey !== 'custom';
-  if (myKey === 'custom') {
-    if (customTeam && !$('customText').value) $('customText').value = customTeam.text;
-    $('teamRoster').textContent = customTeam ? 'Saved custom team: ' + teamNames(customTeam.text) : 'Paste a team below to use it.';
-  } else {
-    $('teamRoster').textContent = E ? teamNames(E.TEAM_TEXT[myKey]) : '';
-  }
-}
+// The Battle Hall's "Your team" panel (built in the hall section further down).
+function renderTeamChips() { if (typeof renderTeamPanel === 'function') renderTeamPanel(); }
 
 function teamNames(text) {
   return (text || '').split(/\n\s*\n/).map(b => b.trim().split('\n')[0].split(' @ ')[0].replace(/\s*\((M|F)\)\s*$/, '').replace(/^.*\((.+)\)$/, '$1').trim()).filter(Boolean).join(' · ');
@@ -135,34 +158,18 @@ function renderLeaders() {
   }).join('');
 }
 
-$('teamChips').addEventListener('click', e => {
-  const b = e.target.closest('.chip'); if (!b) return;
-  myKey = b.dataset.k; store.set('myTeam', myKey); renderTeamChips(); renderOnline();
-});
-$('customSave').addEventListener('click', () => {
-  if (!E) return;
-  const text = $('customText').value;
-  const {team, problems} = E.parseTeam(text);
-  const note = $('customNote');
-  if (!team) { note.className = 'note err'; note.textContent = problems.join('\n'); return; }
-  if (problems.length) { note.className = 'note err'; note.textContent = 'This team breaks National Dex Ubers rules:\n' + problems.join('\n'); return; }
-  customTeam = {text}; store.set('customTeam', customTeam);
-  note.className = 'note'; note.textContent = `Team saved: ${team.length} Pokémon, ready to battle.`;
-  renderTeamChips(); renderOnline();
-});
 $('leaders').addEventListener('click', e => {
   const b = e.target.closest('.leader'); if (!b || !E) return;
   startCpuBattle(b.dataset.k);
 });
 
-function myTeamText() { return myKey === 'custom' ? (customTeam && customTeam.text) : E.TEAM_TEXT[myKey]; }
-function baseName() { return myKey === 'custom' ? 'Player' : LEADERS[myKey].first; }
-function needTeam() {
-  myKey = 'custom'; store.set('myTeam', myKey); renderTeamChips();
-  $('customNote').className = 'note err'; $('customNote').textContent = 'Paste and save a team first.';
-}
+function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m.sets)) : null; }
+function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
+function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-function show(id) { for (const s of ['setup', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'intro', 'dex']) $(s).hidden = s !== id; }
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'intro', 'dex'];
+let curScreen = null;
+function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
 
 // ---------- shared battle start ----------
@@ -209,12 +216,13 @@ function typesHTML(types) { return `<span class="types">${types.map(t => `<span 
 
 // ---------- computer battles ----------
 function startCpuBattle(k) {
-  const text = myTeamText();
-  if (!text) { needTeam(); return; }
+  const mine = myTeam();
+  if (!mine) { needTeam(); return; }
   ctx = null;
+  noteUsed(mine);
   const L = LEADERS[k];
-  foe = {name: L.first, key: k, color: L.color, icon: L.icon, title: L.title, subtitle: `${L.badge} · ${DIFFS[difficulty].label}`};
-  startVsCpu(E.TEAM_TEXT[k], null, text, baseName());
+  foe = {name: L.first, key: k, color: L.color, icon: L.icon, title: L.title, subtitle: `${L.badge} · ${DIFFS[difficulty].label}${mine.levels ? ' · levels matched to your team' : ''}`};
+  startVsCpu(foeTeamFor(E.TEAM_TEXT[k], mine.levels), null, mine.sets || mine.text, mine.name);
 }
 
 function startVsCpu(foeTeamText, state, playerText, playerName) {
@@ -754,9 +762,7 @@ function leaveBattle() {
   ctx = null;
   if (wasJourney) { openMap({}); return; }
   if (wasAdv) { if (wasAdv.quest != null) openQuest(wasAdv.quest); else openAdvMap({}); return; }
-  setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR);
-  renderBadges(); renderLeaders(); renderOnline();
-  show('setup');
+  openHall();
 }
 
 // ---------- online lobby ----------
@@ -814,7 +820,8 @@ $('online').addEventListener('click', async e => {
 
 function playerInfo() {
   const text = myTeamText();
-  return {uid: myUid, name: baseName(), key: myKey === 'custom' ? null : myKey, color: LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR, team: text};
+  const mine = myTeam();
+  return {uid: myUid, name: profileName() || baseName(), key: mine.kind === 'gym' ? mine.key : null, color: mine.color || CUSTOM_COLOR, team: text};
 }
 
 function newId() {
@@ -974,11 +981,12 @@ function dexCard(set, idx) {
 }
 
 function renderInfo() {
-  const keys = [...ORDER, ...(customTeam ? ['custom'] : [])];
-  if (!keys.includes(infoKey)) infoKey = keys.includes(myKey) ? myKey : ORDER[0];
-  $('infoChips').innerHTML = keys.map(k => `<button class="chip" id="info-${k}" data-k="${k}" aria-pressed="${k === infoKey}">${k === 'custom' ? 'Custom team' : esc(LEADERS[k].first)}</button>`).join('');
-  const text = infoKey === 'custom' ? customTeam.text : E.TEAM_TEXT[infoKey];
-  const team = E.parseTeam(text).team || [];
+  const mine = myTeam();
+  const own = mine && mine.kind !== 'gym' ? mine : null;
+  const keys = [...(own ? ['mine'] : []), ...ORDER];
+  if (!keys.includes(infoKey)) infoKey = mine && mine.kind === 'gym' ? mine.key : keys[0];
+  $('infoChips').innerHTML = keys.map(k => `<button class="chip" id="info-${k}" data-k="${k}" aria-pressed="${k === infoKey}">${k === 'mine' ? esc(own.label) : esc(LEADERS[k].first)}</button>`).join('');
+  const team = infoKey === 'mine' ? own.sets : (E.parseTeam(E.TEAM_TEXT[infoKey]).team || []);
   if (LEADERS[infoKey]) setAccent(LEADERS[infoKey].color); else setAccent(CUSTOM_COLOR);
   $('infoBody').innerHTML = team.map(dexCard).join('');
 }
@@ -990,14 +998,17 @@ function openGuide(key, from) {
   renderInfo(); show('info');
   $('info').querySelector('.scroll').scrollTop = 0;
 }
-$('openGuide').addEventListener('click', () => openGuide(myKey, 'setup'));
-$('battleGuide').addEventListener('click', () => (ctx && (ctx.kind === 'adventure' || ctx.kind === 'journey')) ? (mapMode = ctx.kind, openTeamView('battle')) : openGuide(ctx && ctx.kind === 'journey' && J ? (J.teamKey === 'custom' && !customTeam ? ORDER[0] : J.teamKey) : mode === 'cpu' ? myKey : (match && match.data[ME].key) || myKey, 'battle'));
+$('battleGuide').addEventListener('click', () => {
+  if (ctx && (ctx.kind === 'adventure' || ctx.kind === 'journey')) { mapMode = ctx.kind; openTeamView('battle'); return; }
+  const mine = myTeam();
+  openGuide(mode === 'cpu' ? (mine && mine.kind === 'gym' ? mine.key : 'mine') : ((match && match.data[ME].key) || 'mine'), 'battle');
+});
 $('infoChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; infoKey = b.dataset.k; renderInfo(); });
 $('infoBack').addEventListener('click', () => {
   if (infoReturn === 'map') { if (mapMode === 'adventure') openAdvMap({}); else openMap({}); return; }
   if (typeof infoReturn === 'number') { openQuest(infoReturn); return; }
   if (infoReturn === 'battle' && battle) { setAccent(foe.color); show('battle'); }
-  else { setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); }
+  else openHall();
 });
 
 // ---------- difficulty ----------
@@ -1036,8 +1047,11 @@ const ELITE = ['parker', 'kent', 'rachel', 'anna'];
 const CHAMP = {name: 'The Champion', title: 'The Champion', color: '#e8c76a', icon: 'crown'};
 function renderGauntletCard() {
   const b = badgesFor(difficulty);
-  if (!ORDER.every(k => b[k])) { $('gauntletCard').innerHTML = ''; return; }
   const label = DIFFS[difficulty].label;
+  if (!ORDER.every(k => b[k])) {
+    $('gauntletCard').innerHTML = `<div class="modecard locked"><h3>Elite Four &amp; Champion</h3><p class="note">Locked · earn all 17 ${esc(label)} badges in this slot (${ORDER.filter(k => b[k]).length} so far).</p></div>`;
+    return;
+  }
   const champ = champions[difficulty];
   $('gauntletCard').innerHTML = `<div class="modecard" style="--c:${CHAMP.color}">
     <h3>Elite Four and Champion</h3>
@@ -1048,8 +1062,10 @@ function renderGauntletCard() {
 $('gauntletCard').addEventListener('click', e => { if (e.target.id === 'gauntletGo') startGauntlet(); });
 
 function startGauntlet() {
-  if (!myTeamText()) { needTeam(); return; }
-  ctx = {kind: 'gauntlet', stage: 0, state: null, champTeam: E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k]))};
+  const mine = myTeam();
+  if (!mine) { needTeam(); return; }
+  noteUsed(mine);
+  ctx = {kind: 'gauntlet', stage: 0, state: null, mine, champTeam: E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k]))};
   runGauntletStage();
 }
 function runGauntletStage() {
@@ -1063,7 +1079,7 @@ function runGauntletStage() {
     foe = {...CHAMP, key: null, subtitle: `Final battle · ${DIFFS[difficulty].label}`};
     teamText = ctx.champTeam;
   }
-  startVsCpu(teamText, ctx.state, myTeamText(), baseName());
+  startVsCpu(foeTeamFor(teamText, ctx.mine.levels), ctx.state, ctx.mine.sets || ctx.mine.text, ctx.mine.name);
 }
 function gauntletResult(won) {
   let html;
@@ -1161,13 +1177,15 @@ const START_BAG = {hyperpotion: 10, fullrestore: 4, fullheal: 5, revive: 4, maxr
 const GYM_REWARD = {hyperpotion: 2, fullrestore: 1, revive: 1};
 const E4_REWARD = {hyperpotion: 2, fullrestore: 2, revive: 1};
 
-let J = store.get('journey', null);
-if (J && (!J.order || !J.team)) J = null;
-if (J) for (const t of Object.values(J.team)) t.hp = Math.min(t.maxhp, Math.max(0, t.hp || 0));
-let jTeamKey = null;
+let J = null;
+function loadJ() {
+  J = store.get('journey', null);
+  if (J && (!J.order || !J.team)) J = null;
+  if (J) for (const t of Object.values(J.team)) t.hp = Math.min(t.maxhp, Math.max(0, t.hp || 0));
+}
+loadJ();
 let mapFromBattle = false;
 let mapMode = 'journey';
-let startMode = 'journey';
 let restartArmed = false;
 function saveJ() { store.set('journey', J); }
 
@@ -1222,24 +1240,24 @@ function renderJourneyCard() {
     const where = st.kind === 'gym' ? `Next: ${LEADERS[st.key].title} in ${TOWNS[st.key]}` : st.kind === 'e4' ? `Elite Four battle ${J.e4pos + 1} of 4 at ${LEADERS[st.key] ? 'Victory Summit' : ''}` : 'The Champion is waiting at Victory Summit';
     const col = st.key ? LEADERS[st.key].color : CHAMP.color;
     el.innerHTML = `<div class="modecard" style="--c:${col}">
-      <h3>Your journey</h3>
-      <p>${J.pos} of 17 badges · ${esc(DIFFS[J.difficulty].label)} · ${esc(J.playerName)}'s team</p>
+      <h3>Badge Rush</h3>
+      <p>${J.pos} of 17 badges · ${esc(DIFFS[J.difficulty].label)} · ${esc(J.teamLabel || J.playerName + "'s team")}</p>
       <div class="meter"><i style="width:${Math.round((J.pos + J.e4pos) / 22 * 100)}%"></i></div>
       <p>${esc(where)}</p>
-      <div class="row"><button class="btn primary" id="jContinue">Continue journey</button><button class="btn" id="jRestart">Start over</button></div>
-      ${restartArmed ? `<div class="confirmrow">Start over? This journey will be lost. <button class="btn" id="jRestartYes">Yes, start over</button><button class="btn" id="jRestartNo">Keep it</button></div>` : ''}
+      <div class="row"><button class="btn primary" id="jContinue">Continue run</button><button class="btn" id="jRestart">Start over</button></div>
+      ${restartArmed ? `<div class="confirmrow">Start over? This run will be lost. <button class="btn" id="jRestartYes">Yes, start over</button><button class="btn" id="jRestartNo">Keep it</button></div>` : ''}
     </div>`;
   } else if (J && J.done) {
     el.innerHTML = `<div class="modecard" style="--c:${CHAMP.color}">
       <h3>Champion of the Neofield Region</h3>
-      <p>You finished a journey on ${esc(DIFFS[J.difficulty].label)} with ${esc(J.playerName)}'s team.</p>
-      <div class="row"><button class="btn primary" id="jNew">Start a new journey</button><button class="btn" id="jContinue">See the map</button></div>
+      <p>You finished a Badge Rush on ${esc(DIFFS[J.difficulty].label)} with ${esc(J.teamLabel || J.playerName + "'s team")}.</p>
+      <div class="row"><button class="btn primary" id="jNew">Start a new run</button><button class="btn" id="jContinue">See the map</button></div>
     </div>`;
   } else {
     el.innerHTML = `<div class="modecard" style="--c:${LEADERS[JORDER[0]].color}">
-      <h3>Start a journey</h3>
+      <h3>Badge Rush</h3>
       <p>Travel the Neofield Region town by town. Hear from each leader, earn all 17 badges with a bag full of healing items, then face a random Elite Four and the Champion.</p>
-      <div class="row"><button class="btn primary" id="jNew">Start a journey</button></div>
+      <div class="row"><button class="btn primary" id="jNew">Start a run</button></div>
     </div>`;
   }
 }
@@ -1253,44 +1271,34 @@ $('journeyCard').addEventListener('click', e => {
 });
 
 // --- start screen ---
-function openJourneyStart(mode = 'journey') {
-  startMode = mode;
-  $('jstart').querySelector('h1').textContent = mode === 'adventure' ? 'New adventure' : 'New journey';
-  $('jstart').querySelector('.lede').textContent = mode === 'adventure'
-    ? 'Your team starts at its first evolution stage at level 8 and grows from there. Train against wild Pokémon, take on side quests for money and items, shop for supplies, beat all 17 gyms, then the Elite Four and a level 70 Champion.'
-    : 'Travel the Neofield Region town by town, earn all 17 badges, then face the Elite Four and the Champion. Your team\'s HP carries over between battles, so use your bag.';
-  $('jBegin').textContent = mode === 'adventure' ? 'Begin adventure' : 'Begin journey';
-  jTeamKey = jTeamKey || (myKey === 'custom' && !customTeam ? ORDER[0] : myKey);
-  renderJourneyStart();
-  setAccent(LEADERS[jTeamKey] ? LEADERS[jTeamKey].color : CUSTOM_COLOR);
+function openJourneyStart() {
+  const mine = myTeam();
+  if (!mine) { needTeam(); return; }
+  renderJourneyStart(mine);
+  setAccent(mine.color || CUSTOM_COLOR);
   show('jstart');
   $('jstart').querySelector('.scroll').scrollTop = 0;
 }
-function renderJourneyStart() {
-  const keys = [...ORDER, ...(customTeam ? ['custom'] : [])];
-  $('jTeamChips').innerHTML = keys.map(k => `<button class="chip" id="jchip-${k}" data-k="${k}" aria-pressed="${k === jTeamKey}">${k === 'custom' ? 'Custom team' : esc(LEADERS[k].first)}</button>`).join('');
-  const text = jTeamKey === 'custom' ? customTeam.text : E.TEAM_TEXT[jTeamKey];
-  $('jTeamRoster').textContent = startMode === 'adventure'
-    ? E.parseSets(text).map(s => E.evolutionPath(s.species).map(c => c.species).join(' → ')).join(' · ')
-    : teamNames(text);
-  $('jDiffNote').textContent = `${DIFFS[difficulty].label}. ${DIFFS[difficulty].note} You can change this on the main menu before you begin. The journey keeps its difficulty until it ends, and the badges you win count toward that difficulty.`;
-  $('jStartBag').innerHTML = Object.entries(startMode === 'adventure' ? ADV_START_BAG : START_BAG).map(([k, n]) => `<div class="bagitem"><b>${esc(E.ITEMS[k].name)}<span>×${n}</span></b><small>${esc(E.ITEMS[k].desc)}</small></div>`).join('');
+function renderJourneyStart(mine) {
+  $('jTeamRoster').textContent = `${mine.label}: ${teamSummary(mine)}`;
+  $('jTeamNote').textContent = mine.levels
+    ? 'Your adventure team is locked in for the whole run, so catching or training in your adventure won’t change it. Every leader brings as many Mons as you, with the same total level.'
+    : 'Change your team in the Battle Hall under Your team before you begin.';
+  $('jDiffNote').textContent = `${DIFFS[difficulty].label}. ${DIFFS[difficulty].note} The run keeps this difficulty until it ends, and the badges you win count toward it.`;
+  $('jStartBag').innerHTML = Object.entries(START_BAG).map(([k, n]) => `<div class="bagitem"><b>${esc(E.ITEMS[k].name)}<span>×${n}</span></b><small>${esc(E.ITEMS[k].desc)}</small></div>`).join('');
 }
-$('jTeamChips').addEventListener('click', e => {
-  const b = e.target.closest('.chip'); if (!b) return;
-  jTeamKey = b.dataset.k; renderJourneyStart();
-  setAccent(LEADERS[jTeamKey] ? LEADERS[jTeamKey].color : CUSTOM_COLOR);
-});
-$('jstartBack').addEventListener('click', () => { renderJourneyCard(); renderAdvCard(); setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); });
+$('jstartBack').addEventListener('click', () => openHall());
 $('jBegin').addEventListener('click', () => {
-  if (startMode === 'adventure') { startAdventure(); return; }
-  const text = jTeamKey === 'custom' ? customTeam && customTeam.text : E.TEAM_TEXT[jTeamKey];
-  if (!text) return;
+  const mine = myTeam();
+  if (!mine) { needTeam(); return; }
+  noteUsed(mine);
+  const team = mine.sets || E.parseTeam(mine.text).team;
   // Build a throwaway battle once to learn each Pokémon's max HP
-  const tmp = E.createBattle({name: 'a', team: E.parseTeam(text).team}, {name: 'b', team: E.parseTeam(E.TEAM_TEXT.tyler).team});
+  const tmp = E.createBattle({name: 'a', team}, {name: 'b', team: E.parseTeam(E.TEAM_TEXT.tyler).team});
   J = {
-    v: 1, difficulty, teamKey: jTeamKey, teamText: text,
-    playerName: jTeamKey === 'custom' ? 'Player' : LEADERS[jTeamKey].first,
+    v: 2, difficulty, teamKey: mine.kind === 'gym' ? mine.key : mine.kind, teamLabel: mine.label,
+    teamText: mine.text || null, teamSets: mine.sets ? JSON.parse(JSON.stringify(mine.sets)) : null, levels: mine.levels || null,
+    playerName: mine.name,
     order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
     team: E.readTeamState(tmp.p1), bag: {...START_BAG}, leagueHealed: false, done: false, travelled: -1,
   };
@@ -1415,7 +1423,7 @@ function renderNextBar() {
   const st = jStage();
   if (st.kind === 'done') {
     bar.innerHTML = `<div class="nextcard" style="--c:${CHAMP.color}"><span class="face">${emblem('crown', CHAMP.color)}</span><div><b>You are the Champion</b><small>Every gym, the Elite Four and the Champion beaten on ${esc(DIFFS[J.difficulty].label)}.</small></div></div>
-      <button class="btn primary" id="jNewFromMap">Start a new journey</button>`;
+      <button class="btn primary" id="jNewFromMap">Start a new Badge Rush</button>`;
     return;
   }
   const sp = speakerFor(st);
@@ -1453,7 +1461,7 @@ function openMap({travel, fromBattle, msg}) {
     }
   });
 }
-$('mapMenu').addEventListener('click', () => { renderJourneyCard(); renderAdvCard(); renderBadges(); renderLeaders(); setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); });
+$('mapMenu').addEventListener('click', () => { if (mapMode === 'adventure') openTitle(); else openHall(); });
 $('mapBag').addEventListener('click', () => mapMode === 'adventure' ? openAdvBag('map') : openBag());
 $('battleMap').addEventListener('click', () => ctx && ctx.kind === 'adventure' ? openAdvMap({fromBattle: true}) : openMap({fromBattle: true}));
 $('nextBar').addEventListener('click', e => {
@@ -1490,7 +1498,7 @@ async function jChallenge() {
     teamText = E.TEAM_TEXT[st.key];
   }
   ctx = {kind: 'journey', stage: st};
-  startVsCpu(teamText, J.team, J.teamText, J.playerName);
+  startVsCpu(foeTeamFor(teamText, J.levels), J.team, J.teamSets || J.teamText, J.playerName);
 }
 
 function useItemInBattle(i) {
@@ -1557,7 +1565,7 @@ function hallOfFame() {
   $('result').innerHTML = `${emblem('crown', CHAMP.color)}<h3>Hall of Fame</h3>
     <p>You beat all 17 gyms, the Elite Four and the Champion on ${esc(DIFFS[J.difficulty].label)}. You are the Champion of the Neofield Region.</p>
     <p>${names.map(esc).join(' · ')}</p>
-    <div class="row" style="justify-content:center"><button class="btn primary" id="jToMap">See the map</button><button class="btn" id="jNewAfter">New journey</button></div>`;
+    <div class="row" style="justify-content:center"><button class="btn primary" id="jToMap">See the map</button><button class="btn" id="jNewAfter">New Badge Rush</button></div>`;
   $('overlay').hidden = false;
 }
 
@@ -1636,10 +1644,14 @@ const AREAS = [
 ];
 const questLevel = i => Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
 
-let A = store.get('adventure', null);
-if (A && (!A.team || !A.order)) A = null;
-if (A) for (const m of [...A.team, ...(A.box || [])]) m.frac = Math.min(1, Math.max(0, +m.frac || 0));
-migrateA();
+let A = null;
+function loadA() {
+  A = store.get('adventure', null);
+  if (A && (!A.team || !A.order)) A = null;
+  if (A) for (const m of [...A.team, ...(A.box || [])]) m.frac = Math.min(1, Math.max(0, +m.frac || 0));
+  migrateA();
+}
+loadA();
 let advBagFrom = 'map';
 let advBagSel = null;
 let advRestartArmed = false;
@@ -1657,50 +1669,7 @@ function advSets() { A.team.forEach(ensureMoves); return E.playerSets(A.team); }
 function advHealAll() { for (const m of [...A.team, ...(A.box || [])]) m.frac = 1; }
 
 // --- setup card ---
-function renderAdvCard() {
-  const el = $('advCard');
-  if (!E) { el.innerHTML = '<div class="note">Loading…</div>'; return; }
-  if (A && !A.done) {
-    const st = aStage();
-    const next = st.kind === 'gym' ? `Next: ${LEADERS[st.key].title} (level ${GYM_LV[A.pos]})` : st.kind === 'e4' ? `Elite Four battle ${A.e4pos + 1} of 4` : 'The Champion is waiting';
-    el.innerHTML = `<div class="modecard" style="--c:#e8c76a">
-      <h3>Your adventure</h3>
-      <p>${A.regional ? esc(A.playerName) + ' · ' : ''}${A.pos} of 17 badges · ${money(A.money)} · Team level ${avgLevel()} · ${esc(DIFFS[A.difficulty].label)}</p>
-      <div class="meter"><i style="width:${Math.round((A.pos + A.e4pos) / 22 * 100)}%"></i></div>
-      <p>${esc(next)}</p>
-      <div class="row"><button class="btn primary" id="aContinue">Continue adventure</button><button class="btn" id="aRestart">Start over</button></div>
-      ${advRestartArmed ? `<div class="confirmrow">Start over? This adventure will be lost. <button class="btn" id="aRestartYes">Yes, start over</button><button class="btn" id="aRestartNo">Keep it</button></div>` : ''}
-    </div>`;
-  } else if (A && A.done) {
-    el.innerHTML = `<div class="modecard" style="--c:#e8c76a"><h3>Adventure complete</h3><p>You beat the level ${CHAMP_LV} Champion on ${esc(DIFFS[A.difficulty].label)}.</p>
-      <div class="row"><button class="btn primary" id="aNew">Start a new adventure</button><button class="btn" id="aContinue">See the map</button></div></div>`;
-  } else {
-    el.innerHTML = `<div class="modecard" style="--c:#e8c76a"><h3>Start an adventure</h3>
-      <p>Meet Professor Okla, choose one of three brand-new Neofield starters and build your team by catching wild Pokémon on the routes. Level up, evolve, clear side quests and shop for supplies. Gym leaders scale from level 10 up to a level ${CHAMP_LV} Champion.</p>
-      <div class="row"><button class="btn primary" id="aNew">Start an adventure</button></div></div>`;
-  }
-}
-$('advCard').addEventListener('click', e => {
-  const id = e.target.id;
-  if (id === 'aContinue') openAdvMap({});
-  else if (id === 'aNew') openProfessor();
-  else if (id === 'aRestart') { advRestartArmed = true; renderAdvCard(); }
-  else if (id === 'aRestartNo') { advRestartArmed = false; renderAdvCard(); }
-  else if (id === 'aRestartYes') { advRestartArmed = false; openProfessor(); }
-});
-
-function startAdventure() {
-  const text = jTeamKey === 'custom' ? customTeam && customTeam.text : E.TEAM_TEXT[jTeamKey];
-  if (!text) return;
-  A = {
-    v: 1, difficulty, teamKey: jTeamKey, playerName: jTeamKey === 'custom' ? 'Player' : LEADERS[jTeamKey].first,
-    team: E.parseSets(text).map(s => ({final: s, level: ADV_START_LV, frac: 1, tutored: [], moves: E.startingMoves(s, ADV_START_LV)})),
-    order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
-    money: 1500, bag: {...ADV_START_BAG}, quests: {}, travelled: -1, done: false,
-  };
-  saveA();
-  openAdvMap({});
-}
+function renderAdvCard() { /* the adventure now lives on the title screen */ }
 
 // --- main map ---
 function questOverlay() {
@@ -2314,7 +2283,7 @@ function openTeamView(from) {
     });
     if (A.regional) cards.push(boxSectionHTML(infoReturn === 'battle'));
   } else if (J) {
-    cards = E.parseTeam(J.teamText).team.map((set, i) => {
+    cards = (J.teamSets || E.parseTeam(J.teamText).team).map((set, i) => {
       const st = J.team[set.name || set.species] || {hp: 1, maxhp: 1};
       return teamCard(set, i, '', hpBlock(st.hp / st.maxhp, st.hp <= 0 ? 'Fainted' : `${st.hp}/${st.maxhp} HP`));
     });
@@ -2378,7 +2347,7 @@ async function openProfessor() {
   showNameCard();
 }
 function showNameCard() {
-  const guess = LEADERS[myKey] ? LEADERS[myKey].first : '';
+  const guess = profileName();
   $('introStage').innerHTML = labSceneHTML() + `<form class="namecard" id="nameForm" autocomplete="off">
     <label for="nameInput"><b>Your name</b></label><input id="nameInput" maxlength="14" value="${esc(introName || guess)}">
     <button class="btn primary" type="submit" id="nameGo">That's me!</button><p class="note" id="nameNote">Up to 14 letters.</p></form>`;
@@ -2422,11 +2391,12 @@ $('introStage').addEventListener('click', async e => {
 });
 function startRegionalAdventure(name, famKey) {
   A = {
-    v: 2, regional: true, difficulty, teamKey: 'regional', playerName: name,
+    v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
     money: 1500, bag: {...ADV_START_BAG, pokeball: 5}, quests: {}, travelled: -1, done: false,
   };
+  touchProfile({name});
   saveA();
   openAdvMap({msg: 'Tap Route 1 on the map to look for wild Pokémon.'});
 }
@@ -2631,7 +2601,7 @@ $('dexTabs').addEventListener('click', e => { const b = e.target.closest('[data-
 $('dexList').addEventListener('click', e => { const b = e.target.closest('[data-dex]'); if (!b || b.disabled) return; dexListTop = $('dexScroll').scrollTop; showDexEntry(b.dataset.dex); });
 $('dexBack').addEventListener('click', () => {
   if (!$('dexEntryView').hidden) { $('dexEntryView').hidden = true; $('dexListView').hidden = false; $('dexScroll').scrollTop = dexListTop; return; }
-  if (dexFrom === 'map') openAdvMap({}); else { setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR); show('setup'); }
+  if (dexFrom === 'map') openAdvMap({}); else openTitle();
 });
 function familyRows(sp) {
   let root = sp;
@@ -2706,11 +2676,619 @@ $('infoBody').addEventListener('click', e => {
   $('info').querySelector('.scroll').scrollTop = top;
 });
 
+// ================= Save slots, title screen, Battle Hall and Build Your Own Team =================
+
+// ---------- profiles and slots ----------
+const profileOf = n => ls.get(slotKey(n, 'profile'), null);
+function profileName() { const p = store.get('profile', null); return (p && p.name) || (A && A.playerName) || ''; }
+function touchProfile(patch = {}) {
+  const p = Object.assign({name: '', playMs: 0}, store.get('profile', null) || {}, patch, {lastPlayed: Date.now()});
+  store.set('profile', p);
+  return p;
+}
+function slotAdv(n) { const a = ls.get(slotKey(n, 'adventure'), null); return a && a.team && a.order ? a : null; }
+function slotHall(n) {
+  const p = profileOf(n) || {};
+  const bb = ls.get(slotKey(n, 'badgeBook'), null) || {normal: ls.get(slotKey(n, 'badges'), {}) || {}};
+  const counts = {};
+  for (const d of Object.keys(DIFFS)) counts[d] = ORDER.filter(k => (bb[d] || {})[k]).length;
+  const champs = ls.get(slotKey(n, 'champions'), {}) || {};
+  const j = ls.get(slotKey(n, 'journey'), null);
+  const any = p.hall || Object.values(counts).some(c => c) || Object.values(champs).some(Boolean) || !!j;
+  return any ? {counts, champs, j} : null;
+}
+function hallLine(h) {
+  if (!h) return 'Battle Hall: not started';
+  const parts = Object.keys(DIFFS).filter(d => h.counts[d]).map(d => `${h.counts[d]} ${DIFFS[d].label} badge${h.counts[d] === 1 ? '' : 's'}`);
+  const champs = Object.keys(DIFFS).filter(d => h.champs[d]).map(d => DIFFS[d].label);
+  if (champs.length) parts.push(`${champs.join(' and ')} Champion`);
+  if (h.j && !h.j.done) parts.push(`Badge Rush at ${h.j.pos} of 17`);
+  return 'Battle Hall: ' + (parts.join(', ') || 'no badges yet');
+}
+function advNext(a) {
+  if (a.done) return 'Adventure complete';
+  if (a.pos < a.order.length) { const k = a.order[a.pos]; return `Next: ${LEADERS[k].title} in ${TOWNS[k]}`; }
+  return a.e4pos < 4 ? `Next: Elite Four battle ${a.e4pos + 1} of 4` : 'Next: the Champion';
+}
+function fmtTime(ms) { const m = Math.floor((ms || 0) / 60000); return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`; }
+function playedAgo(t) {
+  if (!t) return '';
+  const d = Math.floor((Date.now() - t) / 86400000);
+  return d <= 0 ? 'Played today' : d === 1 ? 'Played yesterday' : d < 7 ? `Played ${d} days ago` : d < 14 ? 'Played last week' : `Played ${Math.floor(d / 7)} weeks ago`;
+}
+// Count play time while a slot is actually being played
+setInterval(() => {
+  if (document.hidden || !E || ['title', 'slots', 'options', null].includes(curScreen)) return;
+  const p = store.get('profile', null);
+  if (!p) return;
+  p.playMs = (p.playMs || 0) + 30000; p.lastPlayed = Date.now();
+  store.set('profile', p);
+}, 30000);
+
+function loadSlot(n) {
+  curSlot = n; ls.set('lastSlot', n);
+  loadHallState(); loadJ(); loadA();
+  if (E) migrateRegionalLines();
+  hallTeamSel = store.get('hallTeam', null);
+  restartArmed = false;
+}
+
+// ---------- built teams (shared by every slot) ----------
+const builtTeams = () => ls.get('builtTeams', []) || [];
+const saveBuiltTeams = list => ls.set('builtTeams', list);
+const recentIds = () => ls.get('recentTeams', []) || [];
+function noteUsed(mine) {
+  if (!mine || mine.kind !== 'built') return;
+  ls.set('recentTeams', [mine.id, ...recentIds().filter(id => id !== mine.id)].slice(0, 5));
+}
+const newTeamId = () => 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function teamProblems(mons) {
+  const problems = E.checkTeam(mons.map(E.builtSet));
+  for (const m of mons) {
+    const mv = (m.moves || []).filter(Boolean);
+    if (new Set(mv).size !== mv.length) problems.push(`${m.species} has the same move twice.`);
+  }
+  return [...new Set(problems)];
+}
+function importTeamText(text, name) {
+  const sets = E.parseSets(text);
+  if (!sets.length) return null;
+  const mons = sets.slice(0, 6).map(st => ({species: E.Dex.species.get(st.species).name || st.species, ability: st.ability || '', item: st.item || '',
+    moves: (st.moves || []).slice(0, 4).map(m => E.Dex.moves.get(m).name || m), nature: st.nature || null,
+    evs: st.evs && Object.values(st.evs).some(v => v) ? st.evs : null, spread: null}));
+  const t = {id: newTeamId(), name, fav: false, mons, problems: teamProblems(mons), updated: Date.now()};
+  saveBuiltTeams([...builtTeams(), t]);
+  return t;
+}
+// Teams saved before save slots ("Paste a team") become built teams, and the old team choice carries over.
+function convertLegacyTeams() {
+  for (let n = 1; n <= NSLOTS; n++) {
+    const old = ls.get(slotKey(n, 'myTeam'), null);
+    const ct = ls.get(slotKey(n, 'customTeam'), null);
+    let sel = null;
+    if (ct && ct.text) { const t = importTeamText(ct.text, 'Pasted team'); if (t && old === 'custom') sel = {kind: 'built', id: t.id}; }
+    if (!sel && old && LEADERS[old]) sel = {kind: 'gym', key: old};
+    if (sel && !ls.get(slotKey(n, 'hallTeam'), null)) ls.set(slotKey(n, 'hallTeam'), sel);
+    ls.del(slotKey(n, 'myTeam')); ls.del(slotKey(n, 'customTeam'));
+  }
+  hallTeamSel = store.get('hallTeam', null);
+}
+
+// ---------- the Battle Hall team ----------
+let hallTeamSel = store.get('hallTeam', null); // {kind: 'gym', key} | {kind: 'adv'} | {kind: 'built', id}
+function hallTeam() {
+  const t = hallTeamSel;
+  if (t && (t.kind === 'adv' || t.kind === 'built' || (t.kind === 'gym' && LEADERS[t.key]))) return t;
+  return {kind: 'gym', key: 'trever'};
+}
+function setHallTeam(t) { hallTeamSel = t; store.set('hallTeam', t); }
+const advReady = () => !!(A && A.regional && A.team && A.team.length);
+function advHallSets() {
+  const top = A.team.slice(0, 6);
+  top.forEach(ensureMoves);
+  const sets = E.playerSets(top), seen = {};
+  for (const st of sets) { let nm = st.species; seen[nm] = (seen[nm] || 0) + 1; if (seen[nm] > 1) nm += ' ' + seen[nm]; st.name = nm; }
+  return sets;
+}
+// The team you battle with in the Battle Hall, ready for a battle, or null when there isn't one.
+function myTeam() {
+  if (!E) return null;
+  const t = hallTeam(), who = profileName();
+  if (t.kind === 'adv') {
+    if (!advReady()) return null;
+    return {kind: 'adv', sets: advHallSets(), levels: A.team.slice(0, 6).map(m => m.level), name: who || A.playerName || 'You',
+      label: `${A.playerName || who}'s adventure team`, color: '#e8c76a'};
+  }
+  if (t.kind === 'built') {
+    const bt = builtTeams().find(x => x.id === t.id);
+    if (!bt || !bt.mons.length || (bt.problems && bt.problems.length)) return null;
+    return {kind: 'built', id: bt.id, sets: bt.mons.map(E.builtSet), name: who || 'You', label: bt.name, color: CUSTOM_COLOR};
+  }
+  const L = LEADERS[t.key];
+  return {kind: 'gym', key: t.key, text: E.TEAM_TEXT[t.key], name: L.first, label: `${L.first}'s ${L.type} team`, color: L.color};
+}
+function hallColor() { const t = hallTeam(); return t.kind === 'gym' ? LEADERS[t.key].color : t.kind === 'adv' ? '#e8c76a' : CUSTOM_COLOR; }
+// A gym team as-is, or scaled to an adventure team's levels
+function foeTeamFor(text, levels) { return levels && levels.length ? E.matchedLeaderSets(text, levels) : text; }
+function teamSummary(mine) { return (mine.sets || E.parseTeam(mine.text).team || []).map(st => st.species + (mine.levels ? ` Lv ${st.level}` : '')).join(' · '); }
+// A Neofield Mon's picture, or a dex-number tile for the rest
+function monIcon(species) {
+  const sp = E.Dex.species.get(species);
+  const art = artOf(sp.name);
+  return art || `<span class="numtile" style="--t:${TYPE_COLORS[sp.types[0]] || '#9aa3b2'}">#${sp.num}</span>`;
+}
+
+function renderTeamPanel() {
+  if (!E) return;
+  const t = hallTeam();
+  $('teamTabs').innerHTML = [['gym', 'Gym teams'], ['adv', 'Adventure team'], ['built', 'My teams']]
+    .map(([k, l]) => `<button class="chip" type="button" data-tab="${k}" aria-pressed="${t.kind === k}">${l}</button>`).join('');
+  let html;
+  if (t.kind === 'gym') {
+    html = `<p>Use any gym leader's team, at level 100.</p>
+      <div class="chips">${ORDER.map(k => `<button class="chip" type="button" data-gym="${k}" aria-pressed="${t.key === k}">${esc(LEADERS[k].first)} · ${esc(LEADERS[k].type)}</button>`).join('')}</div>
+      <p>${esc(teamNames(E.TEAM_TEXT[t.key]))}</p>
+      <div class="row"><button class="btn" type="button" data-act="guide">Team guide: moves, items, stats</button></div>`;
+  } else if (t.kind === 'adv') {
+    if (!advReady()) {
+      html = `<p>There's no adventure in Slot ${curSlot} yet. Start one from Adventure on the title screen, then come back to use its team here.</p>`;
+    } else {
+      const top = A.team.slice(0, 6), total = top.reduce((a, m) => a + m.level, 0);
+      html = `<div class="advgrid">${top.map(m => `<div>${monIcon(mset(m).species)}<span>Lv ${m.level}</span></div>`).join('')}</div>
+        <p>Your Slot ${curSlot} adventure team. Gym leaders bring ${top.length} Mon${top.length > 1 ? 's' : ''} too, with the same total level (${total}), spread a little around yours. Battles here don't change your adventure.</p>
+        <div class="row"><button class="btn" type="button" data-act="guide">Team guide</button></div>`;
+    }
+  } else {
+    const bt = builtTeams().find(x => x.id === t.id);
+    if (!bt) {
+      html = `<p>Pick one of your built teams, or build a new one.</p><div class="row"><button class="btn primary" type="button" data-act="teams">Choose or build a team</button></div>`;
+    } else {
+      const bad = bt.problems && bt.problems.length;
+      html = `<div class="row" style="justify-content:space-between"><b>${bt.fav ? '★ ' : ''}${esc(bt.name)}</b><button class="btn" type="button" data-act="teams">Change</button></div>
+        <div class="minis">${bt.mons.map(m => `<span class="mini">${monIcon(m.species)}</span>`).join('')}</div>
+        ${bad ? `<p style="color:var(--danger)">This team has problems to fix before it can battle.</p><div class="row"><button class="btn primary" type="button" data-act="edit">Fix the team</button></div>`
+          : `<p>Built teams play at level 100.</p><div class="row"><button class="btn" type="button" data-act="guide">Team guide</button></div>`}`;
+    }
+  }
+  $('teamPanel').innerHTML = html;
+}
+function afterTeamChange() { renderTeamPanel(); renderOnline(); setAccent(hallColor()); }
+$('teamTabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  const cur = hallTeam(), k = b.dataset.tab;
+  if (k === cur.kind) return;
+  const gym = cur.kind === 'gym' ? cur.key : cur.gym;
+  if (k === 'gym') setHallTeam({kind: 'gym', key: gym || 'trever'});
+  else if (k === 'adv') setHallTeam({kind: 'adv', gym});
+  else {
+    const list = builtTeams(), recent = recentIds();
+    const pick = recent.map(id => list.find(x => x.id === id)).find(Boolean) || list.find(x => x.fav) || list[0];
+    setHallTeam({kind: 'built', id: pick ? pick.id : null, gym});
+  }
+  afterTeamChange();
+});
+$('teamPanel').addEventListener('click', e => {
+  const g = e.target.closest('[data-gym]');
+  if (g) { setHallTeam({kind: 'gym', key: g.dataset.gym}); afterTeamChange(); return; }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const t = hallTeam();
+  if (a.dataset.act === 'guide') openGuide(t.kind === 'gym' ? t.key : 'mine', 'setup');
+  else if (a.dataset.act === 'teams') openTeams();
+  else if (a.dataset.act === 'edit') openBuilder(t.id);
+});
+
+// ---------- Battle Hall ----------
+function openHall() {
+  if (!E) return;
+  const p = touchProfile({hall: true});
+  $('hallSlot').innerHTML = `Slot ${curSlot}${p.name ? ' · ' + esc(p.name) : ''} · <button type="button" id="hallChange">Change slot</button>`;
+  renderDifficulty(); renderBadges(); renderTeamPanel(); renderLeaders(); renderJourneyCard(); renderOnline();
+  setAccent(hallColor());
+  show('setup');
+}
+$('hallSlot').addEventListener('click', e => { if (e.target.id === 'hallChange') openSlots('hall'); });
+$('hallBack').addEventListener('click', () => openTitle());
+$('gymToggle').addEventListener('click', () => {
+  const open = $('leaders').hidden;
+  $('leaders').hidden = !open;
+  $('gymToggle').setAttribute('aria-expanded', String(open));
+});
+
+// ---------- title screen and options ----------
+function openTitle() { ctx = null; setAccent('#e8c76a'); show('title'); }
+$('goAdventure').addEventListener('click', () => openSlots('adv'));
+$('goHall').addEventListener('click', () => {
+  const p = profileOf(curSlot);
+  if (p && p.hall && p.name) { loadSlot(curSlot); openHall(); } else openSlots('hall');
+});
+$('openOptions').addEventListener('click', () => {
+  $('optSound').checked = !!evoSound;
+  $('saveBox').hidden = true; $('saveNote').textContent = '';
+  show('options');
+});
+$('optionsBack').addEventListener('click', () => openTitle());
+$('optSound').addEventListener('change', e => { evoSound = e.target.checked; store.set('evoSound', evoSound); });
+
+// ---------- save slots screen ----------
+let slotsMode = 'adv', slotAsk = null; // slotAsk: {n, diff}
+let newAdvDiff = 'normal';
+function openSlots(m) {
+  slotsMode = m; slotAsk = null;
+  renderSlots(); setAccent('#e8c76a'); show('slots');
+}
+$('slotsBack').addEventListener('click', () => openTitle());
+function diffSegHTML(cur) {
+  return `<div class="seg" role="radiogroup" aria-label="Difficulty">${Object.keys(DIFFS).map(d => `<button type="button" role="radio" data-act="diff" data-v="${d}" aria-checked="${d === cur}">${DIFFS[d].label}</button>`).join('')}</div>`;
+}
+function advTeamMinis(a) {
+  return `<div class="minis">${a.team.slice(0, 6).map(m => `<span class="mini">${monIcon(E.setAtLevel(m.final, m.level).species)}</span>`).join('')}</div>`;
+}
+function renderSlots() {
+  const slots = [1, 2, 3, 4].map(n => ({n, p: profileOf(n) || {}, adv: slotAdv(n), hall: slotHall(n)}));
+  const adv = slotsMode === 'adv';
+  $('slotsTitle').textContent = adv ? 'Adventure' : 'Battle Hall';
+  $('slotsSub').textContent = adv ? 'Continue, or start a new game in a slot' : 'Choose a save slot';
+  let html = '';
+  if (adv) {
+    const recent = slots.filter(x => x.adv).sort((a, b) => (b.p.lastPlayed || 0) - (a.p.lastPlayed || 0))[0];
+    if (recent) {
+      const a = recent.adv, lead = a.team[0];
+      html += `<section class="slot cont" aria-label="Continue">
+        <span class="lead">${monIcon(E.setAtLevel(lead.final, lead.level).species)}</span>
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+          <p class="kicker">CONTINUE · SLOT ${recent.n}</p>
+          <p class="big">${esc(a.playerName || recent.p.name || 'Trainer')}</p>
+          <p>${a.done ? 'Champion' : `${a.pos} of 17 badges`} · ${esc(DIFFS[a.difficulty] ? DIFFS[a.difficulty].label : 'Normal')} · ${fmtTime(recent.p.playMs)}</p>
+          <p class="next">${esc(advNext(a))}</p>
+        </div>
+        <button class="btn gold full" type="button" data-act="cont" data-n="${recent.n}">Continue</button>
+      </section>`;
+    }
+  }
+  html += '<h2>Save slots</h2>';
+  for (const x of slots) {
+    const ask = slotAsk && slotAsk.n === x.n;
+    const has = adv ? !!x.adv : !!x.hall;
+    const empty = !x.adv && !x.hall && !x.p.name;
+    let body = '';
+    if (adv && x.adv) body = `${advTeamMinis(x.adv)}<p>Adventure: ${x.adv.done ? 'Champion' : `${x.adv.pos} badges`}, ${esc((DIFFS[x.adv.difficulty] || DIFFS.normal).label)} · ${esc(hallLine(x.hall))}</p>`;
+    else if (!adv && x.hall) body = `<p>${esc(hallLine(x.hall))}</p><p>${x.adv ? `Adventure: ${x.adv.done ? 'Champion' : `${x.adv.pos} badges`}` : 'No adventure yet'}</p>`;
+    else if (!empty) body = `<p>${adv ? 'No adventure yet' : 'Battle Hall not started'} · ${esc(adv ? hallLine(x.hall) : (x.adv ? `Adventure: ${x.adv.pos} badges` : ''))}</p>`;
+    let acts;
+    if (ask) {
+      const warn = has;
+      if (adv) {
+        acts = `<div class="${warn ? 'warnbox' : 'askbox'}">
+          ${warn ? `<p><b style="color:#fff">Start a new adventure in Slot ${x.n}?</b> This erases the adventure saved here. Slot ${x.n}'s Battle Hall badges and titles stay.</p>` : `<p><b style="color:var(--fg)">New adventure in Slot ${x.n}</b></p>`}
+          <span class="note">Difficulty</span>${diffSegHTML(slotAsk.diff)}
+          <div class="acts"><button class="btn ${warn ? 'danger' : 'gold'}" type="button" data-act="start" data-n="${x.n}">${warn ? 'Erase and start' : 'Start'}</button><button class="btn ghostbtn" type="button" data-act="cancel">${warn ? 'Keep it' : 'Cancel'}</button></div>
+        </div>`;
+      } else {
+        acts = `<div class="${warn ? 'warnbox' : 'askbox'}">
+          ${warn ? `<p><b style="color:#fff">Start the Battle Hall over in Slot ${x.n}?</b> This erases Slot ${x.n}'s Battle Hall badges, Champion titles and Badge Rush. The adventure here stays.</p>` : ''}
+          <label for="slotName">YOUR NAME</label><input id="slotName" maxlength="14" autocomplete="off" value="${esc(x.p.name || '')}">
+          <p class="note err" id="slotNameNote"></p>
+          <div class="acts"><button class="btn ${warn ? 'danger' : 'gold'}" type="button" data-act="start" data-n="${x.n}">${warn ? 'Erase and start' : 'Start'}</button><button class="btn ghostbtn" type="button" data-act="cancel">${warn ? 'Keep it' : 'Cancel'}</button></div>
+        </div>`;
+      }
+    } else if (has) {
+      acts = `<div class="acts"><button class="btn" type="button" data-act="cont" data-n="${x.n}">${adv ? 'Continue' : 'Open'}</button><button class="btn ghostbtn" type="button" data-act="new" data-n="${x.n}">${adv ? 'New game' : 'Start over'}</button></div>`;
+    } else {
+      acts = `<div class="acts"><button class="btn" type="button" data-act="new" data-n="${x.n}">${adv ? (empty ? 'New game' : 'Start an adventure') : (empty ? 'New game' : 'Start the Battle Hall')}</button></div>`;
+    }
+    html += `<article class="slot${empty && !ask ? ' empty' : ''}${ask && has ? ' warn' : ''}" aria-label="Slot ${x.n}">
+      <div class="top"><b>Slot ${x.n}${x.p.name ? ' · ' + esc(x.p.name) : ''}</b><span class="note">${empty ? 'Empty' : esc(playedAgo(x.p.lastPlayed))}</span></div>
+      ${body}${acts}</article>`;
+  }
+  $('slotsBody').innerHTML = html;
+  if (slotAsk && $('slotName')) $('slotName').focus();
+}
+$('slotsBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, n = +b.dataset.n;
+  if (act === 'cont') {
+    loadSlot(n); touchProfile();
+    if (slotsMode === 'adv') openAdvMap({}); else openHall();
+  } else if (act === 'new') { slotAsk = {n, diff: 'normal'}; renderSlots(); }
+  else if (act === 'cancel') { slotAsk = null; renderSlots(); }
+  else if (act === 'diff') { slotAsk.diff = b.dataset.v; renderSlots(); }
+  else if (act === 'start') {
+    if (slotsMode === 'adv') {
+      loadSlot(n);
+      newAdvDiff = slotAsk.diff;
+      slotAsk = null;
+      openProfessor();
+    } else {
+      const name = $('slotName').value.trim().replace(/\s+/g, ' ');
+      if (!name) { $('slotNameNote').textContent = 'Type a name first.'; return; }
+      loadSlot(n);
+      for (const k of HALL_KEYS) store.del(k);
+      loadSlot(n);
+      touchProfile({name, hall: true});
+      slotAsk = null;
+      openHall();
+    }
+  }
+});
+
+// ---------- My teams ----------
+let teamsPaste = false, teamsDelete = null;
+function openTeams() { teamsPaste = false; teamsDelete = null; renderTeams(); setAccent(CUSTOM_COLOR); show('teams'); }
+$('teamsBack').addEventListener('click', () => openHall());
+function teamCardHTML(t, sel) {
+  const bad = t.problems && t.problems.length;
+  const del = teamsDelete === t.id;
+  return `<article class="teamcard${sel ? ' sel' : ''}" aria-label="${esc(t.name)}">
+    <div class="top"><b>${esc(t.name)}${sel ? ' <span class="note">· in use</span>' : ''}</b>
+      <button class="star" type="button" data-act="star" data-id="${t.id}" aria-pressed="${!!t.fav}" aria-label="${t.fav ? 'Remove ' + esc(t.name) + ' from favorites' : 'Add ' + esc(t.name) + ' to favorites'}"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="${t.fav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></button></div>
+    <div class="minis">${t.mons.map(m => `<span class="mini">${monIcon(m.species)}</span>`).join('') || '<span class="note">No Mons yet</span>'}</div>
+    ${bad ? `<p class="err">Needs fixing: ${esc(t.problems[0])}${t.problems.length > 1 ? ` (+${t.problems.length - 1} more)` : ''}</p>` : ''}
+    ${del ? `<div class="warnbox"><p>Delete ${esc(t.name)}? This can't be undone.</p><div class="row"><button class="btn danger" type="button" data-act="delyes" data-id="${t.id}">Delete</button><button class="btn ghostbtn" type="button" data-act="delno">Keep it</button></div></div>`
+      : `<div class="row"><button class="btn primary" type="button" data-act="use" data-id="${t.id}" ${bad || !t.mons.length ? 'disabled' : ''}>Use this team</button><button class="btn" type="button" data-act="edit" data-id="${t.id}">Edit</button><button class="btn ghostbtn" type="button" data-act="del" data-id="${t.id}">Delete</button></div>`}
+  </article>`;
+}
+function renderTeams() {
+  const list = builtTeams(), rec = recentIds(), cur = hallTeam();
+  const selId = cur.kind === 'built' ? cur.id : null;
+  const favs = list.filter(t => t.fav);
+  const recent = rec.map(id => list.find(t => t.id === id)).filter(Boolean);
+  const others = list.filter(t => !t.fav && !rec.includes(t.id)).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  let html = `<div class="row"><button class="btn gold" type="button" data-act="new" style="flex:2 1 0">Build a new team</button><button class="btn ghostbtn" type="button" data-act="paste" style="flex:1 1 0">${teamsPaste ? 'Cancel' : 'Paste a team'}</button></div>`;
+  if (teamsPaste) html += `<div class="pastebox"><label class="note" for="pasteText">Paste a team exported from Pokémon Showdown's Teambuilder.</label><textarea id="pasteText" spellcheck="false"></textarea>
+    <div class="row"><button class="btn primary" type="button" data-act="import">Add this team</button></div><p class="note err" id="pasteNote"></p></div>`;
+  html += `<div class="section"><h2>Favorites</h2>${favs.map(t => teamCardHTML(t, t.id === selId)).join('') || '<p class="note">Star a team to keep it here.</p>'}</div>`;
+  html += `<div class="section"><h2>Recently used</h2>${recent.map(t => teamCardHTML(t, t.id === selId)).join('') || '<p class="note">Your last 5 teams used in battle show here.</p>'}</div>`;
+  if (others.length) html += `<div class="section"><h2>Other teams</h2>${others.map(t => teamCardHTML(t, t.id === selId)).join('')}</div>`;
+  $('teamsBody').innerHTML = html;
+}
+$('teamsBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  const list = builtTeams(), t = list.find(x => x.id === id);
+  if (act === 'new') openBuilder(null);
+  else if (act === 'paste') { teamsPaste = !teamsPaste; renderTeams(); if (teamsPaste) $('pasteText').focus(); }
+  else if (act === 'import') {
+    const text = $('pasteText').value;
+    const nt = text.trim() ? importTeamText(text, `Pasted team ${list.length + 1}`) : null;
+    if (!nt) { $('pasteNote').textContent = "That doesn't look like a Showdown team. Export it from the Teambuilder and paste the whole thing."; return; }
+    teamsPaste = false; renderTeams();
+    toast(nt.problems.length ? `${nt.name} added. It needs a few fixes before it can battle.` : `${nt.name} added.`);
+  } else if (act === 'star' && t) { t.fav = !t.fav; saveBuiltTeams(list); renderTeams(); }
+  else if (act === 'use' && t) { setHallTeam({kind: 'built', id, gym: hallTeam().gym}); openHall(); toast(`Using ${t.name}.`); }
+  else if (act === 'edit' && t) openBuilder(id);
+  else if (act === 'del') { teamsDelete = id; renderTeams(); }
+  else if (act === 'delno') { teamsDelete = null; renderTeams(); }
+  else if (act === 'delyes') {
+    saveBuiltTeams(list.filter(x => x.id !== id));
+    ls.set('recentTeams', recentIds().filter(x => x !== id));
+    teamsDelete = null; renderTeams();
+  }
+});
+
+// ---------- team builder ----------
+let bt = null, btDirty = false, btProblems = null, btLeave = false;
+const bf = {q: '', src: 'all', final: true, types: [], limit: 40};
+const TYPE_LIST = ['Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting', 'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost', 'Dragon', 'Dark', 'Steel', 'Fairy'];
+const BACK_SVG = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+function openBuilder(id) {
+  const src = id && builtTeams().find(t => t.id === id);
+  bt = src ? JSON.parse(JSON.stringify(src)) : {id: null, name: `Team ${builtTeams().length + 1}`, fav: false, mons: [], problems: []};
+  btDirty = false; btLeave = false; btProblems = src && src.problems && src.problems.length ? src.problems : null; bf.limit = 40;
+  renderBuilder(); setAccent(CUSTOM_COLOR); show('builder');
+}
+function poolMatches() {
+  const q = bf.q.trim().toLowerCase().replace(/^#/, '');
+  return E.speciesPool().filter(s => (bf.src === 'all' || (bf.src === 'neo') === s.neo) && (!bf.final || s.final)
+    && bf.types.every(t => s.types.includes(t))
+    && (!q || s.name.toLowerCase().includes(q) || String(s.num) === q.replace(/^0+/, '')));
+}
+function renderResults() {
+  if (!$('btResults')) return;
+  const all = poolMatches(), on = new Set(bt.mons.map(m => E.Dex.species.get(m.species).baseSpecies));
+  $('btCount').textContent = `${all.length} Mon${all.length === 1 ? '' : 's'} match`;
+  $('btResults').innerHTML = all.slice(0, bf.limit).map(s => {
+    const taken = on.has(E.Dex.species.get(s.name).baseSpecies);
+    return `<button class="monrow" type="button" data-pick="${esc(s.name)}" ${taken ? 'disabled' : ''}>
+      <span class="pic">${monIcon(s.name)}</span>
+      <span><small>${s.neo ? 'Neofield' : 'National'} #${pad3(s.num)}</small><b>${esc(s.name)}</b>${typesHTML(s.types)}</span>
+      <small>${taken ? 'On team' : ''}</small></button>`;
+  }).join('') || '<p class="note">No Mons match. Try fewer filters.</p>';
+  $('btMore').hidden = all.length <= bf.limit;
+}
+function renderBuilder() {
+  const full = bt.mons.length >= 6;
+  const slots = [0, 1, 2, 3, 4, 5].map(i => {
+    const m = bt.mons[i];
+    if (m) return `<button class="bslot" type="button" data-slot="${i}" aria-label="Slot ${i + 1}: ${esc(m.species)}. Change its moves and item">${monIcon(m.species)}</button>`;
+    const next = i === bt.mons.length;
+    return `<button class="bslot open" type="button" ${next ? 'aria-pressed="true"' : 'disabled'} aria-label="Slot ${i + 1}: empty${next ? ', choosing now' : ''}"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>`;
+  }).join('');
+  let html = `<header class="hallhead"><button class="iconbtn" type="button" data-act="back" aria-label="Back to My teams">${BACK_SVG}</button><h1 style="flex:1">Build a team</h1><button class="btn gold" type="button" data-act="save">Save</button></header>`;
+  if (btLeave) html += `<div class="warnbox"><p>Leave without saving your changes?</p><div class="row"><button class="btn danger" type="button" data-act="leave">Leave</button><button class="btn ghostbtn" type="button" data-act="stay">Keep editing</button></div></div>`;
+  html += `<div class="field"><label for="btName">Team name</label><input id="btName" maxlength="24" autocomplete="off" value="${esc(bt.name)}"></div>
+    <div class="bslots">${slots}</div>
+    ${btProblems && btProblems.length ? `<div class="problems"><b>Fix these before this team can battle:</b><ul>${btProblems.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>` : ''}
+    <p class="note">${bt.mons.length ? 'Tap a Mon above to change its moves and item, or to remove it.' : 'Pick up to 6 Mons from the list below.'}</p>`;
+  if (!full) {
+    html += `<div class="section"><h2>Choose a Mon for slot ${bt.mons.length + 1}</h2>
+      <input id="btSearch" class="dexsearch" type="search" placeholder="Search by name or number" aria-label="Search Mons" value="${esc(bf.q)}" autocomplete="off">
+      <div class="filters">
+        <div class="chips">${[['all', 'All'], ['neo', 'Neofield'], ['main', 'Main games']].map(([k, l]) => `<button class="chip" type="button" data-src="${k}" aria-pressed="${bf.src === k}">${l}</button>`).join('')}
+          <button class="chip" type="button" data-final="1" aria-pressed="${bf.final}">Fully evolved</button></div>
+        <div class="typechips">${TYPE_LIST.map(t => `<button class="typechip" type="button" data-type="${t}" style="--t:${TYPE_COLORS[t]}" aria-pressed="${bf.types.includes(t)}">${t}</button>`).join('')}</div>
+      </div>
+      <p class="note" id="btCount"></p>
+      <div class="results" id="btResults"></div>
+      <button class="btn" type="button" id="btMore" data-act="more" hidden>Show more</button></div>`;
+  } else html += '<p class="note">Your team is full.</p>';
+  $('builderBody').innerHTML = html;
+  renderResults();
+}
+function saveBuilder() {
+  bt.name = ($('btName').value.trim() || 'My team').slice(0, 24);
+  if (!bt.mons.length) { btProblems = ['Add at least one Mon.']; renderBuilder(); return; }
+  bt.problems = teamProblems(bt.mons);
+  bt.updated = Date.now();
+  if (!bt.id) bt.id = newTeamId();
+  const list = builtTeams(), i = list.findIndex(t => t.id === bt.id);
+  if (i >= 0) list[i] = JSON.parse(JSON.stringify(bt)); else list.push(JSON.parse(JSON.stringify(bt)));
+  saveBuiltTeams(list);
+  btDirty = false;
+  if (bt.problems.length) { btProblems = bt.problems; renderBuilder(); toast('Saved. Fix the problems listed before this team can battle.', 4200); return; }
+  toast(`${bt.name} saved.`);
+  openTeams();
+}
+$('builderBody').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.pick) {
+    const species = b.dataset.pick;
+    const ab = E.abilitiesFor(species);
+    bt.mons.push({species, ability: ab.length ? ab[0].name : '', item: '', moves: E.suggestMoves(species), nature: null, spread: null, evs: null});
+    btDirty = true; btProblems = null;
+    openMonEditor(bt.mons.length - 1);
+    return;
+  }
+  if (b.dataset.slot != null) { openMonEditor(+b.dataset.slot); return; }
+  if (b.dataset.src) { bf.src = b.dataset.src; bf.limit = 40; renderBuilder(); return; }
+  if (b.dataset.final) { bf.final = !bf.final; bf.limit = 40; renderBuilder(); return; }
+  if (b.dataset.type) {
+    const t = b.dataset.type;
+    bf.types = bf.types.includes(t) ? bf.types.filter(x => x !== t) : [...bf.types, t].slice(-2);
+    bf.limit = 40; renderBuilder(); return;
+  }
+  const act = b.dataset.act;
+  if (act === 'more') { bf.limit += 40; renderResults(); }
+  else if (act === 'save') saveBuilder();
+  else if (act === 'back') { if (btDirty) { btLeave = true; renderBuilder(); } else openTeams(); }
+  else if (act === 'leave') openTeams();
+  else if (act === 'stay') { btLeave = false; renderBuilder(); }
+});
+$('builderBody').addEventListener('input', e => {
+  if (e.target.id === 'btSearch') { bf.q = e.target.value; bf.limit = 40; renderResults(); }
+  else if (e.target.id === 'btName') { bt.name = e.target.value; btDirty = true; }
+});
+
+// ---------- Mon editor ----------
+let medIdx = 0, medAdvOpen = false;
+const learnCache = {};
+const learnFor = sp => learnCache[sp] || (learnCache[sp] = E.learnableMoves(sp));
+function openMonEditor(i) { medIdx = i; medAdvOpen = false; renderMonEditor(); show('moned'); }
+function renderMonEditor() {
+  const m = bt.mons[medIdx], sp = E.Dex.species.get(m.species);
+  const reg = E.regionalInfo(sp.name);
+  const abil = E.abilitiesFor(sp.name), items = E.itemsFor(sp.name), moves = learnFor(sp.name);
+  const set = E.builtSet(m), auto = E.autoSpread(sp.name, m.moves);
+  const itemOpt = it => `<option value="${esc(it.name)}" ${it.name === m.item ? 'selected' : ''}>${esc(it.name)}</option>`;
+  const itemInfo = m.item ? [...items.own, ...items.popular, ...items.other].find(it => it.name === m.item) : null;
+  const abInfo = abil.find(a => a.name === set.ability);
+  const mv = [0, 1, 2, 3].map(k => {
+    const curName = (m.moves || [])[k] || '';
+    const others = new Set((m.moves || []).filter((x, j) => x && j !== k));
+    const info = moves.find(x => x.name === curName);
+    return `<div class="field movepick" style="--t:${info ? TYPE_COLORS[info.type] : 'var(--line)'};padding-left:10px">
+      <label for="medMove${k}">Move ${k + 1}</label>
+      <select id="medMove${k}" data-f="move" data-k="${k}"><option value="">(none)</option>${moves.filter(x => !others.has(x.name)).map(x => `<option value="${esc(x.name)}" ${x.name === curName ? 'selected' : ''}>${esc(x.name)} · ${x.type}${x.power ? ' · ' + x.power : ''}</option>`).join('')}</select>
+      ${info ? `<small class="note">${esc(info.category)}${info.accuracy ? ` · ${info.accuracy}% accuracy` : ''} · ${esc(info.desc || '')}</small>` : ''}</div>`;
+  }).join('');
+  const spreads = Object.entries(E.SPREADS).map(([k, v]) => `<option value="${k}" ${m.spread === k ? 'selected' : ''}>${esc(v.label)}</option>`).join('');
+  const natures = E.NATURES().map(n => `<option value="${n.name}" ${m.nature === n.name ? 'selected' : ''}>${n.name}${n.plus ? ` (+${STAT_LABEL[n.plus]}, −${STAT_LABEL[n.minus]})` : ''}</option>`).join('');
+  $('monedBody').innerHTML = `<header class="hallhead"><button class="iconbtn" type="button" data-act="done" aria-label="Back to the team">${BACK_SVG}</button><p class="note" style="flex:1;margin:0">${esc(bt.name)} · Mon ${medIdx + 1} of ${bt.mons.length}</p></header>
+    <div class="monhero"><div class="pic">${artOf(sp.name) || '#' + sp.num}</div><div><small>${reg ? 'Neofield' : 'National'} #${pad3(reg ? reg.num : sp.num)} · Level 100</small><h1>${esc(sp.name)}</h1>${typesHTML(sp.types)}</div></div>
+    <div class="fieldgrid">
+      <div class="field"><label for="medAbility">Ability</label><select id="medAbility" data-f="ability">${abil.map(a => `<option value="${esc(a.name)}" ${a.name === set.ability ? 'selected' : ''}>${esc(a.name)}${a.hidden ? ' (hidden)' : ''}</option>`).join('')}</select>
+        <small class="note">${esc(abInfo ? abInfo.desc : '')}</small></div>
+      <div class="field"><label for="medItem">Held item</label><select id="medItem" data-f="item"><option value="">None</option>
+        ${items.own.length ? `<optgroup label="Just for ${esc(sp.name)}">${items.own.map(itemOpt).join('')}</optgroup>` : ''}
+        <optgroup label="Popular">${items.popular.map(itemOpt).join('')}</optgroup><optgroup label="All items">${items.other.map(itemOpt).join('')}</optgroup></select>
+        <small class="note">${esc(itemInfo ? itemInfo.desc : 'No held item.')}</small></div>
+    </div>
+    <div class="section"><h2>Moves</h2>${mv}<p class="note">Only moves ${esc(sp.name)} can learn are listed.</p></div>
+    <details class="adv" id="medAdv" ${medAdvOpen ? 'open' : ''}><summary>Advanced: nature and stat training</summary>
+      <div class="fieldgrid">
+        <div class="field"><label for="medNature">Nature</label><select id="medNature" data-f="nature"><option value="">Automatic (${auto.nature})</option>${natures}</select></div>
+        <div class="field"><label for="medSpread">Stat training</label><select id="medSpread" data-f="spread"><option value="">Automatic (${esc(E.SPREADS[auto.spread].label)})</option>${spreads}${m.evs && !m.spread ? '<option value="custom" selected>From the pasted team</option>' : ''}</select></div>
+      </div></details>
+    ${statBlock(set, sp, 'Stats at level 100')}
+    <div class="row"><button class="btn ghostbtn" type="button" data-act="remove" style="flex:1 1 0">Remove from team</button><button class="btn gold" type="button" data-act="done" style="flex:1 1 0">Done</button></div>`;
+}
+$('monedBody').addEventListener('change', e => {
+  const f = e.target.dataset.f; if (!f) return;
+  const m = bt.mons[medIdx], v = e.target.value;
+  if (f === 'ability') m.ability = v;
+  else if (f === 'item') m.item = v;
+  else if (f === 'move') { m.moves = (m.moves || []).slice(); while (m.moves.length < 4) m.moves.push(''); m.moves[+e.target.dataset.k] = v; }
+  else if (f === 'nature') m.nature = v || null;
+  else if (f === 'spread') { if (v !== 'custom') { m.spread = v || null; m.evs = null; } }
+  btDirty = true; btProblems = null;
+  const top = $('monedScroll').scrollTop;
+  renderMonEditor();
+  $('monedScroll').scrollTop = top;
+});
+$('monedBody').addEventListener('toggle', e => { if (e.target.id === 'medAdv') medAdvOpen = e.target.open; }, true);
+$('monedBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'remove') { bt.mons.splice(medIdx, 1); btDirty = true; btProblems = null; }
+  const m = bt.mons[medIdx];
+  if (m && m.moves) m.moves = m.moves.filter(Boolean);
+  renderBuilder(); show('builder');
+});
+
+// ---------- intro: who's that Mon? ----------
+// Plays once each time the app opens: 3 seconds of silhouette, the reveal, 3 more seconds,
+// and then the title screen as soon as the battle engine has also finished loading.
+const NEO_MONS = /*NEO_MONS*/[];
+let introDone = false, engineReady = false, introFinished = false, fakeP = 8;
+const fakeTimer = setInterval(() => {
+  if (engineReady) return;
+  fakeP = Math.min(90, fakeP + (90 - fakeP) * 0.06);
+  $('whoisFill').style.width = fakeP + '%';
+}, 150);
+function finishIntro() {
+  if (introFinished) return;
+  if (!engineReady) { if (introDone) $('whoisStatus').textContent = 'Almost ready…'; return; }
+  if (!introDone) return;
+  introFinished = true;
+  clearInterval(fakeTimer);
+  $('whoisFill').style.width = '100%';
+  openTitle();
+  $('whois').classList.add('out');
+  setTimeout(() => { $('whois').hidden = true; }, 550);
+}
+(function runIntro() {
+  $('whoisStatus').textContent = 'Loading the battle engine…';
+  const mons = NEO_MONS.filter(m => m.pic);
+  if (!mons.length) { introDone = true; return; }
+  const m = mons[Math.floor(Math.random() * mons.length)];
+  const img = $('whoisImg');
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    img.hidden = false; $('whoisQ').hidden = false;
+    setTimeout(() => {
+      img.className = 'shown'; img.alt = m.name;
+      $('whoisQ').hidden = true;
+      $('whoisNum').textContent = `It's #${pad3(m.num)}`;
+      $('whoisName').textContent = m.name + '!';
+      $('whoisTypes').innerHTML = m.types.map(t => `<span class="type" style="--t:${TYPE_COLORS[t] || '#999'}">${esc(t)}</span>`).join('');
+      $('whoisA').hidden = false;
+      setTimeout(() => { introDone = true; finishIntro(); }, 3000);
+    }, 3000);
+  };
+  img.alt = 'A mystery Mon in silhouette';
+  img.onload = start;
+  img.onerror = () => { if (!started) { introDone = true; finishIntro(); } };
+  img.src = m.pic;
+  setTimeout(start, 2500); // don't wait forever for the picture
+})();
+
 // ---------- save backup ----------
-const SAVE_KEYS = ['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'adventure', 'evoSound'];
+const SHARED_SAVE_KEYS = ['builtTeams', 'recentTeams', 'evoSound', 'lastSlot', 'saveVersion'];
+const OLD_SAVE_KEYS = ['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'adventure'];
+const isSaveKey = k => /^slot[1-4]\./.test(k) || SHARED_SAVE_KEYS.includes(k);
 function saveCode() {
   const data = {};
-  for (const k of SAVE_KEYS) { try { const v = localStorage.getItem(k); if (v != null) data[k] = v; } catch (e) { /* storage unavailable */ } }
+  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isSaveKey(k)) data[k] = localStorage.getItem(k); } } catch (e) { /* storage unavailable */ }
   return 'GLB1:' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
 }
 $('saveCopy').addEventListener('click', async () => {
@@ -2725,7 +3303,7 @@ $('saveCopy').addEventListener('click', async () => {
 $('saveLoadOpen').addEventListener('click', () => {
   $('saveBox').hidden = false; $('saveLoadRow').hidden = false;
   $('saveText').readOnly = false; $('saveText').value = ''; $('saveText').placeholder = 'Paste a save code that starts with GLB1:';
-  $('saveNote').textContent = 'Loading a code replaces everything saved on this device.';
+  $('saveNote').textContent = 'Loading a code replaces every save slot and built team on this device.';
   $('saveText').focus();
 });
 $('saveLoad').addEventListener('click', () => {
@@ -2734,16 +3312,19 @@ $('saveLoad').addEventListener('click', () => {
   try { if (raw.startsWith('GLB1:')) data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(5))))); } catch (e) { data = null; }
   if (!data || typeof data !== 'object') { $('saveNote').textContent = "That doesn't look like a save code. Copy the whole thing, starting with GLB1:"; return; }
   try {
-    for (const k of SAVE_KEYS) localStorage.removeItem(k);
-    for (const [k, v] of Object.entries(data)) if (SAVE_KEYS.includes(k)) localStorage.setItem(k, v);
+    const drop = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isSaveKey(k) || OLD_SAVE_KEYS.includes(k)) drop.push(k); }
+    drop.forEach(k => localStorage.removeItem(k));
+    for (const [k, v] of Object.entries(data)) if (isSaveKey(k) || OLD_SAVE_KEYS.includes(k)) localStorage.setItem(k, v);
+    // a code from before save slots: let the move into Slot 1 run again
+    if (!('saveVersion' in data)) localStorage.removeItem('saveVersion');
   } catch (e) { $('saveNote').textContent = "This device won't let the game save. Check that private browsing is off."; return; }
   $('saveNote').textContent = 'Save loaded. Restarting the game…';
   setTimeout(() => location.reload(), 600);
 });
 
 // ---------- boot ----------
-renderDifficulty(); renderBadges(); renderTeamChips(); renderLeaders(); renderJourneyCard(); renderAdvCard();
-setAccent(LEADERS[myKey] ? LEADERS[myKey].color : CUSTOM_COLOR);
+setAccent('#e8c76a');
 db = undefined;
 
 async function connectOnline() {
@@ -2769,10 +3350,13 @@ async function connectOnline() {
 
 function boot() {
   E = window.Engine;
-  if (!E) { $('loading').textContent = 'The battle engine did not load. Reload the page to try again.'; return; }
-  $('loading').hidden = true;
+  if (!E) { $('whoisStatus').textContent = 'The battle engine did not load. Reload the page to try again.'; return; }
+  convertLegacyTeams();
   migrateRegionalLines();
-  renderTeamChips(); renderLeaders(); renderOnline(); renderJourneyCard(); renderAdvCard();
+  engineReady = true;
+  $('whoisFill').style.width = '100%';
+  $('whoisStatus').textContent = 'Ready';
+  finishIntro();
 }
 if (window.Engine) boot(); else window.addEventListener('load', boot);
 connectOnline();
