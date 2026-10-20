@@ -1,5 +1,5 @@
-// Adventure mode: evolution chains, level-up moves, wild Pokémon and scaled teams.
-// All evolution levels and level-up moves come from Pokémon Showdown's data, which mirrors the games.
+// Adventure mode: evolution chains, level-up moves, wild Mons and scaled teams.
+// All evolution levels and level-up moves come from Showdown's data, which mirrors the games.
 import {Dex, Teams} from '@pkmn/sim';
 import {ROUTES, familyOf, FAMILIES} from './regional.js';
 
@@ -95,7 +95,7 @@ function pickMoves(chain, idx, level, signature, extra) {
   return chosen.slice(0, 4);
 }
 
-// A battle set for a Pokémon at a given level, heading toward its final battle set.
+// A battle set for a Mon at a given level, heading toward its final battle set.
 // opts.tutored: moves bought from the Move Tutor. opts.leader: trainers know their set moves from level 30.
 export function setAtLevel(finalSet, level, opts = {}) {
   const chain = chainOf(finalSet.species);
@@ -118,7 +118,7 @@ export function setAtLevel(finalSet, level, opts = {}) {
   };
 }
 
-// ---------- wild Pokémon ----------
+// ---------- wild Mons ----------
 const BANNED_TAGS = ['Restricted Legendary', 'Sub-Legendary', 'Mythical', 'Ultra Beast', 'Paradox'];
 const REGIONAL = ['Alola', 'Galar', 'Hisui', 'Paldea'];
 let basePool = null;
@@ -140,7 +140,7 @@ function familyTypes(sp) {
 }
 const rand = a => a[Math.floor(Math.random() * a.length)];
 
-// A random wild (or trainer) Pokémon at a level, optionally of certain types.
+// A random wild (or trainer) Mons at a level, optionally of certain types.
 export function randomMon(level, types = null, trained = false) {
   let list = bases();
   if (types && types.length) {
@@ -230,7 +230,7 @@ export function moveInfo(name) {
   return {name: m.name, type: m.type, category: m.category, power: m.basePower, accuracy: m.accuracy === true ? null : m.accuracy, pp: Math.floor(m.pp * 8 / 5), desc: m.shortDesc || m.desc};
 }
 
-// A leader's team at a level (their Pokémon shown at the right evolution stage)
+// A leader's team at a level (their Mons shown at the right evolution stage)
 export function leaderSets(teamText, level) { return parseSets(teamText).map(s => setAtLevel(s, level, {leader: true})); }
 
 // Level everyone up by n. Returns readable lines about growth, evolutions and new moves.
@@ -248,7 +248,7 @@ export function levelUp(team, n) {
   return lines;
 }
 
-// Moves from the final battle set that the Move Tutor can teach this Pokémon right now
+// Moves from the final battle set that the Move Tutor can teach this Mon right now
 export function tutorOptions(member) {
   const chain = chainOf(member.final.species);
   const idx = stageAt(chain, member.level);
@@ -260,9 +260,9 @@ export function tutorOptions(member) {
 export function evolutionPath(finalSpecies) { return chainOf(finalSpecies).map(c => ({species: c.sp.name, at: c.at})); }
 
 
-// ---------- Neofield Region (invented Pokémon) ----------
+// ---------- Neofield Region (invented Mons) ----------
 export * from './regional.js';
-// A wild invented Pokémon from a route, at the right evolution stage for its level.
+// A wild invented Mons from a route, at the right evolution stage for its level.
 export function regionalWild(routeIdx, level, famKey) {
   const r = ROUTES[Math.max(0, Math.min(ROUTES.length - 1, routeIdx))];
   const fam = familyOf(famKey || r.families[Math.floor(Math.random() * r.families.length)]);
@@ -271,13 +271,13 @@ export function regionalWild(routeIdx, level, famKey) {
   set.family = fam.key;
   return set;
 }
-// A new team member (starter or caught Pokémon) that grows toward its family's battle set.
+// A new team member (starter or caught Mons) that grows toward its family's battle set.
 export function newMember(famKey, level) {
   const fam = familyOf(famKey);
   const final = JSON.parse(JSON.stringify(fam.finalSet));
   return {final, level, frac: 1, tutored: [], moves: setAtLevel(final, level).moves};
 }
-// Chance one Poké Ball works. hpFrac 0..1, status like 'slp'. Friendlier than the main games.
+// Chance one Mon Ball works. hpFrac 0..1, status like 'slp'. Friendlier than the main games.
 export function catchChance(catchRate, hpFrac, status) {
   const bonus = status === 'slp' || status === 'frz' ? 2 : status ? 1.5 : 1;
   const a = (3 - 2 * Math.max(0, Math.min(1, hpFrac))) / 3 * catchRate * bonus;

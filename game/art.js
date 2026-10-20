@@ -1,4 +1,4 @@
-// Art for the Neofield Pokémon. Tyler's finished designs live in www/mons/<id>.png and are listed in MON_PICS.
+// Art for the Neofield Mons. Tyler's finished designs live in www/mons/<id>.png and are listed in MON_PICS.
 // Everything else shows a placeholder: a type-colored silhouette with a question mark.
 import {SPECIES} from './regional.js';
 

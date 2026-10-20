@@ -404,7 +404,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .ballicon { display: inline-block; width: 18px; height: 18px; vertical-align: -3px; }
 .mon.fx-ball { animation: ballwobble .5s ease-in-out; }
 @keyframes ballwobble { 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
-/* ---------- Pokédex ---------- */
+/* ---------- MonDex ---------- */
 .dexsearch { width: 100%; box-sizing: border-box; font: inherit; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); margin: 10px 0; }
 .dexgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .dexrow { --c: var(--line); display: grid; grid-template-columns: 46px 1fr; gap: 8px; align-items: center; text-align: left; border: 1px solid var(--line); border-left: 3px solid var(--c); border-radius: 10px; background: var(--panel); padding: 6px 8px; min-height: 58px; }
@@ -631,7 +631,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
         <button class="bigbtn" id="goHall" type="button">Battle Hall</button>
       </nav>
       <div class="titleicons">
-        <button class="iconlbl" id="openDexMain" type="button"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="10" r="3.2"/><path d="M8 16h8"/></svg>Pokédex</button>
+        <button class="iconlbl" id="openDexMain" type="button"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="10" r="3.2"/><path d="M8 16h8"/></svg>MonDex</button>
         <button class="iconlbl" id="openOptions" type="button"><svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Options</button>
       </div>
     </div>
@@ -665,7 +665,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       </div>
       <div class="section">
         <h2>About</h2>
-        <p class="note">Neofield. Neofield Mons designed by Tyler. Battles run on the Pokémon Showdown simulator.</p>
+        <p class="note">Neofield. Neofield Mons designed by Tyler. Battles run on the Showdown battle simulator.</p>
         <p class="note" id="optVersion"></p>
       </div>
     </div>
@@ -750,7 +750,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <section class="screen battle" id="battle" hidden>
     <div class="topbar">
       <div class="vs" id="vsLabel"></div>
-      <div class="row"><button class="ghost" id="battleMap" hidden>Map</button><button class="ghost" id="battleGuide">Teams</button><button class="ghost" id="forfeit">Forfeit</button></div>
+      <div class="row"><button class="ghost" id="battleMap" hidden>Map</button><button class="ghost" id="battleGuide">Team</button><button class="ghost" id="forfeit">Forfeit</button></div>
     </div>
     <div class="mon foe" id="foeCard"></div>
     <div class="weather" id="weather"></div>
@@ -787,7 +787,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <section class="screen" id="journey" hidden>
     <div class="maphead">
       <div class="mapttl"><small id="mapSub"></small>Neofield Region</div>
-      <div class="row"><button class="ghost" id="mapDex" hidden>Dex</button><button class="ghost" id="mapTeam">Team</button><button class="ghost" id="mapBag">Bag</button><button class="ghost" id="mapMenu">Menu</button></div>
+      <div class="row"><button class="ghost" id="mapDex" hidden>MonDex</button><button class="ghost" id="mapTeam">Team</button><button class="ghost" id="mapBag">Bag</button><button class="ghost" id="mapMenu">Menu</button></div>
     </div>
     <div class="mapwrap" id="mapWrap"><svg id="mapSvg" viewBox="0 0 360 720" role="img" aria-label="Region map"></svg></div>
     <div class="nextbar" id="nextBar"></div>
@@ -800,7 +800,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       <div class="wallet"><span>Your money</span><b id="shopMoney"></b></div>
       <p class="note" id="shopNote">Tap Buy to add an item to your bag.</p>
       <div class="section"><h2>Items</h2><div class="shoplist" id="shopItems"></div></div>
-      <div class="section"><h2>Move Tutor</h2><p class="note">Teaches one of a Pokémon's battle-set moves early, as long as its current form can learn it. Costs <span id="tutorPrice"></span> per move.</p><div class="shoplist" id="shopTutor"></div></div>
+      <div class="section"><h2>Move Tutor</h2><p class="note">Teaches one of a Mon's battle-set moves early, as long as its current form can learn it. Costs <span id="tutorPrice"></span> per move.</p><div class="shoplist" id="shopTutor"></div></div>
     </div>
   </section>
 
@@ -822,10 +822,10 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <!-- POKÉDEX -->
   <section class="screen" id="dex" hidden>
     <div class="scroll" id="dexScroll">
-      <header class="guidehead"><h1 id="dexTitle">Pokédex</h1><button class="btn" id="dexBack">Back</button></header>
+      <header class="guidehead"><h1 id="dexTitle">MonDex</h1><button class="btn" id="dexBack">Back</button></header>
       <div id="dexListView">
         <p class="note" id="dexSub"></p>
-        <div class="chips" id="dexTabs" role="group" aria-label="Which Pokédex"></div>
+        <div class="chips" id="dexTabs" role="group" aria-label="Which MonDex"></div>
         <input class="dexsearch" id="dexSearch" type="search" placeholder="Search by name, number or type" autocomplete="off">
         <div class="dexgrid" id="dexList"></div>
       </div>
@@ -837,7 +837,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <section class="screen" id="jbag" hidden>
     <div class="scroll">
       <header class="guidehead"><h1>Team &amp; bag</h1><button class="btn" id="jbagBack">Back to map</button></header>
-      <div class="section"><h2>Bag</h2><div class="bagrow" id="jbagItems"></div><p class="note" id="jbagNote">Pick an item, then the Pokémon to use it on.</p></div>
+      <div class="section"><h2>Bag</h2><div class="bagrow" id="jbagItems"></div><p class="note" id="jbagNote">Pick an item, then the Mon to use it on.</p></div>
       <div class="section"><h2>Your team</h2><div class="swaps" id="jbagTeam"></div></div>
     </div>
   </section>

@@ -7,7 +7,7 @@ const LEADERS = {
   tucker: {first: 'Tucker', title: 'Ranger Tucker',  badge: 'Mountainbadge', type: 'Rock',        color: '#d2a564', icon: 'peak'},
   tanner: {first: 'Tanner', title: 'Coach Tanner',   badge: 'Blizzardbadge', type: 'Ice',         color: '#86d8ec', icon: 'flake'},
   makenna: {first: 'Makenna', title: 'Ninja Makenna', badge: 'Moonbadge',     type: 'Dark',        color: '#a58fe0', icon: 'moon'},
-  charlotte: {first: 'Charlotte', title: 'Pokéfan Charlotte', badge: 'Zapbadge', type: 'Electric',  color: '#f2cc3a', icon: 'bolt'},
+  charlotte: {first: 'Charlotte', title: 'Monfan Charlotte', badge: 'Zapbadge', type: 'Electric',  color: '#f2cc3a', icon: 'bolt'},
   lillian: {first: 'Lillian', title: 'Gardener Lillian', badge: 'Petalbadge',   type: 'Grass',       color: '#7fcf5c', icon: 'leaf'},
   theo:   {first: 'Theo',   title: 'Youngin Theo',   badge: 'Buzzbadge',     type: 'Bug',         color: '#b5cc3a', icon: 'bug'},
   rachel: {first: 'Rachel', title: 'Scribe Rachel',  badge: 'Mythicbadge',   type: 'Fairy',       color: '#ee9ad0', icon: 'fairy'},
@@ -259,7 +259,7 @@ async function commit(choice) {
     runAI();
     if (!battle.choose('p1', choice)) { chooseError(); return; }
     E.recountLeft(battle.p1);
-    // the computer may still owe choices (e.g. replacing a fainted Pokémon)
+    // the computer may still owe choices (e.g. replacing a fainted Mon)
     await refresh();
     return;
   }
@@ -550,7 +550,7 @@ function hpColor(pct) { return pct > 50 ? 'var(--hp-good)' : pct > 20 ? 'var(--h
 
 function cardHTML(side) {
   const v = view[side];
-  if (!v.species) return `<div class="head"><span class="name">${side === ME ? 'Your side' : esc(foe.name)}</span><span class="owner">${side === ME ? 'You' : 'Opponent'}</span></div><div class="note">Waiting for the first Pokémon…</div>`;
+  if (!v.species) return `<div class="head"><span class="name">${side === ME ? 'Your side' : esc(foe.name)}</span><span class="owner">${side === ME ? 'You' : 'Opponent'}</span></div><div class="note">Waiting for the first Mon…</div>`;
   const sp = E.Dex.species.get(v.species);
   const pct = hpTrack(side, v.ident, Math.max(0, pctOf(side)));
   const hpText = hpLabel(side, pct);
@@ -670,18 +670,21 @@ function renderControls() {
   if (!forced) {
     html += `<div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-fight" aria-selected="${panel === 'fight'}" data-panel="fight">Fight</button>
-      <button class="tab" role="tab" id="tab-switch" aria-selected="${panel === 'switch'}" data-panel="switch">Pokémon</button>
+      <button class="tab" role="tab" id="tab-switch" aria-selected="${panel === 'switch'}" data-panel="switch">Mons</button>
       ${usesBag() ? `<button class="tab" role="tab" id="tab-bag" aria-selected="${panel === 'bag'}" data-panel="bag">Bag</button>` : ''}
       ${act && act.canMegaEvo ? '<label class="mega"><input type="checkbox" id="megaBox"> Mega Evolve</label>' : ''}
     </div>`;
   } else {
-    html += `<div class="prompt">Choose your next Pokémon.</div>`;
+    html += `<div class="prompt">Choose your next Mon.</div>`;
   }
   if (panel === 'bag' && !forced && usesBag()) {
     html += bagButtons(bagNow(), bagSel, true);
     if (!bagSel) html += '<div class="prompt">Pick an item. Using one takes your turn.</div>';
-    if (bagSel) {
-      html += `<div class="prompt">${esc(E.ITEMS[bagSel].desc)} Use it on which Pokémon?</div><div class="swaps">` + battle.p1.pokemon.map((p, i) => {
+    if (bagSel && E.ITEMS[bagSel].ball) {
+      const foeMon = battle.p2.active[0], n = bagNow()[bagSel] || 0;
+      html += `<div class="prompt">${esc(E.ITEMS[bagSel].desc)}</div><div class="row"><button class="btn primary" id="bagThrow" ${canThrow() ? '' : 'disabled'}>${BALL_SVG} Throw it at the wild ${esc(foeMon ? foeMon.species.name : 'Mon')} (${n} left)</button></div>`;
+    } else if (bagSel) {
+      html += `<div class="prompt">${esc(E.ITEMS[bagSel].desc)} Use it on which Mon?</div><div class="swaps">` + battle.p1.pokemon.map((p, i) => {
         const prob = E.itemProblem(bagSel, p);
         const pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
         return `<button class="swap" id="use-${i}" data-use="${i}" ${prob ? 'disabled' : ''} title="${esc(prob)}"><b>${esc(p.name)}${p.isActive ? ' · in battle' : ''}</b>
@@ -725,7 +728,7 @@ function renderControls() {
 
 $('controls').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t || t.disabled || playing) return;
-  if (t.id === 'catchThrow') { throwBall(); return; }
+  if (t.id === 'catchThrow' || t.id === 'bagThrow') { throwBall(); return; }
   if (t.id === 'catchNo') { finishWild(); return; }
   if (t.dataset.panel) { panel = t.dataset.panel; bagSel = null; renderControls(); return; }
   if (t.dataset.item) { bagSel = bagSel === t.dataset.item ? null : t.dataset.item; renderControls(); return; }
@@ -773,7 +776,7 @@ function showResult() {
       badges[foe.key] = true; store.set('badgeBook', badgeBook);
       const left = battle[ME].pokemon.filter(p => !p.fainted).length;
       html = `${emblem(L.icon, L.color)}<h3>${esc(L.badge)}${first ? ' earned' : ' defended'}</h3>
-        <p>You beat ${esc(L.title)} with ${left} Pokémon still standing, in ${battle.turn} turns.</p>`;
+        <p>You beat ${esc(L.title)} with ${left} ${left === 1 ? 'Mon' : 'Mons'} still standing, in ${battle.turn} turns.</p>`;
     } else {
       html = `${emblem(L.icon, L.color)}<h3>${esc(L.first)} wins</h3><p>${forfeited ? 'You forfeited the match.' : `${esc(L.title)} held the ${esc(L.badge)} after ${battle.turn} turns.`} Try a different lead or switch more often.</p>`;
     }
@@ -782,7 +785,7 @@ function showResult() {
     const ic = foe.key ? LEADERS[foe.key].icon : 'star';
     const left = battle[won ? ME : FOE].pokemon.filter(p => !p.fainted).length;
     const ff = match && match.data.forfeit;
-    const why = ff ? (ff === ME ? 'You forfeited.' : `${esc(foe.name)} forfeited.`) : `${left} Pokémon left standing after ${battle.turn} turns.`;
+    const why = ff ? (ff === ME ? 'You forfeited.' : `${esc(foe.name)} forfeited.`) : `${left} ${left === 1 ? 'Mon' : 'Mons'} left standing after ${battle.turn} turns.`;
     html = `${emblem(ic, foe.color)}<h3>${won ? 'You beat ' + esc(foe.name) : esc(foe.name) + ' wins'}</h3><p>${why}</p>
       <div class="row" style="justify-content:center"><button class="btn primary" id="toSetup">Back to lobby</button></div>`;
   }
@@ -1086,7 +1089,7 @@ function toast(msg, ms = 3400) {
 const reducedMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function bagButtons(bag, sel, compact) {
-  return `<div class="bagrow${compact ? ' compact' : ''}">` + Object.entries(E.ITEMS).filter(([id, it]) => !(it.ball && (compact || !bag.pokeball))).map(([id, it]) =>
+  return `<div class="bagrow${compact ? ' compact' : ''}">` + Object.entries(E.ITEMS).filter(([id, it]) => !it.ball || (compact ? wildBattle() : bag.pokeball)).map(([id, it]) =>
     `<button class="bagitem" id="item-${id}" data-item="${id}" aria-pressed="${sel === id}" ${bag[id] ? '' : 'disabled'} title="${esc(it.desc)}"><b>${esc(it.name)}<span>×${bag[id] || 0}</span></b>${compact ? '' : `<small>${esc(it.desc)}</small>`}</button>`).join('') + '</div>';
 }
 function addItems(bag, reward) {
@@ -1142,7 +1145,7 @@ function gauntletResult(won) {
     const left = battle.p1.pokemon.filter(p => !p.fainted).length;
     if (ctx.stage < 4) {
       const next = ctx.stage + 1 < 4 ? `Elite Four ${LEADERS[ELITE[ctx.stage + 1]].title}` : 'The Champion';
-      html = `${ic}<h3>${esc(foe.name)} defeated</h3><p>${left} Pokémon still standing. Next up: ${esc(next)}. No healing in between.</p>
+      html = `${ic}<h3>${esc(foe.name)} defeated</h3><p>${left} ${left === 1 ? 'Mon' : 'Mons'} still standing. Next up: ${esc(next)}. No healing in between.</p>
         <div class="row" style="justify-content:center"><button class="btn primary" id="gNext">Next battle</button><button class="btn" id="toSetup">Give up</button></div>`;
     } else {
       champions[difficulty] = true; store.set('champions', champions);
@@ -1195,7 +1198,7 @@ const LINES = {
   rachel: {intro: ['Every great tale needs a challenger. Today, that is you.', "Let's see how your chapter ends."],
     win: ["What a twist. I'll have to rewrite the ending.", 'The Mythicbadge is yours. Your story is worth telling.'],
     e4: "I've written a new chapter for the League, and you're in it."},
-  anna: {intro: ["Skyquiver's winds are strong today. Perfect for my birds.", 'I never miss my mark. Draw your first Pokémon.'],
+  anna: {intro: ["Skyquiver's winds are strong today. Perfect for my birds.", 'I never miss my mark. Draw your first Mon.'],
     win: ["A clean hit. You've got a sharp eye.", 'Take the Arrowbadge. Aim high.'],
     e4: "My aim has only gotten sharper. Don't blink."},
   jack: {intro: ['Gloves on! Ironknuckle trains its fighters the hard way.', "No tricks, no excuses. Just fists. Let's rumble!"],
@@ -1346,7 +1349,7 @@ $('jBegin').addEventListener('click', () => {
   if (!mine) { needTeam(); return; }
   noteUsed(mine);
   const team = mine.sets || E.parseTeam(mine.text).team;
-  // Build a throwaway battle once to learn each Pokémon's max HP
+  // Build a throwaway battle once to learn each Mon's max HP
   const tmp = E.createBattle({name: 'a', team}, {name: 'b', team: E.parseTeam(E.TEAM_TEXT.tyler).team});
   J = {
     v: 2, difficulty, teamKey: mine.kind === 'gym' ? mine.key : mine.kind, teamLabel: mine.label,
@@ -1483,7 +1486,7 @@ function renderNextBar() {
   let sub;
   if (st.kind === 'gym') sub = `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · Badge ${J.pos + 1} of 17`;
   else if (st.kind === 'e4') sub = `${LEAGUE} · Elite Four battle ${J.e4pos + 1} of 4`;
-  else sub = `${LEAGUE} · Random Pokémon from every leader`;
+  else sub = `${LEAGUE} · Random Mons from every leader`;
   const btn = st.kind === 'gym' ? `Challenge ${LEADERS[st.key].first}` : st.kind === 'e4' ? `Challenge ${LEADERS[st.key].first}` : 'Face the Champion';
   bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(sp.key, sp.color)}</span><div><b>${esc(sp.name)}</b><small>${esc(sub)}</small></div></div>
     <button class="btn primary" id="jChallenge">${esc(btn)}</button>`;
@@ -1533,7 +1536,7 @@ async function jChallenge() {
   if (Object.values(J.team).every(s => s.hp <= 0)) healAll();
   if (st.kind !== 'gym' && !J.leagueHealed) {
     healAll(); J.leagueHealed = true; saveJ();
-    toast('Your team rested at the Victory Summit Pokémon Center and is fully healed.', 4000);
+    toast('Your team rested at the Victory Summit Mon Center and is fully healed.', 4000);
   }
   if (st.kind === 'champion' && !J.champTeam) { J.champTeam = E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k])); saveJ(); }
   const sp = speakerFor(st);
@@ -1608,7 +1611,7 @@ async function journeyBattleOver(won) {
   if (league) J.e4pos = 0;
   saveJ();
   $('result').innerHTML = `${emblem(st.key ? LEADERS[st.key].icon : 'crown', sp.color)}<h3>You blacked out</h3>
-    <p>Your team was rushed to the nearest Pokémon Center and fully healed. ${league ? 'The Elite Four must be faced again from the start.' : `${esc(sp.name)} is waiting for a rematch.`}</p>
+    <p>Your team was rushed to the nearest Mon Center and fully healed. ${league ? 'The Elite Four must be faced again from the start.' : `${esc(sp.name)} is waiting for a rematch.`}</p>
     <div class="row" style="justify-content:center"><button class="btn primary" id="jToMap">Back to map</button></div>`;
   $('overlay').hidden = false;
 }
@@ -1628,7 +1631,7 @@ function openBag() { jBagSel = null; renderBag(); show('jbag'); }
 function renderBag() {
   $('jbagItems').innerHTML = bagButtons(J.bag, jBagSel);
   const note = $('jbagNote');
-  if (!note.dataset.msg) note.textContent = jBagSel ? `Use the ${E.ITEMS[jBagSel].name} on which Pokémon?` : 'Pick an item, then the Pokémon to use it on.';
+  if (!note.dataset.msg) note.textContent = jBagSel ? `Use the ${E.ITEMS[jBagSel].name} on which Mon?` : 'Pick an item, then the Mon to use it on.';
   $('jbagTeam').innerHTML = Object.entries(J.team).map(([name, s], i) => {
     const pct = s.maxhp ? s.hp / s.maxhp * 100 : 0;
     const fake = {name, hp: s.hp, maxhp: s.maxhp, fainted: s.hp <= 0, status: ''};
@@ -1787,7 +1790,7 @@ function advNextBarClick(id) {
   else if (id === 'aShop') openShop();
   else if (id === 'rGrass') routeBattle(A.loc);
   else if (id === 'rLeave') { A.loc = null; saveA(); openAdvMap({}); }
-  else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Pokémon Center.'); }
+  else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
 }
 $('mapSvg').addEventListener('click', e => {
   if (mapMode !== 'adventure' || mapFromBattle) return;
@@ -2081,13 +2084,13 @@ async function advBattleOver(won) {
     if (fight.quest != null) A.quests[fight.quest].step = 0;
     saveA();
     advResult(fight.foe.icon || 'star', fight.foe.color, 'You blacked out',
-      `Your team was rushed to the Pokémon Center and fully healed. ${fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
+      `Your team was rushed to the Mon Center and fully healed. ${fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
       null, `<button class="btn primary" id="aToMap">Back to map</button>`);
     return;
   }
   if (fight.type === 'train') {
     const lines = await growAndShow(1); saveA();
-    advResult('leaf', '#8fb36a', 'Training complete', `You beat the wild ${esc(fight.sets[0].species)}. Every Pokémon on your team gained a level.`, lines,
+    advResult('leaf', '#8fb36a', 'Training complete', `You beat the wild ${esc(fight.sets[0].species)}. Every Mon on your team gained a level.`, lines,
       `<button class="btn primary" id="aTrainAgain">Train again</button><button class="btn" id="aToMap">Back to map</button>`);
     return;
   }
@@ -2096,8 +2099,8 @@ async function advBattleOver(won) {
     saveA();
     const lines = await growAndShow(1); saveA();
     const f = E.familyOf(fight.sets[0].family);
-    advResult(fight.caught ? 'star' : 'leaf', f.color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Pokémon defeated',
-      `${esc(caughtMsg)} Every Pokémon on your team gained a level.`, lines,
+    advResult(fight.caught ? 'star' : 'leaf', f.color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated',
+      `${esc(caughtMsg)} Every Mon on your team gained a level.`, lines,
       `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
     return;
   }
@@ -2105,7 +2108,7 @@ async function advBattleOver(won) {
     const q = A.quests[fight.quest]; q.step++;
     const caughtMsg = fight.caught ? addCaught(fight.caught) + ' ' : '';
     const lines = null; saveA();
-    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Pokémon defeated', `${esc(caughtMsg)}${q.step < 3 ? `${3 - q.step} more wild Pokémon before the trainer.` : `The ${esc(q.trainer)} is waiting at the end of the path.`}`, lines,
+    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', `${esc(caughtMsg)}${q.step < 3 ? `${3 - q.step} more wild Mons before the trainer.` : `The ${esc(q.trainer)} is waiting at the end of the path.`}`, lines,
       `<button class="btn primary" id="aQuestNext">Keep going</button><button class="btn" id="aToQuest">Quest map</button>`);
     return;
   }
@@ -2195,7 +2198,7 @@ function openQuest(i) {
   svg += `<text x="${pts[0].x}" y="${pts[0].y + 26}" text-anchor="middle" font-size="11" fill="#b4bdcb">Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
   for (let k = 1; k <= 4; k++) {
     const p = pts[k], cleared = q.step >= k, cur = !q.done && q.step === k - 1;
-    const label = k < 4 ? `Wild Pokémon ${k}` : q.trainer;
+    const label = k < 4 ? `Wild Mon ${k}` : q.trainer;
     if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="24" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
     svg += `<circle cx="${p.x}" cy="${p.y}" r="17" fill="${cleared ? ar.color : '#1d2633'}" stroke="${cleared || cur ? ar.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
     svg += k < 4 ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
@@ -2204,9 +2207,9 @@ function openQuest(i) {
   $('questSvg').innerHTML = svg;
   let card;
   if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>You beat the ${esc(q.trainer)} here. Nothing left to do.</small></div></div>`;
-  else if (q.step < 3) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Wild Pokémon ${q.step + 1} of 3</b><small>Something is rustling ahead · around level ${q.level} · HP carries over, so use your bag</small></div></div>
+  else if (q.step < 3) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Wild Mon ${q.step + 1} of 3</b><small>Something is rustling ahead · around level ${q.level} · HP carries over, so use your bag</small></div></div>
     <button class="btn primary" id="qGo">Keep going</button>`;
-  else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>Three Pokémon around level ${q.level + 1} · prize ${money(trainerPrize(q.level))} and items</small></div></div>
+  else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>Three Mons around level ${q.level + 1} · prize ${money(trainerPrize(q.level))} and items</small></div></div>
     <button class="btn primary" id="qGo">Challenge the ${esc(q.trainer)}</button>`;
   $('questBar').innerHTML = card;
   show('quest');
@@ -2273,7 +2276,7 @@ function openAdvBag(from) { advBagFrom = from; advBagSel = null; mapMode = 'adve
 function renderAdvBag() {
   $('jbagItems').innerHTML = bagButtons(A.bag, advBagSel);
   const note = $('jbagNote');
-  if (!note.dataset.msg) note.textContent = advBagSel ? `Use the ${E.ITEMS[advBagSel].name} on which Pokémon?` : 'Pick an item, then the Pokémon to use it on.';
+  if (!note.dataset.msg) note.textContent = advBagSel ? `Use the ${E.ITEMS[advBagSel].name} on which Mon?` : 'Pick an item, then the Mon to use it on.';
   $('jbagTeam').innerHTML = A.team.map((m, i) => {
     const cur = mset(m);
     const pct = m.frac * 100;
@@ -2351,7 +2354,7 @@ $('mapTeam').addEventListener('click', () => openTeamView('map'));
 $('questTeam').addEventListener('click', () => openTeamView(questIdx()));
 
 
-// ================= Neofield regional adventure: professor, routes, catching, Pokédex =================
+// ================= Neofield regional adventure: professor, routes, catching, MonDex =================
 const toId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const REG_START_LV = 6;
 const artOf = name => (E && E.isRegional(name)) ? E.monArt(toId(name)) : '';
@@ -2387,14 +2390,14 @@ async function openProfessor() {
   $('introStage').innerHTML = labSceneHTML();
   show('intro');
   await talk(PROF, [
-    'Hello there! Welcome to the world of Pokémon!',
-    "My name is Okla. Everyone around here calls me the Pokémon Professor.",
-    'This is the Neofield Region. Pokémon live everywhere: in the tall grass along the routes, deep in the forests and caves, even out at sea.',
+    'Hello there! Welcome to the world of Mons!',
+    "My name is Okla. Everyone around here calls me the Mon Professor.",
+    'This is the Neofield Region. Mons live everywhere: in the tall grass along the routes, deep in the forests and caves, even out at sea.',
     "Seventeen Gym Leaders guard the region's towns. Beat them all to earn their badges, then climb Victory Summit to face the Elite Four and the Champion.",
-    'Tap a route on your map to walk it. Every route has its own wild Pokémon, and some live nowhere else.',
-    "Battle a wild Pokémon until it's down to 1 HP and you can throw Poké Balls to catch it. Keep trying as long as you have balls, but watch out. It fights back between throws!",
-    'Train to level up your team, clear side quests for money and items, and stock up at the shop.',
-    'Every Pokémon you meet is recorded in your Pokédex, so you always know what you are up against.',
+    'Tap a route on your map to walk it. Every route has its own wild Mons, and some live nowhere else.',
+    "To catch a wild Mon, open your Bag in battle and throw a Mon Ball. The weaker it is, the better your chances, and once it's down to 1 HP it can't get away. Keep trying as long as you have balls, but watch out. It fights back between throws!",
+    'Walk the routes to level up your team, clear side quests for money and items, and stock up at the shop.',
+    'Every Mon you meet is recorded in your MonDex, so you always know what you are up against.',
     "But first, tell me a little about yourself. What's your name?",
   ]);
   showNameCard();
@@ -2413,7 +2416,7 @@ $('introStage').addEventListener('submit', async e => {
   if (!name) { $('nameNote').textContent = 'Type a name first.'; return; }
   introName = name;
   $('introStage').innerHTML = labSceneHTML();
-  await talk(PROF, [`${name}! What a great name.`, 'Now, I have three Pokémon here with me. They were all born right here in Neofield, and each one is looking for a partner.', 'Take a look and choose the one you like best!']);
+  await talk(PROF, [`${name}! What a great name.`, 'Now, I have three Mons here with me. They were all born right here in Neofield, and each one is looking for a partner.', 'Take a look and choose the one you like best!']);
   showStarters();
 });
 function showStarters() {
@@ -2421,14 +2424,14 @@ function showStarters() {
     const st = f.stages[0];
     return `<button class="starter" id="starter-${f.key}" data-starter="${f.key}" style="--c:${f.color}" aria-pressed="${introPick === f.key}">${E.monArt(st.id)}<b>${esc(st.name)}</b>${typesHTML(st.types)}</button>`;
   }).join('');
-  let info = '<p class="starterinfo">Tap a Pokémon to learn about it.</p>';
+  let info = '<p class="starterinfo">Tap a Mon to learn about it.</p>';
   if (introPick) {
     const f = E.familyOf(introPick), st = f.stages[0];
     info = `<p class="starterinfo"><b style="color:var(--fg)">${esc(st.name)}</b>: ${esc(st.entry)}</p>
       <p class="starterinfo">Evolves into ${f.stages.slice(1).map(s => `${esc(s.name)} at level ${s.at}`).join(', then ')}.</p>
       <div class="row"><button class="btn primary" id="starterGo" style="--accent:${f.color}">Choose ${esc(st.name)}</button></div>`;
   }
-  $('introStage').innerHTML = labSceneHTML() + `<div class="startercard"><b>Choose your first Pokémon</b><div class="starters">${cards}</div>${info}</div>`;
+  $('introStage').innerHTML = labSceneHTML() + `<div class="startercard"><b>Choose your first Mon</b><div class="starters">${cards}</div>${info}</div>`;
 }
 $('introStage').addEventListener('click', async e => {
   const b = e.target.closest('[data-starter]');
@@ -2437,7 +2440,7 @@ $('introStage').addEventListener('click', async e => {
     const st = E.familyOf(introPick).stages[0];
     $('introStage').innerHTML = labSceneHTML();
     await talk(PROF, [`So you've chosen ${st.name}! It already looks happy to be with you.`,
-      'Take these too: five Poké Balls for catching wild Pokémon, and your very own Pokédex.',
+      'Take these too: five Mon Balls for catching wild Mons, and your very own MonDex.',
       `Your adventure starts now, ${introName}. Go make the Neofield Region proud!`]);
     startRegionalAdventure(introName, introPick);
   }
@@ -2451,13 +2454,13 @@ function startRegionalAdventure(name, famKey) {
   };
   touchProfile({name});
   saveA();
-  openAdvMap({msg: 'Tap Route 1 on the map to look for wild Pokémon.'});
+  openAdvMap({msg: 'Tap Route 1 on the map to look for wild Mons.'});
 }
 function migrateA() {
   if (!A) return;
   A.box = A.box || []; A.dex = A.dex || {seen: {}, caught: {}};
   if (A.loc === undefined) A.loc = null;
-  // Pokédex ids of Neofield Pokémon that were renamed (old id -> current id)
+  // MonDex ids of Neofield Mons that were renamed (old id -> current id)
   const RENAMED = {brightwatercharmander: 'shardmander', neofieldcharmander: 'shardmander', opalisk: 'shardmander',
     starter1: 'bulbazoid', bulbazilla: 'bulbazoid', starter1stage2: 'ivyzoid', starter1stage3: 'venuzoid',
     starter2stage2: 'shardmeleon', starter2stage3: 'shardizar',
@@ -2535,7 +2538,7 @@ function routeCardHTML(r) {
     const seen = A.dex.seen[st.id], caught = A.dex.caught[st.id];
     return `<div class="routemon ${seen ? '' : 'unseen'}">${E.monArt(st.id)}<span>${seen ? esc(st.name) : '???'}</span><small>${caught ? '<span class="caughtdot">●</span> Caught' : seen ? 'Seen' : 'Not seen yet'}</small></div>`;
   }).join('');
-  return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Pokémon around level ${lv} · ${A.bag.pokeball || 0} Poké Balls</small></div></div>
+  return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Mons around level ${lv} · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
     <div class="routemons">${mons}</div>
     <div class="row"><button class="btn primary" id="rGrass">Walk in the tall grass</button><button class="btn" id="rLeave">Back to town</button></div>`;
 }
@@ -2555,22 +2558,24 @@ function addCaught(c) {
 }
 
 // --- catching in battle ---
+function wildBattle() { return !!(ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.catchable && battle && !battle.ended); }
+function canThrow() { const m = battle && battle.p2.active[0]; return wildBattle() && (A.bag.pokeball || 0) > 0 && m && !m.fainted && m.hp > 0; }
 function catchPending() { return !!(ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.catchable && battle && !battle.ended && E.catchReady(battle)); }
 function catchHTML() {
   const mon = battle.p2.active[0], balls = A.bag.pokeball || 0;
-  return `<div class="catchbox"><p>The wild <b>${esc(mon.species.name)}</b> is barely hanging on!</p><p>Would you like to try and catch this Pokémon?</p>
-    <div class="row">${balls ? `<button class="btn primary" id="catchThrow">${BALL_SVG} Throw a Poké Ball (${balls} left)</button>` : ''}<button class="btn" id="catchNo">${balls ? 'No, finish it' : 'Out of Poké Balls. Finish it'}</button></div></div>`;
+  return `<div class="catchbox"><p>The wild <b>${esc(mon.species.name)}</b> is barely hanging on!</p><p>Would you like to try and catch this Mon?</p>
+    <div class="row">${balls ? `<button class="btn primary" id="catchThrow">${BALL_SVG} Throw a Mon Ball (${balls} left)</button>` : ''}<button class="btn" id="catchNo">${balls ? 'No, finish it' : 'Out of Mon Balls. Finish it'}</button></div></div>`;
 }
 async function throwBall() {
-  if (playing || !battle || !(A.bag.pokeball > 0) || !catchPending()) return;
-  playing = true;
+  if (playing || !canThrow()) return;
+  playing = true; bagSel = null; panel = 'fight';
   const mon = battle.p2.active[0], fight = ctx.fight;
   A.bag.pokeball--; saveA();
   $('controls').innerHTML = '<div class="waiting">…</div>';
   const fam = E.familyOf(fight.sets[0].family);
   const ok = Math.random() < E.catchChance(fam.catchRate, mon.hp / mon.maxhp, mon.status);
   const shakes = ok ? 3 : Math.floor(Math.random() * 3);
-  addLine(`${BALL_SVG} You threw a Poké Ball!`);
+  addLine(`${BALL_SVG} You threw a Mon Ball!`);
   await sleep(700);
   const card = $('foeCard');
   for (let k = 0; k < shakes; k++) {
@@ -2586,10 +2591,10 @@ async function throwBall() {
     await refresh();
     return;
   }
-  addLine(['Oh no! The Pokémon broke free!', 'Aww! It appeared to be caught!', 'Argh! Almost had it!'][shakes], 'bad');
-  if (!A.bag.pokeball) addLine("That was your last Poké Ball.", 'info');
+  addLine(['Oh no! The Mon broke free!', 'Aww! It appeared to be caught!', 'Argh! Almost had it!'][shakes], 'bad');
+  if (!A.bag.pokeball) addLine("That was your last Mon Ball.", 'info');
   playing = false;
-  // throwing takes your turn, so the wild Pokémon attacks
+  // throwing takes your turn, so the wild Mon attacks
   runAI();
   E.spendTurnOnItem(battle, 'p1');
   E.recountLeft(battle.p1);
@@ -2606,7 +2611,7 @@ async function finishWild() {
   await refresh();
 }
 
-// --- Pokédex ---
+// --- MonDex ---
 let dexMode = 'main', dexTab = 'regional', dexFrom = 'setup', dexListTop = 0, natList = null;
 const pad3 = n => String(n).padStart(3, '0');
 function nationalList() {
@@ -2627,11 +2632,11 @@ function openDex(mode, from) {
 function renderDexList() {
   const q = $('dexSearch').value.trim().toLowerCase();
   const adv = dexMode === 'adventure';
-  $('dexTitle').textContent = adv ? `${A.playerName}'s Pokédex` : 'Pokédex';
+  $('dexTitle').textContent = adv ? `${A.playerName}'s MonDex` : 'MonDex';
   if (adv) {
     const reg = E.SPECIES, seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id]).length;
-    $('dexSub').textContent = `Neofield Pokémon: ${seen} of ${reg.length} seen, ${caught} caught. Tap one you've seen for everything about it.`;
-  } else $('dexSub').textContent = `${E.SPECIES.length} Neofield Pokémon and ${nationalList().length} Pokémon from the main games.`;
+    $('dexSub').textContent = `Neofield Mons: ${seen} of ${reg.length} seen, ${caught} caught. Tap one you've seen for everything about it.`;
+  } else $('dexSub').textContent = `${E.SPECIES.length} Neofield Mons and ${nationalList().length} Mons from the main games.`;
   $('dexTabs').innerHTML = [['regional', 'Neofield'], ['national', adv ? 'Others you have seen' : 'National']].map(([k, l]) => `<button class="chip" id="dextab-${k}" data-dextab="${k}" aria-pressed="${dexTab === k}">${l}</button>`).join('');
   const match = (name, num, types) => !q || name.toLowerCase().includes(q) || String(num) === q.replace(/^#?0*/, '') || types.some(t => t.toLowerCase() === q);
   let rows = [];
@@ -2645,9 +2650,9 @@ function renderDexList() {
     let list = nationalList();
     if (adv) list = list.filter(s => A.dex.seen[s.id] && !E.isRegional(s.name));
     rows = list.filter(s => match(s.name, s.num, s.types)).map(s => `<button class="dexrow" style="--c:${TYPE_COLORS[s.types[0]] || '#999'}" data-dex="${esc(s.name)}"><span class="thumb">${s.num}</span><span><small>#${pad3(s.num)}</small><b>${esc(s.name)}</b>${typesHTML(s.types)}</span></button>`);
-    if (adv && !rows.length && !q) rows = ['<p class="note">Pokémon you meet in gym battles and training show up here.</p>'];
+    if (adv && !rows.length && !q) rows = ['<p class="note">Mons you meet in gym battles and on routes show up here.</p>'];
   }
-  $('dexList').innerHTML = rows.join('') || '<p class="note">No Pokémon match that search.</p>';
+  $('dexList').innerHTML = rows.join('') || '<p class="note">No Mons match that search.</p>';
 }
 $('dexSearch').addEventListener('input', renderDexList);
 $('dexTabs').addEventListener('click', e => { const b = e.target.closest('[data-dextab]'); if (!b) return; dexTab = b.dataset.dextab; renderDexList(); });
@@ -2713,7 +2718,7 @@ function boxSectionHTML(inBattle) {
     const set = mset(m);
     return `<div class="boxmon">${artOf(set.species)}<b>${esc(set.species)} <span class="lvl">Lv ${m.level}</span></b>${typesHTML(E.Dex.species.get(set.species).types)}
       <button class="btn" id="boxin-${i}" data-boxin="${i}" ${inBattle || A.team.length >= 6 ? 'disabled' : ''}>Add to team</button></div>`;
-  }).join('') : '<p class="note">Pokémon you catch when your team already has six go here.</p>';
+  }).join('') : '<p class="note">Mons you catch when your team already has six go here.</p>';
   return `<div class="section"><h2>Box · ${A.box.length}</h2>${A.team.length >= 6 && A.box.length ? '<p class="note">Your team is full. Send one to the box to make room.</p>' : ''}<div class="boxgrid">${tools}</div></div>`;
 }
 $('infoBody').addEventListener('click', e => {
@@ -3087,7 +3092,7 @@ function renderTeams() {
   const recent = rec.map(id => list.find(t => t.id === id)).filter(Boolean);
   const others = list.filter(t => !t.fav && !rec.includes(t.id)).sort((a, b) => (b.updated || 0) - (a.updated || 0));
   let html = `<div class="row"><button class="btn gold" type="button" data-act="new" style="flex:2 1 0">Build a new team</button><button class="btn ghostbtn" type="button" data-act="paste" style="flex:1 1 0">${teamsPaste ? 'Cancel' : 'Paste a team'}</button></div>`;
-  if (teamsPaste) html += `<div class="pastebox"><label class="note" for="pasteText">Paste a team exported from Pokémon Showdown's Teambuilder.</label><textarea id="pasteText" spellcheck="false"></textarea>
+  if (teamsPaste) html += `<div class="pastebox"><label class="note" for="pasteText">Paste a team exported from Showdown's Teambuilder.</label><textarea id="pasteText" spellcheck="false"></textarea>
     <div class="row"><button class="btn primary" type="button" data-act="import">Add this team</button></div><p class="note err" id="pasteNote"></p></div>`;
   html += `<div class="section"><h2>Favorites</h2>${favs.map(t => teamCardHTML(t, t.id === selId)).join('') || '<p class="note">Star a team to keep it here.</p>'}</div>`;
   html += `<div class="section"><h2>Recently used</h2>${recent.map(t => teamCardHTML(t, t.id === selId)).join('') || '<p class="note">Your last 5 teams used in battle show here.</p>'}</div>`;

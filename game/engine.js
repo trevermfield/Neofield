@@ -1,4 +1,4 @@
-// Battle engine wrapper + computer opponent AI, built on the Pokémon Showdown simulator (@pkmn/sim).
+// Battle engine wrapper + computer opponent AI, built on the Showdown battle simulator (@pkmn/sim).
 import {Battle, Dex, Teams, TeamValidator} from '@pkmn/sim';
 import {TEAM_TEXT} from './teams.js';
 
@@ -8,7 +8,7 @@ export {Dex, TEAM_TEXT};
 export function parseTeam(text) {
   const clean = String(text || '').split('\n').filter(l => !l.trim().startsWith('===')).join('\n');
   const team = Teams.import(clean);
-  if (!team || !team.length) return {team: null, problems: ['No Pokémon found in that text.']};
+  if (!team || !team.length) return {team: null, problems: ['No Mons found in that text.']};
   const problems = TeamValidator.get(FORMAT).validateTeam(team);
   return {team, problems: problems || []};
 }
@@ -273,19 +273,19 @@ function randomPreview(side) {
 
 // ---------- bag items (Journey mode) ----------
 export const ITEMS = {
-  hyperpotion: {name: 'Hyper Potion', desc: 'Restores half of a Pokémon\'s max HP.', heal: 0.5},
+  hyperpotion: {name: 'Hyper Potion', desc: 'Restores half of a Mon\'s max HP.', heal: 0.5},
   fullrestore: {name: 'Full Restore', desc: 'Fully restores HP and cures any status problem.', heal: 1, cure: true},
   fullheal:    {name: 'Full Heal',    desc: 'Cures poison, burn, paralysis, sleep or freeze.', cure: true},
-  revive:      {name: 'Revive',       desc: 'Revives a fainted Pokémon with half its max HP.', revive: 0.5},
-  maxrevive:   {name: 'Max Revive',   desc: 'Revives a fainted Pokémon with full HP.', revive: 1},
-  pokeball:    {name: 'Poké Ball',    desc: 'Catches wild Pokémon. When a wild Pokémon is down to 1 HP you can throw one.', ball: true},
+  revive:      {name: 'Revive',       desc: 'Revives a fainted Mon with half its max HP.', revive: 0.5},
+  maxrevive:   {name: 'Max Revive',   desc: 'Revives a fainted Mon with full HP.', revive: 1},
+  pokeball:    {name: 'Mon Ball',    desc: 'Throw it at a wild Mon to catch it. The lower its HP, the better your chances.', ball: true},
 };
 
-// Can this item do anything for this Pokémon? Returns '' if usable, else the reason.
+// Can this item do anything for this Mon? Returns '' if usable, else the reason.
 export function itemProblem(itemId, p) {
   const it = ITEMS[itemId];
   if (!it || !p) return 'Unknown item.';
-  if (it.ball) return 'Poké Balls are thrown at wild Pokémon when they are down to 1 HP.';
+  if (it.ball) return 'Mon Balls are thrown at wild Mons in battle.';
   const fainted = p.fainted || p.hp <= 0;
   if (it.revive) return fainted ? '' : `${p.name} hasn't fainted.`;
   if (fainted) return `${p.name} has fainted. Use a Revive.`;
@@ -296,14 +296,14 @@ export function itemProblem(itemId, p) {
   return '';
 }
 
-// Apply an item to a Pokémon inside a running battle. Returns a message.
+// Apply an item to a Mon inside a running battle. Returns a message.
 export function applyItem(battle, sideId, itemId, p) {
   const it = ITEMS[itemId];
   const side = battle[sideId];
   let msg = '';
   if (it.revive) {
     // the simulator never clears its "already fainted" mark on its own; leaving it set makes
-    // a revived Pokémon unable to faint again (HP goes negative)
+    // a revived Mon unable to faint again (HP goes negative)
     p.fainted = false; p.faintQueued = false; p.subFainted = null; p.status = ''; p.statusState = {};
     p.switchFlag = false;
     p.hp = Math.max(1, Math.floor(p.maxhp * it.revive));
@@ -321,7 +321,7 @@ export function applyItem(battle, sideId, itemId, p) {
   return msg;
 }
 
-// The turn spent using an item: the active Pokémon skips its move.
+// The turn spent using an item: the active Mons skips its move.
 const BAG_TURN = {
   id: 'bagturn', name: 'Bag Turn', fullname: 'Bag Turn', effectType: 'Condition', exists: true, duration: 1,
   onBeforeMovePriority: 100,
@@ -341,8 +341,8 @@ export function spendTurnOnItem(battle, sideId) {
   return battle.choose(sideId, `move ${slot}`);
 }
 
-// ---------- catching wild Pokémon ----------
-// While armed, an attack that would knock out the wild Pokémon leaves it at 1 HP instead and flags a catch chance.
+// ---------- catching wild Mons ----------
+// While armed, an attack that would knock out the wild Mon leaves it at 1 HP instead and flags a catch chance.
 const CATCH_GUARD = {
   name: 'catchguard', id: 'catchguard', effectType: 'Condition',
   onDamagePriority: -200,
@@ -356,7 +356,7 @@ function guardOf(battle) {
   const cache = battle.dex.conditions.conditionCache;
   if (!cache.has('catchguard')) cache.set('catchguard', CATCH_GUARD);
   if (!battle.p2.sideConditions.catchguard) {
-    // set it directly: addSideCondition runs events that need active Pokémon, which don't exist before the lead is chosen
+    // set it directly: addSideCondition runs events that need active Mons, which don't exist before the lead is chosen
     const state = {id: 'catchguard', target: battle.p2};
     battle.p2.sideConditions.catchguard = battle.initEffectState ? battle.initEffectState(state) : state;
   }
@@ -371,7 +371,7 @@ export function catchReady(battle) {
 }
 
 // ---------- carry HP between battles ----------
-// The simulator resets its count of usable Pokémon when the battle starts, so recount after.
+// The simulator resets its count of usable Mons when the battle starts, so recount after.
 export function recountLeft(side) { side.pokemonLeft = side.pokemon.filter(p => !p.fainted).length; }
 export function readTeamState(side) {
   const out = {};
@@ -390,7 +390,7 @@ export function applyTeamState(side, state) {
   recountLeft(side);
 }
 
-// ---------- the Champion's team: random Pokémon from every leader ----------
+// ---------- the Champion's team: random Mons from every leader ----------
 export function buildChampionTeam(allTeamTexts, avoidSpecies = []) {
   const pool = [];
   for (const text of allTeamTexts) for (const set of (Teams.import(text) || [])) pool.push(set);

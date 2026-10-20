@@ -1,7 +1,7 @@
-// Neofield Region: new Pokémon designed by Tyler. Anything named 'Starter N' or 'Wild N' is a placeholder
-// (placeholder stats and moves too) until Tyler sends that Pokémon.
+// Neofield Region: new Mons designed by Tyler. Anything named 'Starter N' or 'Wild N' is a placeholder
+// (placeholder stats and moves too) until Tyler sends that Mons.
 // Each family: stages (base → final), level-up moves, a battle-set goal for the final form,
-// and Pokédex info. Everything is injected into the simulator's data so battles just work.
+// and MonDex info. Everything is injected into the simulator's data so battles just work.
 import {Dex} from '@pkmn/sim';
 
 const dex = Dex.forFormat('gen9nationaldexubers');
@@ -84,7 +84,7 @@ export const FAMILIES = [
       {name: 'Zapybara', types: ['Electric'], stats: S(55, 55, 45, 50, 45, 70), abilities: ['Static', 'Run Away'], h: .5, w: 30,
         entry: 'A calm, chubby rodent with a lightning-bolt mark. Static crackles between its ears when it is happy. Designed by Tyler.'},
       {name: 'Wild 3 Stage 2', at: 28, types: ['Electric', 'Normal'], stats: S(65, 90, 60, 75, 60, 120), abilities: ['Static', 'Speed Boost'], h: .9, w: 12,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
     ],
     moves: [[1, 'Quick Attack'], [1, 'Tail Whip'], [5, 'Thunder Shock'], [9, 'Double Kick'], [14, 'Spark'], [19, 'Nuzzle'], [24, 'Body Slam'],
       [28, 'Volt Switch'], [33, 'Thunder Fang'], [38, 'Extreme Speed'], [44, 'Wild Charge'], [50, 'Double-Edge']],
@@ -94,9 +94,9 @@ export const FAMILIES = [
   {key: 'wild4', color: '#b06ee0', catchRate: 150,
     stages: [
       {name: 'Wild 4', types: ['Poison', 'Water'], stats: S(60, 45, 50, 50, 55, 30), abilities: ['Poison Point', 'Water Absorb'], h: .4, w: 9,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
       {name: 'Wild 4 Stage 2', at: 30, types: ['Poison', 'Water'], stats: S(95, 70, 85, 85, 95, 45), abilities: ['Poison Point', 'Regenerator'], h: 1.4, w: 88,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
     ],
     moves: [[1, 'Poison Sting'], [1, 'Water Gun'], [6, 'Acid'], [11, 'Bubble Beam'], [16, 'Toxic'], [21, 'Sludge'], [26, 'Brine'],
       [30, 'Recover'], [35, 'Sludge Bomb'], [40, 'Scald'], [46, 'Toxic Spikes'], [52, 'Hydro Pump']],
@@ -106,9 +106,9 @@ export const FAMILIES = [
   {key: 'wild5', color: '#86d8ec', catchRate: 120,
     stages: [
       {name: 'Wild 5', types: ['Ice', 'Flying'], stats: S(45, 45, 45, 55, 50, 60), abilities: ['Snow Cloak', 'Keen Eye'], h: .3, w: 3,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
       {name: 'Wild 5 Stage 2', at: 34, types: ['Ice', 'Flying'], stats: S(75, 70, 70, 105, 85, 100), abilities: ['Snow Cloak', 'Snow Warning'], h: 1.3, w: 32,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
     ],
     moves: [[1, 'Peck'], [1, 'Powder Snow'], [6, 'Gust'], [11, 'Ice Shard'], [16, 'Air Cutter'], [21, 'Icy Wind'], [26, 'Roost'],
       [31, 'Air Slash'], [34, 'Ice Beam'], [40, 'Hurricane'], [46, 'Blizzard'], [52, 'Aurora Veil']],
@@ -118,11 +118,11 @@ export const FAMILIES = [
   {key: 'wild6', color: '#7f6bb0', catchRate: 120,
     stages: [
       {name: 'Wild 6', types: ['Ghost'], stats: S(40, 55, 40, 40, 40, 60), abilities: ['Cursed Body', 'Frisk'], h: .4, w: 4,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
       {name: 'Wild 6 Stage 2', at: 25, types: ['Ghost', 'Dark'], stats: S(60, 80, 60, 60, 60, 85), abilities: ['Cursed Body', 'Intimidate'], h: 1.0, w: 26,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
       {name: 'Wild 6 Stage 3', at: 42, types: ['Ghost', 'Dark'], stats: S(80, 120, 80, 75, 80, 105), abilities: ['Cursed Body', 'Intimidate'], h: 1.7, w: 75,
-        entry: 'Placeholder. This Pokémon is waiting for its design from Tyler.'},
+        entry: 'Placeholder. This Mon is waiting for its design from Tyler.'},
     ],
     moves: [[1, 'Lick'], [1, 'Leer'], [5, 'Astonish'], [9, 'Bite'], [14, 'Shadow Sneak'], [19, 'Hex'], [25, 'Crunch'],
       [30, 'Shadow Claw'], [35, 'Play Rough'], [42, 'Shadow Bone'], [48, 'Psychic Fangs'], [54, 'Poltergeist']],
