@@ -168,7 +168,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'farm', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -1809,11 +1809,11 @@ function renderAdvNextBar() {
     const ti = advTown(), L = ti > 0 ? LEADERS[A.order[ti - 1]] : null, c = L ? L.color : '#c9d3e3';
     const gated = A.travelled < advDest();
     bar.innerHTML = `<div class="nextcard" style="--c:${c}"><span class="face">${emblem(L ? L.icon : 'star', c)}</span><div><b>${esc(placeName(ti))}</b><small>${L ? `${esc(L.badge)} already earned here.` : 'Your hometown.'} Shop and heal, then tap a route on the map to head out again.</small></div></div>
-    <div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aCenter">Heal team</button></div>`;
+    <div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aFarm">Farm</button><button class="btn" id="aCenter">Heal team</button></div>`;
     return;
   }
   const st = aStage();
-  const actions = `<div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aCenter">Heal team</button></div>`;
+  const actions = `<div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aFarm">Farm</button><button class="btn" id="aCenter">Heal team</button></div>`;
   if (st.kind === 'done') {
     bar.innerHTML = `<div class="nextcard" style="--c:${CHAMP.color}"><span class="face">${emblem('crown', CHAMP.color)}</span><div><b>Adventure complete</b><small>You beat the level ${CHAMP_LV} Champion.</small></div></div>${actions}`;
     return;
@@ -1830,6 +1830,7 @@ function advNextBarClick(id) {
   else if (id === 'aChallenge') advChallenge();
   else if (id === 'aTrain') advTrain();
   else if (id === 'aShop') openShop();
+  else if (id === 'aFarm') openFarm();
   else if (id === 'rGrass') routeBattle(A.loc);
   else if (id === 'sGo') shamFight(shamAt(A.loc));
     else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
@@ -2503,10 +2504,9 @@ function openTeamView(from) {
         + `<div class="kv"><div class="lbl">Evolution</div><p class="evopath">${route}</p><p class="evopath">${next ? `Evolves into ${esc(next.species)} at level ${next.at}.` : 'Fully evolved.'}</p></div>`
         + `<div class="kv"><div class="lbl">Battle-set goal</div><p class="evopath">${(m.final.moves || []).map(esc).join(', ')}${tutor.length ? ` · The Move Tutor can teach ${tutor.map(esc).join(', ')} now.` : ''}</p></div>`;
       const art = artOf(set.species);
-      const tools = A.regional && infoReturn !== 'battle' ? `<div class="teamtools">${i > 0 ? `<button class="btn" id="tofront-${i}" data-tofront="${i}">Make lead</button>` : '<span class="note">Leads your team</span>'}${A.team.length > 1 ? `<button class="btn" id="tobox-${i}" data-tobox="${i}">Send to box</button>` : ''}</div>` : '';
+      const tools = A.regional && infoReturn !== 'battle' ? `<div class="teamtools">${i > 0 ? `<button class="btn" id="tofront-${i}" data-tofront="${i}">Make lead</button>` : '<span class="note">Leads your team</span>'}</div>` : '';
       return `<div class="teamslot">${teamCard(set, i, `Lv ${m.level}`, (art ? `<div style="width:120px;height:120px;margin:0 auto">${art}</div>` : '') + extra)}${tools}</div>`;
     });
-    if (A.regional) cards.push(boxSectionHTML(infoReturn === 'battle'));
   } else if (J) {
     cards = (J.teamSets || E.parseTeam(J.teamText).team).map((set, i) => {
       const st = J.team[set.name || set.species] || {hp: 1, maxhp: 1};
@@ -2740,7 +2740,7 @@ function addCaught(c) {
   const name = mset(m).species;
   if (A.team.length < 6) { A.team.push(m); syncDexFromTeam(); return `${name} joined your team!`; }
   A.box.push(m); syncDexFromTeam();
-  return `Your team is full, so ${name} was sent to your box. Swap it in from the Team screen.`;
+  return `Your team is full, so ${name} was sent to the Farm. Swap it in from the Farm when you are in a town.`;
 }
 
 // --- catching in battle ---
@@ -2902,22 +2902,38 @@ $('dexEntryView').addEventListener('click', e => { const b = e.target.closest('[
 $('openDexMain').addEventListener('click', () => { if (E) openDex('main', 'setup'); });
 $('mapDex').addEventListener('click', () => { if (A) openDex('adventure', 'map'); });
 
-// --- box (from the Team screen) ---
-function boxSectionHTML(inBattle) {
-  if (!A || !A.regional) return '';
-  const tools = A.box.length ? A.box.map((m, i) => {
-    const set = mset(m);
-    return `<div class="boxmon">${artOf(set.species)}<b>${esc(set.species)} <span class="lvl">Lv ${m.level}</span></b>${typesHTML(E.Dex.species.get(set.species).types)}
-      <button class="btn" id="boxin-${i}" data-boxin="${i}" ${inBattle || A.team.length >= 6 ? 'disabled' : ''}>Add to team</button></div>`;
-  }).join('') : '<p class="note">Mons you catch when your team already has six go here.</p>';
-  return `<div class="section"><h2>Box · ${A.box.length}</h2>${A.team.length >= 6 && A.box.length ? '<p class="note">Your team is full. Send one to the box to make room.</p>' : ''}<div class="boxgrid">${tools}</div></div>`;
+// --- the Farm (in towns): swap Mons between your team and the Farm. Only team Mons gain levels. ---
+function openFarm() {
+  if (!A || !A.regional) return;
+  mapMode = 'adventure';
+  setAccent('#8fb36a');
+  $('farmSub').textContent = `${A.team.length} on your team · ${A.box.length} on the Farm`;
+  const row = (m, i, kind) => {
+    const set = mset(m), pct = Math.round(m.frac * 100);
+    const btn = kind === 'team'
+      ? `<button class="btn" id="tofarm-${i}" data-tofarm="${i}" ${A.team.length <= 1 ? 'disabled' : ''}>Send to Farm</button>`
+      : `<button class="btn" id="tomteam-${i}" data-toteam="${i}" ${A.team.length >= 6 ? 'disabled' : ''}>Add to team</button>`;
+    return `<div class="boxmon">${artOf(set.species)}<b>${esc(set.species)} <span class="lvl">Lv ${m.level}</span></b>${typesHTML(E.Dex.species.get(set.species).types)}<small class="note">${m.frac <= 0 ? 'Fainted' : `${pct}% HP`}</small>${btn}</div>`;
+  };
+  $('farmBody').innerHTML = `<p class="note">Mons on the Farm rest and do not gain levels. Only your team grows, so swap in the Mons you want to train.</p>
+    <div class="section"><h2>Your team · ${A.team.length} of 6</h2><div class="boxgrid">${A.team.map((m, i) => row(m, i, 'team')).join('')}</div></div>
+    <div class="section"><h2>The Farm · ${A.box.length}</h2>${A.team.length >= 6 && A.box.length ? '<p class="note">Your team is full. Send one to the Farm to make room.</p>' : ''}<div class="boxgrid">${A.box.length ? A.box.map((m, i) => row(m, i, 'farm')).join('') : '<p class="note">Mons you catch when your team already has six come here.</p>'}</div></div>`;
+  show('farm');
 }
+$('farmBody').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.disabled || !A) return;
+  if (t.dataset.toteam != null) { if (A.team.length >= 6) return; A.team.push(A.box.splice(+t.dataset.toteam, 1)[0]); }
+  else if (t.dataset.tofarm != null) { if (A.team.length <= 1) return; A.box.push(A.team.splice(+t.dataset.tofarm, 1)[0]); }
+  else return;
+  saveA();
+  const sc = $('farm').querySelector('.scroll'), top = sc.scrollTop;
+  openFarm(); sc.scrollTop = top;
+});
+$('farmBack').addEventListener('click', () => openAdvMap({}));
 $('infoBody').addEventListener('click', e => {
   if (!A || !A.regional || infoReturn === 'battle') return;
   const t = e.target.closest('button'); if (!t) return;
-  if (t.dataset.boxin != null) { if (A.team.length >= 6) return; A.team.push(A.box.splice(+t.dataset.boxin, 1)[0]); }
-  else if (t.dataset.tobox != null) { if (A.team.length <= 1) return; A.box.push(A.team.splice(+t.dataset.tobox, 1)[0]); }
-  else if (t.dataset.tofront != null) { const i = +t.dataset.tofront; A.team.unshift(A.team.splice(i, 1)[0]); }
+  if (t.dataset.tofront != null) { const i = +t.dataset.tofront; A.team.unshift(A.team.splice(i, 1)[0]); }
   else return;
   saveA();
   const top = $('info').querySelector('.scroll').scrollTop;
