@@ -188,16 +188,17 @@ function beginBattle(p1, p2, seed) {
 }
 
 function showLeadScreen() {
-  $('leadTitle').textContent = `vs ${foe.title || foe.name}`;
+  const foeLead = battle[FOE].pokemon[0];
+  $('leadTitle').textContent = `vs ${foe.title || foe.name}${foe.wild && foeLead ? ` · Lv ${foeLead.level}` : ''}`;
   $('leadSub').textContent = mode === 'cpu'
     ? `${foe.subtitle || ''}. Pick who goes out first.`
     : `Online battle. Pick who goes out first. ${foe.name} is choosing too.`;
-  $('foeRoster').innerHTML = battle[FOE].pokemon.map(p => `${esc(p.species.name)} ${typesHTML(p.species.types)}`).join('<br>');
+  $('foeRoster').innerHTML = battle[FOE].pokemon.map(p => `${esc(p.species.name)} <span class="lvl">Lv ${p.level}</span> ${typesHTML(p.species.types)}`).join('<br>');
   const carry = ctx && ctx.kind !== undefined;
   $('leadList').innerHTML = battle[ME].pokemon.map((p, i) => {
     const pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
     const hpBar = carry ? `<span class="hpmini"><i style="width:${pct}%;background:${hpColor(pct)}"></i></span><small>${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`} ${p.status && !p.fainted ? statusPill(p.status, true) : ''}</small>` : '';
-    return `<button class="pick" id="lead-${i}" data-i="${i + 1}" ${p.fainted ? 'disabled' : ''}><div><b>${esc(p.species.name)}</b><small>${esc(p.item ? E.Dex.items.get(p.item).name : '')} · ${p.moveSlots.map(m => esc(m.move)).join(', ')}</small>${hpBar}</div>${typesHTML(p.species.types)}</button>`;
+    return `<button class="pick" id="lead-${i}" data-i="${i + 1}" ${p.fainted ? 'disabled' : ''}><div><b>${esc(p.species.name)} <span class="lvl">Lv ${p.level}</span></b><small>${esc(p.item ? E.Dex.items.get(p.item).name : '')} · ${p.moveSlots.map(m => esc(m.move)).join(', ')}</small>${hpBar}</div>${typesHTML(p.species.types)}</button>`;
   }).join('');
   $('leadBack').textContent = mode !== 'cpu' ? 'Back to lobby' : ctx && ctx.kind === 'journey' ? 'Back to map' : 'Back';
   show('lead');
@@ -1899,7 +1900,7 @@ function ensureMoves(m) {
 function mset(m) { ensureMoves(m); return E.setAtLevel(m.final, m.level, {tutored: m.tutored, moves: m.moves, noItem: true}); }
 function moveCardHTML(name, tag, extraClass, attrs) {
   const mv = E.moveInfo(name);
-  const bits = [mv.category, mv.power ? `Power ${mv.power}` : '', mv.accuracy ? `Accuracy ${mv.accuracy}%` : 'Never misses'].filter(Boolean).join(' · ');
+  const bits = [mv.category, mv.power ? `Power ${mv.power}` : '', mv.accuracy ? `Accuracy ${mv.accuracy}%` : 'Never misses', `Max PP ${mv.pp}`].filter(Boolean).join(' · ');
   return `<${tag} class="mvcard ${extraClass || ''}" style="--t:${TYPE_COLORS[mv.type] || '#999'}" ${attrs || ''}><div class="top"><b>${esc(mv.name)}</b>${typesHTML([mv.type])}</div><small>${esc(bits)}</small><small>${esc(mv.desc || '')}</small></${tag}>`;
 }
 // Ask which move to forget. Resolves with the forgotten move's name, or null to skip the new move.
