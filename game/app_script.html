@@ -168,7 +168,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'farm', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'farm', 'dev', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -1802,6 +1802,10 @@ function openAdvMap({fromBattle, msg} = {}) {
   });
 }
 function renderAdvNextBar() {
+  renderAdvNextBarMain();
+  if (A.dev && !mapFromBattle) $('nextBar').insertAdjacentHTML('beforeend', '<button class="btn" id="aDev">Developer tools</button>');
+}
+function renderAdvNextBarMain() {
   const bar = $('nextBar');
   if (mapFromBattle) { bar.innerHTML = `<button class="btn primary" id="mapBackBattle">Back to battle</button>`; return; }
   if (A.regional && A.loc != null) { bar.innerHTML = routeCardHTML(A.loc); return; }
@@ -1831,6 +1835,7 @@ function advNextBarClick(id) {
   else if (id === 'aTrain') advTrain();
   else if (id === 'aShop') openShop();
   else if (id === 'aFarm') openFarm();
+  else if (id === 'aDev') openDev();
   else if (id === 'rGrass') routeBattle(A.loc);
   else if (id === 'sGo') shamFight(shamAt(A.loc));
     else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
@@ -1857,7 +1862,7 @@ function advFight(fight) {
   const seen = {};
   ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
   startVsCpu(fight.sets, null, sets, A.playerName);
-  if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0);
+  if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
 }
 function applyAdvHP() {
   const state = {};
@@ -2606,7 +2611,7 @@ function startRegionalAdventure(name, famKey) {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
-    money: 1500, bag: {...ADV_START_BAG, pokeball: 5}, quests: {}, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
+    money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 5}, quests: {}, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
   touchProfile({name});
   saveA();
@@ -2745,7 +2750,7 @@ function addCaught(c) {
 
 // --- catching in battle ---
 function wildBattle() { return !!(ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.catchable && battle && !battle.ended); }
-function canThrow() { const m = battle && battle.p2.active[0]; return wildBattle() && (A.bag.pokeball || 0) > 0 && m && !m.fainted && m.hp > 0; }
+function canThrow() { const m = battle && battle.p2.active[0]; return wildBattle() && ((A.bag.pokeball || 0) > 0 || A.dev) && m && !m.fainted && m.hp > 0; }
 function catchPending() { return !!(ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.catchable && battle && !battle.ended && E.catchReady(battle)); }
 function catchHTML() {
   const mon = battle.p2.active[0], balls = A.bag.pokeball || 0;
@@ -2756,7 +2761,8 @@ async function throwBall() {
   if (playing || !canThrow()) return;
   playing = true; bagSel = null; panel = 'fight';
   const mon = battle.p2.active[0], fight = ctx.fight;
-  A.bag.pokeball--; saveA();
+  if (!A.dev) A.bag.pokeball--;
+  saveA();
   $('controls').innerHTML = '<div class="waiting">…</div>';
   const fam = E.familyOf(fight.sets[0].family);
   const ok = Math.random() < E.catchChance(fam.catchRate, mon.hp / mon.maxhp, mon.status);
@@ -2901,6 +2907,69 @@ function showDexEntry(name) {
 $('dexEntryView').addEventListener('click', e => { const b = e.target.closest('[data-dexgo]'); if (b && !b.disabled && b.dataset.dexgo) showDexEntry(b.dataset.dexgo); });
 $('openDexMain').addEventListener('click', () => { if (E) openDex('main', 'setup'); });
 $('mapDex').addEventListener('click', () => { if (A) openDex('adventure', 'map'); });
+
+// --- developer tools (only on saves started while developer mode was on) ---
+function devJump(val, setLv) {
+  const [kind, num] = val.split(':'), n = +num;
+  A.done = false;
+  if (kind === 'gym') { A.pos = n; A.e4pos = 0; }
+  else if (kind === 'e4') { A.pos = 17; A.e4pos = n; }
+  else { A.pos = 17; A.e4pos = 4; }
+  A.travelled = Math.min(A.pos, 17) + 1; A.loc = null; A.townAt = null;
+  SHAMBURG.forEach((x, k) => { A.shamburg.done[k] = x.route < A.pos; A.shamburg.step[k] = 0; });
+  if (setLv) {
+    const lv = kind === 'gym' ? GYM_LV[n] : kind === 'e4' ? E4_LV[n] : CHAMP_LV;
+    for (const m of [...A.team, ...A.box]) { m.level = lv; m.moves = []; }
+  }
+  A.team.forEach(ensureMoves); A.box.forEach(ensureMoves);
+  advHealAll(); saveA();
+}
+function openDev(msg) {
+  if (!A || !A.dev) { openAdvMap({}); return; }
+  mapMode = 'adventure';
+  setAccent('#e8c76a');
+  const stageNow = A.done ? 'Adventure complete' : A.pos < 17 ? `Gym ${A.pos + 1}: ${TOWNS[A.order[A.pos]]}` : A.e4pos < 4 ? `Elite Four ${A.e4pos + 1}` : 'Champion';
+  const jumps = [...Array(17).keys()].map(i => `<option value="gym:${i}">Gym ${i + 1}: ${esc(TOWNS[A.order[i]])} (level ${GYM_LV[i]})</option>`).join('')
+    + [0, 1, 2, 3].map(i => `<option value="e4:${i}">Elite Four ${i + 1} (level ${E4_LV[i]})</option>`).join('') + `<option value="champ:0">Champion (level ${CHAMP_LV})</option>`;
+  const mrow = (m, i, where) => `<div class="devmon"><b>${esc(mset(m).species)} <span class="lvl">Lv ${m.level}</span></b><small class="note">${m.frac <= 0 ? 'Fainted' : Math.round(m.frac * 100) + '% HP'}</small>
+    <div class="row"><input type="number" min="1" max="100" value="${m.level}" id="lv-${where}-${i}" aria-label="Level"><button class="btn" data-dev="setlv" data-w="${where}" data-i="${i}">Set level</button><button class="btn" data-dev="mvreset" data-w="${where}" data-i="${i}">Reset moves</button>
+    ${where === 'team' && A.team.length > 1 || where === 'box' ? `<button class="btn" data-dev="remove" data-w="${where}" data-i="${i}">Remove</button>` : ''}</div></div>`;
+  const fams = E.FAMILIES.map(f => `<option value="${f.key}">${esc(f.stages[0].name)}${f.stages.length > 1 ? ' line' : ''}</option>`).join('');
+  $('devBody').innerHTML = `${msg ? `<p class="note"><b>${esc(msg)}</b></p>` : ''}<p class="note">Changes save right away. Right now: <b>${esc(stageNow)}</b> · ${money(A.money)}.</p>
+    <div class="section"><h2>Jump to a point in the game</h2><div class="row"><select id="devJump">${jumps}</select></div>
+      <label class="note"><input type="checkbox" id="devSetLv" checked> Also set every Mon to that level</label>
+      <div class="row"><button class="btn primary" data-dev="jump">Jump there</button></div>
+      <p class="note">This sets your badges, unlocked routes, Team Shamburg and Laurel Pass to match, and heals your team.</p></div>
+    <div class="section"><h2>Side quests</h2><div class="row"><button class="btn" data-dev="questsdone">Clear all side quests</button><button class="btn" data-dev="questsreset">Reset side quests</button><button class="btn" data-dev="shamreset">Reset Team Shamburg</button><button class="btn" data-dev="trailreset">Reset Laurel Pass trainers</button></div></div>
+    <div class="section"><h2>Money and items</h2><div class="row"><input type="number" min="0" id="devMoney" value="${A.money}" aria-label="Money"><button class="btn" data-dev="setmoney">Set money</button><button class="btn" data-dev="items">99 of every item</button></div>
+      <p class="note">Mon Balls never run out on developer saves.</p></div>
+    <div class="section"><h2>Your team</h2><div class="devmons">${A.team.map((m, i) => mrow(m, i, 'team')).join('')}</div></div>
+    <div class="section"><h2>The Farm</h2><div class="devmons">${A.box.length ? A.box.map((m, i) => mrow(m, i, 'box')).join('') : '<p class="note">Empty.</p>'}</div></div>
+    <div class="section"><h2>Add a Mon</h2><div class="row"><select id="devFam">${fams}</select><input type="number" min="1" max="100" value="50" id="devAddLv" aria-label="Level"><button class="btn primary" data-dev="add">Add</button></div></div>
+    <div class="row"><button class="btn" data-dev="heal">Heal everything</button></div>`;
+  show('dev');
+}
+$('devBody').addEventListener('click', e => {
+  const t = e.target.closest('[data-dev]'); if (!t || !A || !A.dev) return;
+  const act = t.dataset.dev, list = t.dataset.w === 'box' ? A.box : A.team, i = +t.dataset.i;
+  const sc = $('dev').querySelector('.scroll'), top = sc.scrollTop;
+  let msg = '';
+  if (act === 'jump') { devJump($('devJump').value, $('devSetLv').checked); msg = 'Jumped. Go back to the map to try it.'; }
+  else if (act === 'setlv') { const m = list[i], lv = Math.max(1, Math.min(100, +$(`lv-${t.dataset.w}-${i}`).value || m.level)); m.level = lv; m.moves = []; ensureMoves(m); msg = `Level set to ${lv}.`; }
+  else if (act === 'mvreset') { const m = list[i]; m.moves = []; ensureMoves(m); msg = 'Moves reset for its level.'; }
+  else if (act === 'remove') { list.splice(i, 1); msg = 'Removed.'; }
+  else if (act === 'add') { const lv = Math.max(1, Math.min(100, +$('devAddLv').value || 50)); const m = E.newMember($('devFam').value, lv); if (A.team.length < 6) A.team.push(m); else A.box.push(m); msg = `Added ${mset(m).species}${A.team.includes(m) ? ' to your team' : ' to the Farm'}.`; }
+  else if (act === 'heal') { advHealAll(); msg = 'Everything healed.'; }
+  else if (act === 'setmoney') { A.money = Math.max(0, +$('devMoney').value || 0); msg = 'Money set.'; }
+  else if (act === 'items') { for (const id of Object.keys(PRICES)) A.bag[id] = 99; msg = 'Gave 99 of every item.'; }
+  else if (act === 'questsdone') { for (let q = 0; q < AREAS.length; q++) { const qq = ensureQuest(q); qq.done = true; qq.step = qq.legend ? 3 : 4; } msg = 'All side quests cleared.'; }
+  else if (act === 'questsreset') { A.quests = {}; msg = 'Side quests reset.'; }
+  else if (act === 'shamreset') { A.shamburg = {step: [0, 0, 0], done: [false, false, false]}; msg = 'Team Shamburg reset.'; }
+  else if (act === 'trailreset') { A.trail = {t: []}; msg = 'Laurel Pass trainers reset.'; }
+  saveA();
+  openDev(msg); sc.scrollTop = top;
+});
+$('devBack').addEventListener('click', () => openAdvMap({}));
 
 // --- the Farm (in towns): swap Mons between your team and the Farm. Only team Mons gain levels. ---
 function openFarm() {
@@ -3715,6 +3784,20 @@ $('optVersion').textContent = `Version ${BUILD}`;
 
 // Automated tests open the game with ?test to read the battle state.
 if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close()};
+
+// ---------- developer mode: tap the Mon on the loading screen 5 times ----------
+let devMode = store.get('devMode', false);
+(function devSecret() {
+  let taps = 0, t0 = 0;
+  $('whoisImg').addEventListener('click', () => {
+    const now = Date.now();
+    taps = now - t0 > 4000 ? 1 : taps + 1; t0 = now;
+    if (taps >= 5) {
+      taps = 0; devMode = !devMode; store.set('devMode', devMode);
+      $('whoisStatus').textContent = devMode ? 'Developer mode ON. New adventures you start are developer saves.' : 'Developer mode OFF.';
+    }
+  });
+})();
 
 // ---------- intro: who's that Mon? ----------
 // Plays once each time the app opens: 3 seconds of silhouette, the reveal, 3 more seconds,

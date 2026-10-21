@@ -422,6 +422,12 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .trailrow b { display: block; font-size: 15px; }
 .trailrow small { display: block; color: var(--dim); font-size: 12px; margin-top: 2px; }
 .trailrow:disabled { opacity: .5; }
+.devmons { display: flex; flex-direction: column; gap: 8px; }
+.devmon { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.devmon .row, #devBody .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#devBody input[type=number], #devBody select { font: inherit; font-size: 15px; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-2); color: var(--fg); max-width: 100%; }
+#devBody input[type=number] { width: 90px; }
+#devBody .btn { padding: 9px 12px; font-size: 14px; }
 .dexnav { display: flex; gap: 10px; }
 .dexnav .btn { flex: 1; }
 .dexnav .btn:disabled { opacity: .35; }
@@ -833,6 +839,15 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       <div class="row"><button class="ghost" id="trailTeam">Team</button><button class="ghost" id="trailBag">Bag</button><button class="ghost" id="trailLeave">Leave</button></div>
     </div>
     <div class="scroll"><div class="trailbody" id="trailBody"></div></div>
+  </section>
+
+  <!-- ADVENTURE: DEVELOPER TOOLS -->
+  <section class="screen" id="dev" hidden>
+    <div class="maphead">
+      <div class="mapttl"><small>Developer mode</small><span>Dev tools</span></div>
+      <div class="row"><button class="ghost" id="devBack">Back</button></div>
+    </div>
+    <div class="scroll"><div class="trailbody" id="devBody"></div></div>
   </section>
 
   <!-- ADVENTURE: THE FARM -->
