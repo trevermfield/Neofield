@@ -168,7 +168,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -1062,6 +1062,7 @@ $('battleGuide').addEventListener('click', () => {
 $('infoChips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; infoKey = b.dataset.k; renderInfo(); });
 $('infoBack').addEventListener('click', () => {
   if (infoReturn === 'map') { if (mapMode === 'adventure') openAdvMap({}); else openMap({}); return; }
+  if (infoReturn === 'trail') { openTrail(); return; }
   if (typeof infoReturn === 'number') { openQuest(infoReturn); return; }
   if (infoReturn === 'battle' && battle) { setAccent(foe.color); show('battle'); }
   else openHall();
@@ -1661,7 +1662,7 @@ $('jbagTeam').addEventListener('click', e => {
   $('jbagNote').dataset.msg = '1'; $('jbagNote').textContent = msg;
   renderBag();
 });
-$('jbagBack').addEventListener('click', () => { if (mapMode !== 'adventure') openMap({}); else if (advBagFrom != null && advBagFrom !== 'map') openQuest(advBagFrom); else openAdvMap({}); });
+$('jbagBack').addEventListener('click', () => { if (mapMode !== 'adventure') openMap({}); else if (advBagFrom === 'trail') openTrail(); else if (advBagFrom != null && advBagFrom !== 'map') openQuest(advBagFrom); else openAdvMap({}); });
 
 
 // ---------- Adventure mode ----------
@@ -1698,7 +1699,31 @@ const AREAS = [
   {name: "Dragon's Den", kind: 'Den', types: ['Dragon', 'Water'], trainer: 'Dragon Tamer', color: '#6f86e8', icon: 'dragon'},
   {name: 'Victory Road', kind: 'Road', types: null, trainer: 'Ace Trainer', color: '#e8c76a', icon: 'crown'},
 ];
-const questLevel = i => Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
+// Legendary side quests on the Triumph Trail (they open one after another once the last gym leader is beaten)
+AREAS.push(
+  {name: 'Whiteout Summit', kind: 'Peak', types: ['Ice'], trainer: 'Nivalux', color: '#bfe0f5', icon: 'flake', legend: 'nivalux', lv: 62},
+  {name: 'Stormcall Ridge', kind: 'Ridge', types: ['Electric'], trainer: 'Storment', color: '#e8c040', icon: 'bolt', legend: 'storment', lv: 63},
+  {name: 'Embersong Glade', kind: 'Glade', types: ['Fire'], trainer: 'Rensylk', color: '#f08a4b', icon: 'flame', legend: 'rensylk', lv: 64},
+  {name: 'Rosequartz Hollow', kind: 'Hollow', types: ['Rock', 'Fairy'], trainer: 'Okloyama', color: '#e88a9a', icon: 'fairy', legend: 'okloyama', lv: 65},
+  {name: 'Tarwing Crater', kind: 'Crater', types: ['Fire', 'Poison'], trainer: 'Hexabeake', color: '#8e7cc3', icon: 'flame', legend: 'hexabeake', lv: 66},
+  {name: 'Whisperwind Perch', kind: 'Perch', types: ['Psychic', 'Flying'], trainer: 'Aerialyn', color: '#f4a58a', icon: 'wing', legend: 'aerialyn', lv: 67},
+);
+const TRAIL = 'Triumph Trail';
+const TRAIL_TRAINERS = ['Ace Trainer Mira', 'Veteran Boone', 'Cooltrainer Juno', 'Black Belt Ryo', 'Psychic Elsie', 'Dragon Tamer Kell',
+  'Beauty Sable', 'Ranger Tobin', 'Scientist Quill', 'Sailor Marlow', 'Biker Dash', 'Expert Hana'];
+const trailLv = i => 58 + Math.round(i * 8 / 11);
+const trailOpen = () => !!(A && A.regional && A.pos >= 17);
+const legendUnlocked = i => i === 17 || !!(A.quests[i - 1] && A.quests[i - 1].done);
+// Team Shamburg: three must-win fights on routes 4, 9 and 14. Trainers come one after another and HP carries over.
+const SHAM_COLOR = '#c9514d';
+const SHAMBURG = [
+  {route: 3, levels: 2, trainers: [['Shamburg Grunt Pike', 2, 1], ['Shamburg Grunt Mara', 2, 1]]},
+  {route: 8, levels: 3, trainers: [['Shamburg Grunt Dex', 2, 1], ['Shamburg Grunt Voss', 3, 1], ['Shamburg Lieutenant Rook', 3, 2]]},
+  {route: 13, levels: 4, trainers: [['Shamburg Grunt Skye', 3, 1], ['Shamburg Grunt Brix', 3, 1], ['Shamburg Lieutenant Vale', 3, 2], ['Boss Shamburg', 4, 3]]},
+];
+const shamAt = r => SHAMBURG.findIndex(x => x.route === r);
+const shamOpen = r => { const k = shamAt(r); return k >= 0 && !(A.shamburg && A.shamburg.done[k]); };
+const questLevel = i => AREAS[i].lv ? AREAS[i].lv - 3 : Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
 
 let A = null;
 function loadA() {
@@ -1738,6 +1763,12 @@ function questOverlay() {
     svg += `<g data-quest="${i}" role="button" aria-label="${esc(ar.name)}"><circle cx="${x}" cy="${y}" r="15" fill="transparent"/>
       <rect x="${x - 8}" y="${y - 8}" width="16" height="16" rx="3" transform="rotate(45 ${x} ${y})" fill="${done ? '#1d2633' : ar.color}" stroke="${ar.color}" stroke-width="2"/>
       ${done ? `<path d="M${x - 4} ${y} l3 3 l5 -6" stroke="${ar.color}" stroke-width="2" fill="none"/>` : `<text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="10" font-weight="800" fill="#10131a">!</text>`}</g>`;
+  }
+  if (trailOpen()) {
+    const p = pts[18], x = Math.min(340, p.x + 30), y = p.y - 24, all = AREAS.slice(17).every((a, k) => (A.quests[17 + k] || {}).done);
+    svg += `<g data-trail="1" role="button" aria-label="${TRAIL}"><circle cx="${x}" cy="${y}" r="17" fill="transparent"/>
+      <rect x="${x - 10}" y="${y - 10}" width="20" height="20" rx="3" transform="rotate(45 ${x} ${y})" fill="${all ? '#1d2633' : '#e8c76a'}" stroke="#e8c76a" stroke-width="2"/>
+      ${all ? `<path d="M${x - 4} ${y} l3 3 l5 -6" stroke="#e8c76a" stroke-width="2" fill="none"/>` : `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#10131a">★</text>`}</g>`;
   }
   return svg;
 }
@@ -1792,10 +1823,13 @@ function advNextBarClick(id) {
   else if (id === 'aTrain') advTrain();
   else if (id === 'aShop') openShop();
   else if (id === 'rGrass') routeBattle(A.loc);
+  else if (id === 'sGo') shamFight(shamAt(A.loc));
     else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
 }
 $('mapSvg').addEventListener('click', e => {
   if (mapMode !== 'adventure' || mapFromBattle) return;
+  const tr = e.target.closest('[data-trail]');
+  if (tr) { openTrail(); return; }
   const g = e.target.closest('[data-quest]');
   if (g) { openQuest(+g.dataset.quest); return; }
   const t = e.target.closest('[data-town]');
@@ -2086,9 +2120,10 @@ async function advBattleOver(won) {
     advHealAll(); A.loc = null;
     if (fight.type === 'e4' || fight.type === 'champion') A.e4pos = 0;
     if (fight.quest != null) A.quests[fight.quest].step = 0;
+    if (fight.sham != null) A.shamburg.step[fight.sham] = 0;
     saveA();
     advResult(fight.foe.icon || 'star', fight.foe.color, 'You blacked out',
-      `Your team was rushed to the Mon Center and fully healed. ${fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
+      `Your team was rushed to the Mon Center and fully healed. ${fight.sham != null ? 'Team Shamburg is waiting, and you have to beat them again from the first trainer.' : fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
       null, `<button class="btn primary" id="aToMap">Back to map</button>`);
     return;
   }
@@ -2100,7 +2135,7 @@ async function advBattleOver(won) {
   }
   if (fight.type === 'route') {
     const caughtMsg = fight.caught ? addCaught(fight.caught) : '';
-    const arrived = A.regional && A.travelled < advDest() && fight.route === advDest() - 1;
+    const arrived = A.regional && A.travelled < advDest() && fight.route === advDest() - 1 && !shamOpen(fight.route);
     if (arrived) A.travelled = advDest();
     saveA();
     const lines = await growAndShow(1); saveA();
@@ -2111,11 +2146,50 @@ async function advBattleOver(won) {
         : `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
     return;
   }
+  if (fight.type === 'shamburg') {
+    const S = SHAMBURG[fight.sham], k = fight.k, prize = trainerPrize(fight.lv);
+    A.money += prize; A.shamburg.step[fight.sham] = k + 1;
+    if (k + 1 < S.trainers.length) {
+      saveA();
+      const left = S.trainers.length - k - 1;
+      advResult('star', SHAM_COLOR, `${S.trainers[k][0]} defeated`, `You won ${money(prize)}. ${left} more Team Shamburg trainer${left > 1 ? 's' : ''} to go, and your Mons do not get to heal in between. Use your bag if you need to.`, null,
+        `<button class="btn primary" id="aShamNext">Next trainer</button>`);
+      return;
+    }
+    A.shamburg.done[fight.sham] = true; A.shamburg.step[fight.sham] = 0;
+    const arrived = A.regional && A.travelled < advDest() && S.route === advDest() - 1;
+    if (arrived) A.travelled = advDest();
+    saveA();
+    const lines = await growAndShow(S.levels); saveA();
+    advResult('star', SHAM_COLOR, 'Team Shamburg beaten', `You won ${money(prize)}. Every Mon on your team gained ${S.levels} levels.${arrived ? ` You can now go to ${esc(placeName(advDest()))}.` : ''}`, lines,
+      arrived ? `<button class="btn primary" id="aToMapTown">Go to ${esc(placeName(advDest()))}</button><button class="btn" id="aToMap">Back to map</button>` : `<button class="btn primary" id="aToMap">Back to map</button>`);
+    return;
+  }
+  if (fight.type === 'trailTrainer') {
+    const prize = trainerPrize(fight.lv);
+    A.money += prize; A.trail.t[fight.idx] = true; saveA();
+    advResult('crown', '#e8c76a', `${TRAIL_TRAINERS[fight.idx]} defeated`, `You won ${money(prize)}.`, null, `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
+    return;
+  }
+  if (fight.type === 'questLegend') {
+    const q = A.quests[fight.quest], ar = AREAS[fight.quest];
+    if (fight.caught) {
+      const caughtMsg = addCaught(fight.caught);
+      q.step = 3; q.done = true; saveA();
+      advResult('star', ar.color, `${fight.caught.species} caught!`, `${esc(caughtMsg)} ${esc(ar.name)} is cleared.${fight.quest < 22 ? ` A new quest opened: ${esc(AREAS[fight.quest + 1].name)}.` : ' That was the last legendary Mon on the trail!'}`, null,
+        `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
+    } else {
+      saveA();
+      advResult(ar.icon, ar.color, 'It got away', `${esc(q.trainer)} was knocked out but not caught, and it slipped away. It will come back if you try again. Weaken it a little, then throw a Mon Ball.`, null,
+        `<button class="btn primary" id="aQuestNext">Try again</button><button class="btn" id="aToTrail">Back to the ${TRAIL}</button>`);
+    }
+    return;
+  }
   if (fight.type === 'questWild') {
     const q = A.quests[fight.quest]; q.step++;
     const caughtMsg = fight.caught ? addCaught(fight.caught) + ' ' : '';
     const lines = null; saveA();
-    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', `${esc(caughtMsg)}${q.step < 3 ? `${3 - q.step} more wild Mons before the trainer.` : `The ${esc(q.trainer)} is waiting at the end of the path.`}`, lines,
+    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', `${esc(caughtMsg)}${q.step < (q.legend ? 2 : 3) ? `${(q.legend ? 2 : 3) - q.step} more wild Mon${(q.legend ? 2 : 3) - q.step > 1 ? 's' : ''} before the ${q.legend ? 'legendary Mon' : 'trainer'}.` : q.legend ? `${esc(q.trainer)}, a legendary Mon, is waiting at the end of the path.` : `The ${esc(q.trainer)} is waiting at the end of the path.`}`, lines,
       `<button class="btn primary" id="aQuestNext">Keep going</button><button class="btn" id="aToQuest">Quest map</button>`);
     return;
   }
@@ -2142,7 +2216,7 @@ async function advBattleOver(won) {
     advHealAll();
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
     saveA();
-    advResult(L.icon, L.color, `${L.badge} earned`, `You won ${money(prize)} and your team was fully healed. ${esc(got)}. A new side quest opened: ${esc(AREAS[A.pos - 1].name)}.`, lines,
+    advResult(L.icon, L.color, `${L.badge} earned`, `You won ${money(prize)} and your team was fully healed. ${esc(got)}. A new side quest opened: ${esc(AREAS[A.pos - 1].name)}.${A.pos >= 17 ? ` The ${TRAIL} has also opened near ${esc(LEAGUE)}.` : ''}`, lines,
       `<button class="btn primary" id="aToMapTravel">Back to map</button>`);
   } else if (fight.type === 'e4') {
     A.e4pos++; A.money += E4_PRIZE;
@@ -2158,12 +2232,14 @@ async function advBattleOver(won) {
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
-  if (!['aToMap', 'aToMapTown', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
+  if (!['aToMap', 'aToMapTown', 'aShamNext', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
   endBattleQuietly(); ctx = null;
   if (id === 'aTrainAgain') advTrain();
   else if (id === 'aRouteAgain') routeBattle(fight.route);
+  else if (id === 'aShamNext') shamFight(fight.sham);
+  else if (id === 'aToTrail') openTrail();
   else if (id === 'aToMapTown') { A.loc = null; saveA(); openAdvMap({}); }
   else if (id === 'aQuestNext') questContinue(fight.quest);
   else if (id === 'aToQuest') openQuest(fight.quest);
@@ -2174,6 +2250,16 @@ $('result').addEventListener('click', e => {
 function ensureQuest(i) {
   if (A.quests[i] && A.quests[i].wild) return A.quests[i];
   const ar = AREAS[i], lv = questLevel(i);
+  if (ar.legend) {
+    const mine = E.familyOf(ar.legend).stages[E.familyOf(ar.legend).stages.length - 1].types;
+    let pool = E.FAMILIES.filter(f => !f.rare && f.stages[f.stages.length - 1].types.some(t => mine.includes(t))).map(f => f.key);
+    if (pool.length < 2) pool = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
+    const pick = () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+    A.quests[i] = {level: lv, step: 0, done: false, legend: true, trainer: E.familyOf(ar.legend).stages[0].name,
+      wild: [E.regionalWild(17, lv, pick()), E.regionalWild(17, lv + 1, pick())], boss: E.regionalWild(17, ar.lv, ar.legend)};
+    saveA();
+    return A.quests[i];
+  }
   A.quests[i] = {
     level: lv, step: 0, done: false, trainer: ar.trainer,
     wild: [0, 1, 2].map(k => A.regional ? E.regionalWild(i, Math.max(2, lv - 2 + k)) : E.randomMon(Math.max(2, lv - 2 + k), ar.types)),
@@ -2189,7 +2275,8 @@ function openQuest(i) {
   $('questName').textContent = ar.name;
   $('questSub').textContent = q.done ? 'Cleared' : `${ar.kind} · level ${q.level} · ${money(A.money)}`;
   // quest map: entrance, three wild spots, trainer
-  const pts = [{x: 60, y: 380}, {x: 240, y: 330}, {x: 100, y: 240}, {x: 260, y: 150}, {x: 150, y: 60}];
+  const nWild = q.legend ? 2 : 3, nodes = nWild + 1;
+  const pts = (q.legend ? [{x: 60, y: 380}, {x: 240, y: 290}, {x: 100, y: 180}, {x: 220, y: 60}] : [{x: 60, y: 380}, {x: 240, y: 330}, {x: 100, y: 240}, {x: 260, y: 150}, {x: 150, y: 60}]);
   const r = rng(1000 + i);
   let svg = `<rect width="360" height="420" fill="color-mix(in srgb, ${ar.color} 14%, #121820)"/>`;
   for (let k = 0; k < 40; k++) {
@@ -2204,19 +2291,21 @@ function openQuest(i) {
     svg += `<path d="M${a.x} ${a.y} Q${(a.x + b.x) / 2 + (k % 2 ? 40 : -40)} ${(a.y + b.y) / 2} ${b.x} ${b.y}" fill="none" stroke="${done ? '#e9edf3' : '#56616f'}" stroke-width="3" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
   }
   svg += `<text x="${pts[0].x}" y="${pts[0].y + 26}" text-anchor="middle" font-size="11" fill="#b4bdcb">Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
-  for (let k = 1; k <= 4; k++) {
+  for (let k = 1; k <= nodes; k++) {
     const p = pts[k], cleared = q.step >= k, cur = !q.done && q.step === k - 1;
-    const label = k < 4 ? `Wild Mon ${k}` : q.trainer;
+    const label = k < nodes ? `Wild Mon ${k}` : q.trainer;
     if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="24" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
     svg += `<circle cx="${p.x}" cy="${p.y}" r="17" fill="${cleared ? ar.color : '#1d2633'}" stroke="${cleared || cur ? ar.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
-    svg += k < 4 ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
+    svg += k < nodes ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
     svg += `<text x="${p.x}" y="${p.y + 32}" text-anchor="middle" font-size="11" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(label)}</text>`;
   }
   $('questSvg').innerHTML = svg;
   let card;
-  if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>You beat the ${esc(q.trainer)} here. Nothing left to do.</small></div></div>`;
-  else if (q.step < 3) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Wild Mon ${q.step + 1} of 3</b><small>Something is rustling ahead · around level ${q.level} · HP carries over, so use your bag</small></div></div>
+  if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>${q.legend ? `You caught ${esc(q.trainer)} here.` : `You beat the ${esc(q.trainer)} here.`} Nothing left to do.</small></div></div>`;
+  else if (q.step < nWild) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Wild Mon ${q.step + 1} of ${nWild}</b><small>Something is rustling ahead · around level ${q.level} · HP carries over, so use your bag</small></div></div>
     <button class="btn primary" id="qGo">Keep going</button>`;
+  else if (q.legend) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>A legendary Mon · level ${q.boss.level} · weaken it, then throw a Mon Ball · ${A.bag.pokeball || 0} left</small></div></div>
+    <button class="btn primary" id="qGo">Approach ${esc(q.trainer)}</button>`;
   else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>Three Mons around level ${q.level + 1} · prize ${money(trainerPrize(q.level))} and items</small></div></div>
     <button class="btn primary" id="qGo">Challenge the ${esc(q.trainer)}</button>`;
   $('questBar').innerHTML = card;
@@ -2225,9 +2314,14 @@ function openQuest(i) {
 function questContinue(i) {
   const q = ensureQuest(i), ar = AREAS[i];
   if (q.done) { openQuest(i); return; }
-  if (q.step < 3) {
+  const nWild = q.legend ? 2 : 3;
+  if (q.legend && q.step >= nWild) {
+    advFight({type: 'questLegend', quest: i, catchable: true, sets: [JSON.parse(JSON.stringify(q.boss))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Legendary ${q.boss.species}`, subtitle: `${ar.name} · level ${q.boss.level}`}});
+    return;
+  }
+  if (q.step < nWild) {
     const mon = q.wild[q.step];
-    advFight({type: 'questWild', quest: i, catchable: !!mon.family, sets: [JSON.parse(JSON.stringify(mon))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · ${q.step + 1} of 3`}});
+    advFight({type: 'questWild', quest: i, catchable: !!mon.family, sets: [JSON.parse(JSON.stringify(mon))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · ${q.step + 1} of ${nWild}`}});
   } else {
     talk({name: q.trainer, key: null, color: ar.color, icon: ar.icon}, [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
       advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: q.trainer, key: null, color: ar.color, icon: 'star', title: q.trainer, subtitle: `${ar.name} · level ${q.level + 1}`}});
@@ -2235,9 +2329,51 @@ function questContinue(i) {
   }
 }
 $('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questContinue(questIdx()); });
-$('questLeave').addEventListener('click', () => openAdvMap({}));
+$('questLeave').addEventListener('click', () => { if (AREAS[questIdx()] && AREAS[questIdx()].legend) openTrail(); else openAdvMap({}); });
 $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
+
+// --- Triumph Trail (opens after the 17th badge) ---
+function openTrail() {
+  if (!trailOpen()) { openAdvMap({}); return; }
+  mapMode = 'adventure';
+  setAccent('#e8c76a');
+  const T = A.trail, doneT = TRAIL_TRAINERS.filter((_, i) => T.t[i]).length;
+  const doneL = AREAS.slice(17).filter((a, k) => (A.quests[17 + k] || {}).done).length;
+  $('trailSub').textContent = `${doneT} of ${TRAIL_TRAINERS.length} trainers · ${doneL} of 6 legendary Mons · ${money(A.money)}`;
+  const legend = AREAS.slice(17).map((ar, k) => {
+    const i = 17 + k, q = A.quests[i] || {}, open = legendUnlocked(i);
+    const sub = q.done ? `Cleared. You caught ${esc(ar.trainer)}.` : !open ? `Locked. Clear ${esc(AREAS[i - 1].name)} first.` : `Level ${ar.lv} · 2 wild Mons, then a legendary Mon`;
+    return `<button class="trailrow" style="--c:${ar.color}" data-tq="${i}" ${open ? '' : 'disabled'}><span class="face">${emblem(ar.icon, ar.color)}</span><span><b>${esc(ar.name)}</b><small>${sub}</small></span></button>`;
+  }).join('');
+  const trainers = TRAIL_TRAINERS.map((n, i) => {
+    const lv = trailLv(i), done = T.t[i];
+    return `<button class="trailrow" style="--c:#e8c76a" data-tt="${i}" ${done ? 'disabled' : ''}><span class="face">${emblem('crown', '#e8c76a')}</span><span><b>${esc(n)}</b><small>${done ? 'Defeated' : `Three Mons around level ${lv} · prize ${money(trainerPrize(lv))}`}</small></span></button>`;
+  }).join('');
+  $('trailBody').innerHTML = `<p class="note">A road of champions beyond ${esc(LEAGUE)}. Beat its trainers for prize money, and track down the six legendary Mons one at a time.</p>
+    <div class="row"><button class="btn" id="trailHeal">Heal team</button></div>
+    <div class="lbl">Legendary quests</div><div class="trailrows">${legend}</div>
+    <div class="lbl">Trainers</div><div class="trailrows">${trainers}</div>`;
+  show('trail');
+  $('trailBody').parentElement.scrollTop = 0;
+}
+$('trailBody').addEventListener('click', async e => {
+  if (e.target.closest('#trailHeal')) { advHealAll(); saveA(); toast('Your team was fully healed.'); return; }
+  const q = e.target.closest('[data-tq]');
+  if (q && !q.disabled) { openQuest(+q.dataset.tq); return; }
+  const t = e.target.closest('[data-tt]');
+  if (t && !t.disabled) trailFight(+t.dataset.tt);
+});
+async function trailFight(i) {
+  const lv = trailLv(i), name = TRAIL_TRAINERS[i];
+  const keys = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
+  const sets = [0, 1, 2].map(() => E.regionalWild(17, lv, keys[Math.floor(Math.random() * keys.length)]));
+  await talk({name, key: null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Triumph Trail for a worthy challenger. Show me what you have got!']);
+  advFight({type: 'trailTrainer', idx: i, lv, sets, foe: {name, key: null, color: '#e8c76a', icon: 'crown', title: name, subtitle: `${TRAIL} · level ${lv}`}});
+}
+$('trailLeave').addEventListener('click', () => openAdvMap({}));
+$('trailTeam').addEventListener('click', () => openTeamView('trail'));
+$('trailBag').addEventListener('click', () => openAdvBag('trail'));
 
 // --- shop ---
 function openShop() { $('shopNote').textContent = 'Tap Buy to add an item to your bag.'; renderShop(); show('shop'); }
@@ -2445,7 +2581,7 @@ function startRegionalAdventure(name, famKey) {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
-    money: 1500, bag: {...ADV_START_BAG, pokeball: 5}, quests: {}, travelled: 0, done: false, loc: 0,
+    money: 1500, bag: {...ADV_START_BAG, pokeball: 5}, quests: {}, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
   touchProfile({name});
   saveA();
@@ -2455,6 +2591,8 @@ function migrateA() {
   if (!A) return;
   A.box = A.box || []; A.dex = A.dex || {seen: {}, caught: {}};
   if (A.loc === undefined) A.loc = null;
+  A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
+  A.trail = A.trail || {t: []};
   // MonDex ids of Neofield Mons that were renamed (old id -> current id)
   const RENAMED = {brightwatercharmander: 'shardmander', neofieldcharmander: 'shardmander', opalisk: 'shardmander',
     starter1: 'bulbazoid', bulbazilla: 'bulbazoid', starter1stage2: 'ivyzoid', starter1stage3: 'venuzoid',
@@ -2505,7 +2643,7 @@ function routeOverlay() {
     const here = A.loc === r;
     const label = r === 17 ? 'VR' : 'R' + (r + 1);
     svg += `<g data-route="${r}" role="button" aria-label="${esc(E.ROUTES[r].name)}"><path d="${segPath(a, b, r + 1)}" stroke="transparent" stroke-width="22" fill="none"/>
-      <rect x="${mx - 14}" y="${my - 9}" width="28" height="18" rx="9" fill="${here ? '#8fb36a' : '#1d2633'}" stroke="#8fb36a" stroke-width="1.5"/>
+      <rect x="${mx - 14}" y="${my - 9}" width="28" height="18" rx="9" fill="${here ? '#8fb36a' : '#1d2633'}" stroke="${shamOpen(r) ? SHAM_COLOR : '#8fb36a'}" stroke-width="${shamOpen(r) ? 2.5 : 1.5}"/>
       <text x="${mx}" y="${my + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${here ? '#10131a' : '#cfe6b8'}">${label}</text></g>`;
   }
   return svg;
@@ -2536,6 +2674,7 @@ function openTown() {
 }
 function routeCardHTML(r) {
   const R = E.ROUTES[r], lv = routeLevel(r);
+  const sg = shamAt(r), sgOpen = shamOpen(r), gatedHere = A.travelled < advDest() && r === advDest() - 1;
   const mons = R.families.map(k => {
     const f = E.familyOf(k);
     const st = f.stages[E.stageAt(E.chainOf(f.finalSet.species), lv)] || f.stages[0];
@@ -2544,8 +2683,22 @@ function routeCardHTML(r) {
   }).join('');
   return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Mons around level ${lv} · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
     <div class="routemons">${mons}</div>
-    ${A.travelled < advDest() && r === advDest() - 1 ? `<p class="note">Beat or catch one wild Mon here to reach ${esc(placeName(r + 1))}.</p>` : `<p class="note">Tap ${esc(placeName(advDest()))} on the map to go back to town.</p>`}
-    <div class="row"><button class="btn primary" id="rGrass">Walk in the tall grass</button></div>`;
+    ${sgOpen ? `<div class="nextcard" style="--c:${SHAM_COLOR}"><span class="face">${emblem('star', SHAM_COLOR)}</span><div><b>Team Shamburg</b><small>${SHAMBURG[sg].trainers.length} trainers in a row, with no healing in between · ${SHAMBURG[sg].levels} levels when you win${A.shamburg.step[sg] ? ` · ${A.shamburg.step[sg]} beaten so far` : ''}</small></div></div>` : ''}
+    ${gatedHere ? `<p class="note">${sgOpen ? `Team Shamburg blocks the way to ${esc(placeName(r + 1))}. Beat all of them to get through.` : `Beat or catch one wild Mon here to reach ${esc(placeName(r + 1))}.`}</p>` : `<p class="note">Tap ${esc(placeName(advDest()))} on the map to go back to town.</p>`}
+    <div class="row">${sgOpen ? `<button class="btn primary" id="sGo">${A.shamburg.step[sg] ? 'Keep fighting Team Shamburg' : 'Confront Team Shamburg'}</button>` : ''}<button class="btn ${sgOpen ? '' : 'primary'}" id="rGrass">Walk in the tall grass</button></div>`;
+}
+async function shamFight(k) {
+  if (k < 0 || A.shamburg.done[k]) return;
+  const S = SHAMBURG[k], n = A.shamburg.step[k], t = S.trainers[n];
+  const lv = Math.max(5, routeLevel(S.route) + t[2] - 1);
+  const speaker = {name: t[0], key: null, color: SHAM_COLOR, icon: 'star'};
+  const boss = n === S.trainers.length - 1 && k === 2;
+  await talk(speaker, n === 0
+    ? [`Hold it right there! We are Team Shamburg, and we take Mons from trainers who are not strong enough to keep them.`, `Your Mons look strong. Hand them over, or beat all ${S.trainers.length} of us!`]
+    : boss ? [`So you got past my team. I am the boss of Team Shamburg. No trainer has ever kept their Mons after facing me!`]
+    : [`You beat my partner? Then you still have to get past me. No healing, no breaks!`]);
+  const sets = Array.from({length: t[1]}, () => E.regionalWild(S.route, lv));
+  advFight({type: 'shamburg', sham: k, k: n, lv, sets, foe: {name: t[0], key: null, color: SHAM_COLOR, icon: 'star', title: t[0], subtitle: `Team Shamburg · ${n + 1} of ${S.trainers.length} · level ${lv}`}});
 }
 function routeBattle(r) {
   const lv = Math.max(2, routeLevel(r) - 2 + Math.floor(Math.random() * 4));
