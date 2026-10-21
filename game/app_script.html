@@ -1748,9 +1748,12 @@ function openAdvMap({fromBattle, msg} = {}) {
   const st = aStage();
   setAccent(st && st.key ? LEADERS[st.key].color : CHAMP.color);
   const dest = A.done ? 18 : Math.min(A.pos, 17) + 1;
-  const firstTrip = A.travelled < dest && !fromBattle;
-  const from = firstTrip ? Math.max(0, dest - 1) : dest;
+  // Neofield: every new town is reached by winning one wild battle on the route that leads to it
+  const gated = !!A.regional && A.travelled < dest;
+  if (gated && !fromBattle && (A.loc == null || A.loc > dest - 1)) A.loc = dest - 1;
+  const firstTrip = !A.regional && A.travelled < dest && !fromBattle;
   if (firstTrip) A.loc = null;
+  const from = firstTrip ? Math.max(0, dest - 1) : A.regional && A.loc != null ? A.loc : dest;
   renderWorldMap(from, {stage: aStage, done: A.done, pos: A.pos, order: A.order}, routeOverlay() + questOverlay());
   $('mapSub').textContent = `${money(A.money)} · ${A.pos} of 17 badges · ${DIFFS[A.difficulty].label}`;
   $('mapMenu').hidden = mapFromBattle;
@@ -1761,7 +1764,7 @@ function openAdvMap({fromBattle, msg} = {}) {
   show('journey');
   requestAnimationFrame(() => {
     scrollMapTo(mapPoints()[from].y);
-    if (A.loc != null && !firstTrip && !mapFromBattle) placeMarkerOnRoute(A.loc);
+    if (A.regional && A.loc != null) placeMarkerOnRoute(A.loc);
     if (msg) toast(msg, 4600);
     if (firstTrip) animateMarker(dest, () => { A.travelled = dest; saveA(); });
   });
@@ -1789,13 +1792,14 @@ function advNextBarClick(id) {
   else if (id === 'aTrain') advTrain();
   else if (id === 'aShop') openShop();
   else if (id === 'rGrass') routeBattle(A.loc);
-  else if (id === 'rLeave') { A.loc = null; saveA(); openAdvMap({}); }
-  else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
+    else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
 }
 $('mapSvg').addEventListener('click', e => {
   if (mapMode !== 'adventure' || mapFromBattle) return;
   const g = e.target.closest('[data-quest]');
   if (g) { openQuest(+g.dataset.quest); return; }
+  const t = e.target.closest('[data-town]');
+  if (t) { openTown(); return; }
   const r = e.target.closest('[data-route]');
   if (r) openRoute(+r.dataset.route);
 });
@@ -2096,12 +2100,15 @@ async function advBattleOver(won) {
   }
   if (fight.type === 'route') {
     const caughtMsg = fight.caught ? addCaught(fight.caught) : '';
+    const arrived = A.regional && A.travelled < advDest() && fight.route === advDest() - 1;
+    if (arrived) A.travelled = advDest();
     saveA();
     const lines = await growAndShow(1); saveA();
     const f = E.familyOf(fight.sets[0].family);
     advResult(fight.caught ? 'star' : 'leaf', f.color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated',
-      `${esc(caughtMsg)} Every Mon on your team gained a level.`, lines,
-      `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
+      `${esc(caughtMsg)} Every Mon on your team gained a level.${arrived ? ` You can now go to ${esc(placeName(advDest()))}.` : ''}`, lines,
+      arrived ? `<button class="btn primary" id="aToMapTown">Go to ${esc(placeName(advDest()))}</button><button class="btn" id="aRouteAgain">Keep exploring</button>`
+        : `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
     return;
   }
   if (fight.type === 'questWild') {
@@ -2151,12 +2158,13 @@ async function advBattleOver(won) {
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
-  if (!['aToMap', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
+  if (!['aToMap', 'aToMapTown', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
   endBattleQuietly(); ctx = null;
   if (id === 'aTrainAgain') advTrain();
   else if (id === 'aRouteAgain') routeBattle(fight.route);
+  else if (id === 'aToMapTown') { A.loc = null; saveA(); openAdvMap({}); }
   else if (id === 'aQuestNext') questContinue(fight.quest);
   else if (id === 'aToQuest') openQuest(fight.quest);
   else openAdvMap({});
@@ -2437,11 +2445,11 @@ function startRegionalAdventure(name, famKey) {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
-    money: 1500, bag: {...ADV_START_BAG, pokeball: 5}, quests: {}, travelled: -1, done: false,
+    money: 1500, bag: {...ADV_START_BAG, pokeball: 5}, quests: {}, travelled: 0, done: false, loc: 0,
   };
   touchProfile({name});
   saveA();
-  openAdvMap({msg: 'Tap Route 1 on the map to look for wild Mons.'});
+  openAdvMap({msg: 'You are on Route 1. Beat one wild Mon to reach the next town.'});
 }
 function migrateA() {
   if (!A) return;
@@ -2488,7 +2496,8 @@ const placeName = i => i === 0 ? HOME : i <= 17 ? TOWNS[A.order[i - 1]] : LEAGUE
 function routeOverlay() {
   if (!A || !A.regional) return '';
   const pts = mapPoints();
-  let svg = '';
+  const tp = pts[advDest()];
+  let svg = `<g data-town="1" role="button" aria-label="${esc(placeName(advDest()))}"><circle cx="${tp.x}" cy="${tp.y}" r="30" fill="transparent"/></g>`;
   for (let r = 0; r < E.ROUTES.length; r++) {
     if (!routeOpen(r)) continue;
     const a = pts[r], b = pts[r + 1], c = segCtrl(a, b, r + 1);
@@ -2515,9 +2524,15 @@ function placeMarkerOnRoute(r) {
 function openRoute(r) {
   if (!routeOpen(r)) return;
   A.loc = r;
-  A.travelled = Math.max(A.travelled, A.done ? 18 : Math.min(A.pos, 17) + 1); // tapping a route skips the travel animation
   saveA();
   openAdvMap({});
+}
+const advDest = () => A.done ? 18 : Math.min(A.pos, 17) + 1;
+function openTown() {
+  if (!A || !A.regional) return;
+  const d = advDest();
+  if (A.travelled < d) { toast(`Beat one wild Mon on ${E.ROUTES[d - 1].name} to reach ${placeName(d)}.`); return; }
+  A.loc = null; saveA(); openAdvMap({});
 }
 function routeCardHTML(r) {
   const R = E.ROUTES[r], lv = routeLevel(r);
@@ -2529,7 +2544,8 @@ function routeCardHTML(r) {
   }).join('');
   return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Mons around level ${lv} · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
     <div class="routemons">${mons}</div>
-    <div class="row"><button class="btn primary" id="rGrass">Walk in the tall grass</button><button class="btn" id="rLeave">Back to town</button></div>`;
+    ${A.travelled < advDest() && r === advDest() - 1 ? `<p class="note">Beat or catch one wild Mon here to reach ${esc(placeName(r + 1))}.</p>` : `<p class="note">Tap ${esc(placeName(advDest()))} on the map to go back to town.</p>`}
+    <div class="row"><button class="btn primary" id="rGrass">Walk in the tall grass</button></div>`;
 }
 function routeBattle(r) {
   const lv = Math.max(2, routeLevel(r) - 2 + Math.floor(Math.random() * 4));
