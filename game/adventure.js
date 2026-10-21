@@ -108,7 +108,7 @@ export function setAtLevel(finalSet, level, opts = {}) {
     : pickMoves(chain, idx, level, finalSet.moves || [], extra).map(id => dex.moves.get(id).name);
   const abilities = Object.values(sp.abilities);
   const ability = abilities.map(toID).includes(toID(finalSet.ability)) ? finalSet.ability : abilities[0];
-  let item = finalSet.item || '';
+  let item = opts.noItem ? '' : (finalSet.item || '');
   const it = dex.items.get(item);
   if (!isFinal && it.megaStone) item = '';
   if (isFinal && it.id === 'eviolite' && !sp.nfe) item = 'Leftovers';
@@ -163,7 +163,7 @@ export function randomMon(level, types = null, trained = false) {
   const abilities = [sp.abilities[0], sp.abilities[1]].filter(Boolean);
   const ev = trained ? 84 : 0, iv = trained ? 24 : 15;
   return {
-    name: sp.name, species: sp.name, level, moves, ability: rand(abilities), item: trained && Math.random() < 0.5 ? 'Oran Berry' : '',
+    name: sp.name, species: sp.name, level, moves, ability: rand(abilities), item: '',
     nature: rand(['Hardy', 'Adamant', 'Modest', 'Jolly', 'Timid', 'Bold', 'Calm']), gender: '',
     evs: {hp: ev, atk: ev, def: ev, spa: ev, spd: ev, spe: ev}, ivs: {hp: iv, atk: iv, def: iv, spa: iv, spd: iv, spe: iv},
   };
@@ -173,7 +173,7 @@ export function randomMon(level, types = null, trained = false) {
 export function parseSets(text) { return Teams.import(String(text || '').split('\n').filter(l => !l.trim().startsWith('===')).join('\n')) || []; }
 
 // The player's team: [{final, level, frac, tutored}] -> battle sets
-export function playerSets(team) { return team.map(m => setAtLevel(m.final, m.level, {tutored: m.tutored, moves: m.moves})); }
+export function playerSets(team) { return team.map(m => setAtLevel(m.final, m.level, {tutored: m.tutored, moves: m.moves, noItem: true})); }
 
 // Starting moves for a team member (used once, then the player owns the move list)
 export function startingMoves(finalSet, level, tutored = []) { return setAtLevel(finalSet, level, {tutored}).moves; }
@@ -231,7 +231,7 @@ export function moveInfo(name) {
 }
 
 // A leader's team at a level (their Mons shown at the right evolution stage)
-export function leaderSets(teamText, level) { return parseSets(teamText).map(s => setAtLevel(s, level, {leader: true})); }
+export function leaderSets(teamText, level) { return parseSets(teamText).map(s => setAtLevel(s, level, {leader: true, noItem: true})); }
 
 // Level everyone up by n. Returns readable lines about growth, evolutions and new moves.
 export function levelUp(team, n) {

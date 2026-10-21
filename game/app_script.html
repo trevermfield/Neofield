@@ -1858,7 +1858,7 @@ function ensureMoves(m) {
   if (!Array.isArray(m.moves) || !m.moves.length) m.moves = E.startingMoves(m.final, m.level, m.tutored || []);
   return m.moves;
 }
-function mset(m) { ensureMoves(m); return E.setAtLevel(m.final, m.level, {tutored: m.tutored, moves: m.moves}); }
+function mset(m) { ensureMoves(m); return E.setAtLevel(m.final, m.level, {tutored: m.tutored, moves: m.moves, noItem: true}); }
 function moveCardHTML(name, tag, extraClass, attrs) {
   const mv = E.moveInfo(name);
   const bits = [mv.category, mv.power ? `Power ${mv.power}` : '', mv.accuracy ? `Accuracy ${mv.accuracy}%` : 'Never misses'].filter(Boolean).join(' · ');
