@@ -414,6 +414,9 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .dexrow small { color: var(--muted); font-size: 11px; display: block; }
 .dexrow:disabled { opacity: .55; cursor: default; }
 .dexentry { display: flex; flex-direction: column; gap: 14px; }
+.dexnav { display: flex; gap: 10px; }
+.dexnav .btn { flex: 1; }
+.dexnav .btn:disabled { opacity: .35; }
 .dexhero { --c: var(--accent); display: grid; grid-template-columns: 140px 1fr; gap: 14px; align-items: center; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: linear-gradient(140deg, color-mix(in srgb, var(--c) 24%, var(--panel)), var(--panel) 70%); }
 .dexhero .pic { width: 140px; height: 140px; display: grid; place-items: center; border-radius: 12px; background: radial-gradient(circle, color-mix(in srgb, var(--c) 30%, transparent), transparent 70%); font-family: var(--font-display); font-size: 40px; font-weight: 800; color: var(--c); }
 .dexhero h2 { font-size: 30px; color: var(--fg); letter-spacing: .02em; }
