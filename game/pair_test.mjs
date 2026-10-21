@@ -1,4 +1,4 @@
-import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './engine.js';
+import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './core.js';
 const pairs = [['charlotte','oksana'],['lillian','tanner'],['lillian','makenna'],['lillian','theo'],['lillian','anna']];
 for (const [a, c] of pairs) { let w = 0; const N = 20;
   for (let g = 0; g < N; g++) {

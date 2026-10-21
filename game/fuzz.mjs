@@ -1,5 +1,5 @@
 import {createBattle, parseTeam, aiChoose, applyItem, itemProblem, spendTurnOnItem, recountLeft, applyTeamState, readTeamState, ITEMS,
-  parseSets, setAtLevel, leaderSets, randomMon, TEAM_TEXT} from './engine.js';
+  parseSets, setAtLevel, leaderSets, randomMon, TEAM_TEXT} from './core.js';
 const names = Object.keys(TEAM_TEXT);
 const R = a => a[Math.floor(Math.random() * a.length)];
 let games = 0, problems = [], itemTurns = 0, itemTurnMoved = 0, revives = 0, stuck = 0;

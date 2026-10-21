@@ -549,6 +549,15 @@ function translate(lines) {
 // ---------- rendering ----------
 function hpColor(pct) { return pct > 50 ? 'var(--hp-good)' : pct > 20 ? 'var(--hp-mid)' : 'var(--hp-low)'; }
 
+// XP bar under your Mon's health in Adventure battles
+function battleXPBar() {
+  if (!(ctx && ctx.kind === 'adventure' && A && ctx.names)) return '';
+  const act = battle && battle[ME].active[0];
+  const i = act ? ctx.names.indexOf(act.name) : -1;
+  if (i < 0 || !A.team[i]) return '';
+  const xp = A.team[i].level >= 100 ? 100 : (A.team[i].xp || 0);
+  return `<div class="xpbar" title="XP ${xp} of ${E.XP.perLevel}"><i style="width:${xp / E.XP.perLevel * 100}%"></i></div>`;
+}
 function cardHTML(side) {
   const v = view[side];
   if (!v.species) return `<div class="head"><span class="name">${side === ME ? 'Your side' : esc(foe.name)}</span><span class="owner">${side === ME ? 'You' : 'Opponent'}</span></div><div class="note">Waiting for the first Mon…</div>`;
@@ -568,6 +577,7 @@ function cardHTML(side) {
     <div class="head"><span class="name">${sp.isMega ? 'Mega ' : ''}${esc(sp.isMega ? sp.baseSpecies : sp.name)}${battle[side].active[0] && battle[side].active[0].level !== 100 ? ` <small class="lvl">Lv ${battle[side].active[0].level}</small>` : ''}</span><span class="owner">${side === ME ? 'You' : esc(foe.name)}</span></div>
     <div class="row" style="justify-content:space-between">${typesHTML(sp.types)}<span class="balls" aria-label="Team status">${balls}</span></div>
     <div class="hpwrap"><div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><span class="hptext">${hpText}</span></div>
+    ${side === ME ? battleXPBar() : ''}
     <div class="tags">${statusPill(v.status)}${boosts}${hazards}</div>`;
 }
 
@@ -2092,13 +2102,12 @@ async function evolveScene(m, ev) {
 }
 
 // Level the team up by n, playing evolutions and asking about moves. Returns summary lines.
-async function growAndShow(n) {
-  A.team.forEach(ensureMoves);
-  const events = E.growTeam(A.team, n);
-  saveA();
+// Show what happened to the team: XP, level-ups, evolutions and new moves. Returns lines for the result box.
+async function showGrowth(events) {
   const lines = [];
   for (const ev of events) {
     const m = A.team[ev.slot];
+    if (ev.type === 'xp') { if (ev.gained > 0) lines.push(`XP|${ev.species}|${ev.gained}`); continue; }
     if (ev.type === 'grew') lines.push(`${ev.species} grew to level ${ev.level}.`);
     else if (ev.type === 'evolve') { await evolveScene(m, ev); lines.push(`${ev.from} evolved into ${ev.to}!`); }
     else if (ev.type === 'learned') lines.push(`${ev.species} learned ${ev.move}!`);
@@ -2109,15 +2118,26 @@ async function growAndShow(n) {
     }
     saveA();
   }
+  saveA();
   return lines;
+}
+// XP for the fight that was just won (call while the battle still exists). Team Mons that were sent out get full XP,
+// the rest of the team half, and Mons on the Farm none.
+const XP_KIND = {gym: 'gym', e4: 'gym', champion: 'gym', route: 'wild', train: 'wild', questWild: 'wild', shamburg: 'trainer', trailTrainer: 'trainer', questTrainer: 'trainer', questLegend: 'legend'};
+function awardFightXP(fight) {
+  if (fight.type === 'questLegend' && !fight.caught) return [];
+  const parts = E.participantsFromLog(battle.log, ctx.names);
+  A.team.forEach(ensureMoves);
+  const events = E.awardXP(A.team, parts, XP_KIND[fight.type] || 'wild', fight.sets.map(x => x.level));
+  saveA();
+  return events;
 }
 
 function summaryHTML(lines) {
-  // condense "X grew to level N" lines into one
-  const grew = lines.filter(l => l.includes(' grew to level '));
-  const other = lines.filter(l => !l.includes(' grew to level '));
+  const xp = lines.filter(l => l.startsWith('XP|')).map(l => l.split('|'));
+  const other = lines.filter(l => !l.startsWith('XP|'));
   const out = [];
-  if (grew.length) out.push(`<p>Your team grew to level ${A.team.map(m => m.level).join(', ')}.</p>`);
+  if (xp.length) out.push(`<p>${xp.map(([, n, g]) => `${esc(n)} +${g} XP`).join(' · ')}</p>`);
   for (const l of other) out.push(`<p class="${l.includes('evolved') ? 'evoline' : 'new'}">${esc(l)}</p>`);
   return `<div class="summary">${out.join('')}</div>`;
 }
@@ -2141,9 +2161,10 @@ async function advBattleOver(won) {
       null, `<button class="btn primary" id="aToMap">Back to map</button>`);
     return;
   }
+  const xpEvents = awardFightXP(fight);
   if (fight.type === 'train') {
-    const lines = await growAndShow(1); saveA();
-    advResult('leaf', '#8fb36a', 'Training complete', `You beat the wild ${esc(fight.sets[0].species)}. Every Mon on your team gained a level.`, lines,
+    const lines = await showGrowth(xpEvents);
+    advResult('leaf', '#8fb36a', 'Training complete', `You beat the wild ${esc(fight.sets[0].species)}.`, lines,
       `<button class="btn primary" id="aTrainAgain">Train again</button><button class="btn" id="aToMap">Back to map</button>`);
     return;
   }
@@ -2152,10 +2173,10 @@ async function advBattleOver(won) {
     const arrived = A.regional && A.travelled < advDest() && fight.route === advDest() - 1 && !shamOpen(fight.route);
     if (arrived) A.travelled = advDest();
     saveA();
-    const lines = await growAndShow(1); saveA();
+    const lines = await showGrowth(xpEvents);
     const f = E.familyOf(fight.sets[0].family);
     advResult(fight.caught ? 'star' : 'leaf', f.color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated',
-      `${esc(caughtMsg)} Every Mon on your team gained a level.${arrived ? ` You can now go to ${esc(placeName(advDest()))}.` : ''}`, lines,
+      `${esc(caughtMsg)}${arrived ? ` You can now go to ${esc(placeName(advDest()))}.` : ''}`, lines,
       arrived ? `<button class="btn primary" id="aToMapTown">Go to ${esc(placeName(advDest()))}</button><button class="btn" id="aRouteAgain">Keep exploring</button>`
         : `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
     return;
@@ -2166,7 +2187,8 @@ async function advBattleOver(won) {
     if (k + 1 < S.trainers.length) {
       saveA();
       const left = S.trainers.length - k - 1;
-      advResult('star', SHAM_COLOR, `${S.trainers[k][0]} defeated`, `You won ${money(prize)}. ${left} more Team Shamburg trainer${left > 1 ? 's' : ''} to go, and your Mons do not get to heal in between. Use your bag if you need to.`, null,
+      const lines = await showGrowth(xpEvents);
+      advResult('star', SHAM_COLOR, `${S.trainers[k][0]} defeated`, `You won ${money(prize)}. ${left} more Team Shamburg trainer${left > 1 ? 's' : ''} to go, and your Mons do not get to heal in between. Use your bag if you need to.`, lines,
         `<button class="btn primary" id="aShamNext">Next trainer</button>`);
       return;
     }
@@ -2174,15 +2196,16 @@ async function advBattleOver(won) {
     const arrived = A.regional && A.travelled < advDest() && S.route === advDest() - 1;
     if (arrived) A.travelled = advDest();
     saveA();
-    const lines = await growAndShow(S.levels); saveA();
-    advResult('star', SHAM_COLOR, 'Team Shamburg beaten', `You won ${money(prize)}. Every Mon on your team gained ${S.levels} levels.${arrived ? ` You can now go to ${esc(placeName(advDest()))}.` : ''}`, lines,
+    const lines = await showGrowth(xpEvents);
+    advResult('star', SHAM_COLOR, 'Team Shamburg beaten', `You won ${money(prize)}.${arrived ? ` You can now go to ${esc(placeName(advDest()))}.` : ''}`, lines,
       arrived ? `<button class="btn primary" id="aToMapTown">Go to ${esc(placeName(advDest()))}</button><button class="btn" id="aToMap">Back to map</button>` : `<button class="btn primary" id="aToMap">Back to map</button>`);
     return;
   }
   if (fight.type === 'trailTrainer') {
     const prize = trainerPrize(fight.lv);
     A.money += prize; A.trail.t[fight.idx] = true; saveA();
-    advResult('crown', '#e8c76a', `${TRAIL_TRAINERS[fight.idx]} defeated`, `You won ${money(prize)}.`, null, `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
+    const lines = await showGrowth(xpEvents);
+    advResult('crown', '#e8c76a', `${TRAIL_TRAINERS[fight.idx]} defeated`, `You won ${money(prize)}.`, lines, `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
     return;
   }
   if (fight.type === 'questLegend') {
@@ -2190,7 +2213,8 @@ async function advBattleOver(won) {
     if (fight.caught) {
       const caughtMsg = addCaught(fight.caught);
       q.step = 3; q.done = true; saveA();
-      advResult('star', ar.color, `${fight.caught.species} caught!`, `${esc(caughtMsg)} ${esc(ar.name)} is cleared.${fight.quest < 22 ? ` A new quest opened: ${esc(AREAS[fight.quest + 1].name)}.` : ' That was the last legendary Mon on the trail!'}`, null,
+      const lines = await showGrowth(xpEvents);
+      advResult('star', ar.color, `${fight.caught.species} caught!`, `${esc(caughtMsg)} ${esc(ar.name)} is cleared.${fight.quest < 22 ? ` A new quest opened: ${esc(AREAS[fight.quest + 1].name)}.` : ' That was the last legendary Mon on the trail!'}`, lines,
         `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
     } else {
       saveA();
@@ -2202,7 +2226,8 @@ async function advBattleOver(won) {
   if (fight.type === 'questWild') {
     const q = A.quests[fight.quest]; q.step++;
     const caughtMsg = fight.caught ? addCaught(fight.caught) + ' ' : '';
-    const lines = null; saveA();
+    saveA();
+    const lines = await showGrowth(xpEvents);
     advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', `${esc(caughtMsg)}${q.step < (q.legend ? 2 : 3) ? `${(q.legend ? 2 : 3) - q.step} more wild Mon${(q.legend ? 2 : 3) - q.step > 1 ? 's' : ''} before the ${q.legend ? 'legendary Mon' : 'trainer'}.` : q.legend ? `${esc(q.trainer)}, a legendary Mon, is waiting at the end of the path.` : `The ${esc(q.trainer)} is waiting at the end of the path.`}`, lines,
       `<button class="btn primary" id="aQuestMap">Keep going</button><button class="btn" id="aToQuest">Quest map</button>`);
     return;
@@ -2214,7 +2239,8 @@ async function advBattleOver(won) {
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
     saveA();
     await talk({name: q.trainer, key: null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, [`You're the real deal. Take these, you've earned them.`]);
-    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, `${AREAS[fight.quest].name} cleared`, `You won ${money(prize)}. ${esc(got)}.`, null,
+    const lines = await showGrowth(xpEvents);
+    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, `${AREAS[fight.quest].name} cleared`, `You won ${money(prize)}. ${esc(got)}.`, lines,
       `<button class="btn primary" id="aToMap">Back to map</button>`);
     return;
   }
@@ -2226,7 +2252,7 @@ async function advBattleOver(won) {
     badgesFor(A.difficulty)[fight.stage.key] = true; store.set('badgeBook', badgeBook);
     const prize = gymPrize(fight.level);
     A.money += prize; A.pos++; A.townAt = null;
-    const lines = await growAndShow(2);
+    const lines = await showGrowth(xpEvents);
     advHealAll();
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
     saveA();
@@ -2236,7 +2262,8 @@ async function advBattleOver(won) {
     A.e4pos++; A.money += E4_PRIZE;
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 2, revive: 1});
     saveA();
-    advResult(LEADERS[fight.stage.key].icon, LEADERS[fight.stage.key].color, `${LEADERS[fight.stage.key].first} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, null, `<button class="btn primary" id="aToMap">Back to map</button>`);
+    const lines = await showGrowth(xpEvents);
+    advResult(LEADERS[fight.stage.key].icon, LEADERS[fight.stage.key].color, `${LEADERS[fight.stage.key].first} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToMap">Back to map</button>`);
   } else {
     A.money += CHAMP_PRIZE; A.done = true;
     champions[A.difficulty] = true; store.set('champions', champions);
@@ -2490,6 +2517,10 @@ function teamCard(set, idx, levelLabel, extra) {
     .replace('</span><span class="chev"></span>', `${levelLabel ? ` <span class="lvl">${levelLabel}</span>` : ''}</span><span class="chev"></span>`)
     .replace('<div class="dexbody">', `<div class="dexbody">${extra}`);
 }
+function xpBlock(m) {
+  const xp = m.level >= 100 ? E.XP.perLevel : (m.xp || 0);
+  return `<div class="teamtop"><div class="lbl">XP</div><div class="hp xpb"><i style="width:${xp / E.XP.perLevel * 100}%"></i></div><small class="note">${m.level >= 100 ? 'Max level' : `${xp} of ${E.XP.perLevel} to level ${m.level + 1}`}</small></div>`;
+}
 function hpBlock(frac, text) {
   const pct = Math.max(0, frac * 100);
   return `<div class="teamtop"><div class="lbl">Health</div><div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><small class="note">${text}</small></div>`;
@@ -2505,7 +2536,7 @@ function openTeamView(from) {
       const next = path.find(p => p.at > m.level);
       const route = path.map(p => p.species === set.species ? `<b>${esc(p.species)}</b>` : esc(p.species) + (p.at > 1 ? ` (Lv ${p.at})` : '')).join(' → ');
       const tutor = E.tutorOptions(m);
-      const extra = hpBlock(m.frac, (m.frac <= 0 ? 'Fainted' : `${Math.round(m.frac * 100)}% HP`) + (infoReturn === 'battle' ? ' before this battle' : ''))
+      const extra = hpBlock(m.frac, (m.frac <= 0 ? 'Fainted' : `${Math.round(m.frac * 100)}% HP`) + (infoReturn === 'battle' ? ' before this battle' : '')) + xpBlock(m)
         + `<div class="kv"><div class="lbl">Evolution</div><p class="evopath">${route}</p><p class="evopath">${next ? `Evolves into ${esc(next.species)} at level ${next.at}.` : 'Fully evolved.'}</p></div>`
         + `<div class="kv"><div class="lbl">Battle-set goal</div><p class="evopath">${(m.final.moves || []).map(esc).join(', ')}${tutor.length ? ` · The Move Tutor can teach ${tutor.map(esc).join(', ')} now.` : ''}</p></div>`;
       const art = artOf(set.species);
@@ -2716,7 +2747,7 @@ function routeCardHTML(r) {
   }).join('');
   return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Mons around level ${lv} · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
     <div class="routemons">${mons}</div>
-    ${sgOpen ? `<div class="nextcard" style="--c:${SHAM_COLOR}"><span class="face">${emblem('star', SHAM_COLOR)}</span><div><b>Team Shamburg</b><small>${SHAMBURG[sg].trainers.length} trainers in a row, with no healing in between · ${SHAMBURG[sg].levels} levels when you win${A.shamburg.step[sg] ? ` · ${A.shamburg.step[sg]} beaten so far` : ''}</small></div></div>` : ''}
+    ${sgOpen ? `<div class="nextcard" style="--c:${SHAM_COLOR}"><span class="face">${emblem('star', SHAM_COLOR)}</span><div><b>Team Shamburg</b><small>${SHAMBURG[sg].trainers.length} trainers in a row, with no healing in between${A.shamburg.step[sg] ? ` · ${A.shamburg.step[sg]} beaten so far` : ''}</small></div></div>` : ''}
     ${gatedHere ? `<p class="note">${sgOpen ? `Team Shamburg blocks the way to ${esc(placeName(r + 1))}. Beat all of them to get through.` : `Beat or catch one wild Mon here to reach ${esc(placeName(r + 1))}.`} You can tap a town you already visited to shop or heal.</p>` : `<p class="note">Tap ${esc(placeName(advDest()))} on the map to go back to town.</p>`}
     <div class="row">${sgOpen ? `<button class="btn primary" id="sGo">${A.shamburg.step[sg] ? 'Keep fighting Team Shamburg' : 'Confront Team Shamburg'}</button>` : ''}<button class="btn ${sgOpen ? '' : 'primary'}" id="rGrass">Walk in the tall grass</button></div>`;
 }
@@ -2955,7 +2986,7 @@ $('devBody').addEventListener('click', e => {
   const sc = $('dev').querySelector('.scroll'), top = sc.scrollTop;
   let msg = '';
   if (act === 'jump') { devJump($('devJump').value, $('devSetLv').checked); msg = 'Jumped. Go back to the map to try it.'; }
-  else if (act === 'setlv') { const m = list[i], lv = Math.max(1, Math.min(100, +$(`lv-${t.dataset.w}-${i}`).value || m.level)); m.level = lv; m.moves = []; ensureMoves(m); msg = `Level set to ${lv}.`; }
+  else if (act === 'setlv') { const m = list[i], lv = Math.max(1, Math.min(100, +$(`lv-${t.dataset.w}-${i}`).value || m.level)); m.level = lv; m.xp = 0; m.moves = []; ensureMoves(m); msg = `Level set to ${lv}.`; }
   else if (act === 'mvreset') { const m = list[i]; m.moves = []; ensureMoves(m); msg = 'Moves reset for its level.'; }
   else if (act === 'remove') { list.splice(i, 1); msg = 'Removed.'; }
   else if (act === 'add') { const lv = Math.max(1, Math.min(100, +$('devAddLv').value || 50)); const m = E.newMember($('devFam').value, lv); if (A.team.length < 6) A.team.push(m); else A.box.push(m); msg = `Added ${mset(m).species}${A.team.includes(m) ? ' to your team' : ' to the Farm'}.`; }

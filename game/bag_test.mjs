@@ -1,4 +1,4 @@
-import {createBattle, parseTeam, aiChoose, applyItem, spendTurnOnItem, recountLeft, TEAM_TEXT} from './engine.js';
+import {createBattle, parseTeam, aiChoose, applyItem, spendTurnOnItem, recountLeft, TEAM_TEXT} from './core.js';
 let skipped = 0, attacked = 0;
 for (let g = 0; g < 30; g++) {
   const b = createBattle({name: 'me', team: parseTeam(TEAM_TEXT.anna).team}, {name: 'cpu', team: parseTeam(TEAM_TEXT.lillian).team});

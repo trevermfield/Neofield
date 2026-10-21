@@ -1,4 +1,4 @@
-import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './engine.js';
+import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './core.js';
 import fs from 'fs';
 const names = Object.keys(TEAM_TEXT);
 const N = 3;

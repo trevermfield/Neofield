@@ -1,4 +1,4 @@
-import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './engine.js';
+import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './core.js';
 // Two clients, same seed, choices arrive in different orders -> identical battles
 let diffs = 0;
 for (let g = 0; g < 30; g++) {

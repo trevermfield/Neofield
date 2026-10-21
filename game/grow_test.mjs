@@ -1,4 +1,4 @@
-import {parseSets, startingMoves, growTeam, playerSets, statsAt, TEAM_TEXT} from './engine.js';
+import {parseSets, startingMoves, growTeam, playerSets, statsAt, TEAM_TEXT} from './core.js';
 const team = parseSets(TEAM_TEXT.trever).map(s => ({final: s, level: 8, tutored: [], moves: startingMoves(s, 8)}));
 console.log('start:', team.map(m => m.moves.join('/')).join(' | '));
 let ev = [];

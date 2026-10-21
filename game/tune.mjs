@@ -1,4 +1,4 @@
-import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './engine.js';
+import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './core.js';
 const names = Object.keys(TEAM_TEXT);
 const [A, B] = [JSON.parse(process.argv[2]), JSON.parse(process.argv[3])];
 const N = +(process.argv[4] || 1);

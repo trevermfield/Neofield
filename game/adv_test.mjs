@@ -1,4 +1,4 @@
-import {chainOf, setAtLevel, leaderSets, randomMon, levelUp, tutorOptions, parseSets, createBattle, aiChoose, TEAM_TEXT} from './engine.js';
+import {chainOf, setAtLevel, leaderSets, randomMon, levelUp, tutorOptions, parseSets, createBattle, aiChoose, TEAM_TEXT} from './core.js';
 for (const [k, text] of Object.entries(TEAM_TEXT)) {
   const sets = parseSets(text);
   console.log(k + ': ' + sets.map(s => chainOf(s.species).map(c => `${c.sp.name}${c.at > 1 ? '@' + c.at : ''}`).join('>')).join(' | '));

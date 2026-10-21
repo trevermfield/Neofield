@@ -1,5 +1,5 @@
 // Simulate the level curve: player trains ~1 time per gym, beats gyms in order. Check matchups stay close.
-import {parseSets, playerSets, leaderSets, levelUp, createBattle, aiChoose, TEAM_TEXT} from './engine.js';
+import {parseSets, playerSets, leaderSets, levelUp, createBattle, aiChoose, TEAM_TEXT} from './core.js';
 const JORDER = ['lillian','trever','oksana','charlotte','tyler','tucker','kaley','makenna','lynne','tanner','theo','jack','tali','parker','kent','rachel','anna'];
 const GYM = JORDER.map((_, i) => Math.round(10 + i * 50 / 16));
 let wins = 0, games = 0;

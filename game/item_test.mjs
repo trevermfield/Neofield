@@ -1,4 +1,4 @@
-import {recountLeft, createBattle, parseTeam, aiChoose, applyItem, itemProblem, spendTurnOnItem, readTeamState, applyTeamState, buildChampionTeam, TEAM_TEXT, FORMAT} from './engine.js';
+import {recountLeft, createBattle, parseTeam, aiChoose, applyItem, itemProblem, spendTurnOnItem, readTeamState, applyTeamState, buildChampionTeam, TEAM_TEXT, FORMAT} from './core.js';
 // 1) carryover with a fainted member + revive mid-battle
 const b = createBattle({name:'me',team:parseTeam(TEAM_TEXT.trever).team},{name:'cpu',team:parseTeam(TEAM_TEXT.tyler).team},[1,2,3,4]);
 const st = {}; for (const p of b.p1.pokemon) st[p.name] = {hp: Math.floor(p.maxhp/3)}; st['Skarmory'] = {hp: 0};

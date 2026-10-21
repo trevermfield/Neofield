@@ -1,4 +1,4 @@
-import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './engine.js';
+import {createBattle, parseTeam, aiChoose, TEAM_TEXT} from './core.js';
 const names = Object.keys(TEAM_TEXT).filter(n => n !== 'kent');
 let wins = 0, games = 0, errors = 0, heroes = 0;
 for (const opp of names) for (let g = 0; g < 4; g++) {

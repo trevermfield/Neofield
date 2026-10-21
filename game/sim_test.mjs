@@ -1,4 +1,4 @@
-import {createBattle, parseTeam, aiChoose, estimate, TEAM_TEXT} from './engine.js';
+import {createBattle, parseTeam, aiChoose, estimate, TEAM_TEXT} from './core.js';
 const names = Object.keys(TEAM_TEXT);
 const wins = {}; let errors = 0, turns = 0, games = 0;
 // effectiveness spot check

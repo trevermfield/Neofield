@@ -2,6 +2,7 @@
 // All evolution levels and level-up moves come from Showdown's data, which mirrors the games.
 import {Dex, Teams} from '@pkmn/sim';
 import {ROUTES, familyOf, FAMILIES} from './regional.js';
+import {XP, xpForKO} from './progress.js';
 
 const dex = Dex.forFormat('gen9nationaldexubers');
 const toID = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -192,22 +193,49 @@ function movesGained(chain, oldLv, newLv) {
 
 // Level everyone up by n and keep their own move lists.
 // Returns events: grew / evolve / learned (had room) / wants (already knows 4, the player decides).
+// Raise one team member by n levels (evolving and learning moves on the way). Returns events.
+export function growMember(m, slot, n) {
+  const events = [];
+  if (m.level >= 100 || n <= 0) return events;
+  const chain = chainOf(m.final.species);
+  const oldLv = m.level;
+  const from = chain[stageAt(chain, oldLv)].sp.name;
+  m.level = Math.min(100, oldLv + n);
+  const to = chain[stageAt(chain, m.level)].sp.name;
+  events.push({type: 'grew', slot, species: from, level: m.level});
+  if (from !== to) events.push({type: 'evolve', slot, from, to, oldLevel: oldLv});
+  for (const mv of movesGained(chain, oldLv, m.level)) {
+    if (m.moves.includes(mv)) continue;
+    if (m.moves.length < 4) { m.moves.push(mv); events.push({type: 'learned', slot, species: to, move: mv}); }
+    else events.push({type: 'wants', slot, species: to, move: mv});
+  }
+  return events;
+}
 export function growTeam(team, n) {
+  const events = [];
+  team.forEach((m, slot) => events.push(...growMember(m, slot, n)));
+  return events;
+}
+
+// XP for a won fight. parts = Set of team slots that fought; kind = 'wild' | 'trainer' | 'gym' | 'legend';
+// foeLevels = the level of every foe Mon that was beaten. Returns events (an 'xp' event per member, then any level-up events).
+export function awardXP(team, parts, kind, foeLevels, cfg = XP) {
   const events = [];
   team.forEach((m, slot) => {
     if (m.level >= 100) return;
     const chain = chainOf(m.final.species);
-    const oldLv = m.level;
-    const from = chain[stageAt(chain, oldLv)].sp.name;
-    m.level = Math.min(100, oldLv + n);
-    const to = chain[stageAt(chain, m.level)].sp.name;
-    events.push({type: 'grew', slot, species: from, level: m.level});
-    if (from !== to) events.push({type: 'evolve', slot, from, to, oldLevel: oldLv});
-    for (const mv of movesGained(chain, oldLv, m.level)) {
-      if (m.moves.includes(mv)) continue;
-      if (m.moves.length < 4) { m.moves.push(mv); events.push({type: 'learned', slot, species: to, move: mv}); }
-      else events.push({type: 'wants', slot, species: to, move: mv});
-    }
+    const species = chain[stageAt(chain, m.level)].sp.name;
+    const share = parts.has(slot) ? 1 : cfg.benchShare;
+    let gain = 0;
+    for (const lv of foeLevels) gain += xpForKO(kind, lv, m.level, cfg);
+    gain = Math.round(gain * share);
+    const before = m.level;
+    m.xp = (m.xp || 0) + gain;
+    let n = 0;
+    while (m.xp >= cfg.perLevel && before + n < 100) { m.xp -= cfg.perLevel; n++; }
+    if (before + n >= 100) m.xp = 0;
+    events.push({type: 'xp', slot, species, gained: gain, xp: m.xp, levels: n});
+    if (n > 0) events.push(...growMember(m, slot, n));
   });
   return events;
 }

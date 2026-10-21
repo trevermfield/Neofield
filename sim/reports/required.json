@@ -1,0 +1,5599 @@
+{
+ "args": {
+  "runs": 12,
+  "policy": "required",
+  "seed": 1,
+  "starter": "cycle",
+  "skill": "hard",
+  "difficulty": "normal",
+  "xp": {},
+  "time": {},
+  "pol": {},
+  "sweep": null,
+  "jobs": 2,
+  "json": "sim/reports/required.json",
+  "detail": false
+ },
+ "results": [
+  {
+   "setting": "base",
+   "summary": {
+    "runs": 12,
+    "finished": 0,
+    "stuck": {
+     "Elite Four": 4,
+     "Gym 10": 7,
+     "Team Shamburg 3": 1
+    },
+    "gyms": [
+     {
+      "gym": 1,
+      "key": "lillian",
+      "lv": 10,
+      "reached": 12,
+      "top": 8.916666666666666,
+      "top3": 7,
+      "avg": 7,
+      "low": 5.166666666666667,
+      "over": -3,
+      "first": 0,
+      "tries": 3.5833333333333335,
+      "size": 3,
+      "min": 21.275
+     },
+     {
+      "gym": 2,
+      "key": "trever",
+      "lv": 13,
+      "reached": 12,
+      "top": 16.666666666666668,
+      "top3": 13.924999999999999,
+      "avg": 13.924999999999999,
+      "low": 11.916666666666666,
+      "over": 0.9249999999999989,
+      "first": 0.3333333333333333,
+      "tries": 2.5,
+      "size": 3,
+      "min": 28.3
+     },
+     {
+      "gym": 3,
+      "key": "oksana",
+      "lv": 16,
+      "reached": 12,
+      "top": 19.75,
+      "top3": 16.8,
+      "avg": 16.8,
+      "low": 14.666666666666666,
+      "over": 0.8000000000000007,
+      "first": 0.3333333333333333,
+      "tries": 2.6666666666666665,
+      "size": 3,
+      "min": 35.93333333333334
+     },
+     {
+      "gym": 4,
+      "key": "charlotte",
+      "lv": 19,
+      "reached": 12,
+      "top": 24.333333333333332,
+      "top3": 21.00833333333333,
+      "avg": 21.00833333333333,
+      "low": 18.75,
+      "over": 2.0083333333333293,
+      "first": 0.9166666666666666,
+      "tries": 1.0833333333333333,
+      "size": 3,
+      "min": 39.71666666666667
+     },
+     {
+      "gym": 5,
+      "key": "tyler",
+      "lv": 23,
+      "reached": 12,
+      "top": 26,
+      "top3": 22.71666666666667,
+      "avg": 22.71666666666667,
+      "low": 20.416666666666668,
+      "over": -0.28333333333333144,
+      "first": 0,
+      "tries": 3.8333333333333335,
+      "size": 3,
+      "min": 51.08333333333333
+     },
+     {
+      "gym": 6,
+      "key": "tucker",
+      "lv": 26,
+      "reached": 12,
+      "top": 30.5,
+      "top3": 27.741666666666664,
+      "avg": 27.741666666666664,
+      "low": 25.583333333333332,
+      "over": 1.7416666666666636,
+      "first": 0.75,
+      "tries": 1.9166666666666667,
+      "size": 3,
+      "min": 58.38333333333333
+     },
+     {
+      "gym": 7,
+      "key": "kaley",
+      "lv": 29,
+      "reached": 12,
+      "top": 33.666666666666664,
+      "top3": 30.608333333333334,
+      "avg": 30.608333333333334,
+      "low": 28.416666666666668,
+      "over": 1.6083333333333343,
+      "first": 0.8333333333333334,
+      "tries": 1.4166666666666667,
+      "size": 3,
+      "min": 61.03333333333333
+     },
+     {
+      "gym": 8,
+      "key": "makenna",
+      "lv": 32,
+      "reached": 12,
+      "top": 36.333333333333336,
+      "top3": 32.93333333333333,
+      "avg": 32.93333333333333,
+      "low": 30.333333333333332,
+      "over": 0.93333333333333,
+      "first": 0.3333333333333333,
+      "tries": 3.3333333333333335,
+      "size": 3,
+      "min": 70.35833333333333
+     },
+     {
+      "gym": 9,
+      "key": "lynne",
+      "lv": 35,
+      "reached": 12,
+      "top": 42,
+      "top3": 39.666666666666664,
+      "avg": 39.666666666666664,
+      "low": 37.833333333333336,
+      "over": 4.666666666666664,
+      "first": 0.75,
+      "tries": 1.3333333333333333,
+      "size": 3,
+      "min": 75.93333333333334
+     },
+     {
+      "gym": 10,
+      "key": "tanner",
+      "lv": 38,
+      "reached": 12,
+      "top": 43.5,
+      "top3": 41.699999999999996,
+      "avg": 41.699999999999996,
+      "low": 40.333333333333336,
+      "over": 3.6999999999999957,
+      "first": 0,
+      "tries": 7.666666666666667,
+      "size": 3,
+      "min": 120.88333333333334
+     },
+     {
+      "gym": 11,
+      "key": "theo",
+      "lv": 41,
+      "reached": 5,
+      "top": 49.6,
+      "top3": 48,
+      "avg": 48,
+      "low": 46.6,
+      "over": 7,
+      "first": 0.4,
+      "tries": 2.8,
+      "size": 3,
+      "min": 123.98333333333333
+     },
+     {
+      "gym": 12,
+      "key": "jack",
+      "lv": 44,
+      "reached": 5,
+      "top": 51.4,
+      "top3": 49.480000000000004,
+      "avg": 49.480000000000004,
+      "low": 48.2,
+      "over": 5.480000000000004,
+      "first": 1,
+      "tries": 1,
+      "size": 3,
+      "min": 125.63333333333334
+     },
+     {
+      "gym": 13,
+      "key": "tali",
+      "lv": 48,
+      "reached": 5,
+      "top": 52.6,
+      "top3": 50.8,
+      "avg": 50.8,
+      "low": 49.8,
+      "over": 2.799999999999997,
+      "first": 0.2,
+      "tries": 4.6,
+      "size": 3,
+      "min": 147.05
+     },
+     {
+      "gym": 14,
+      "key": "parker",
+      "lv": 51,
+      "reached": 4,
+      "top": 59.5,
+      "top3": 57.75,
+      "avg": 57.75,
+      "low": 56.5,
+      "over": 6.75,
+      "first": 1,
+      "tries": 1,
+      "size": 3,
+      "min": 146.49166666666667
+     },
+     {
+      "gym": 15,
+      "key": "kent",
+      "lv": 54,
+      "reached": 4,
+      "top": 60.5,
+      "top3": 59,
+      "avg": 59,
+      "low": 57.75,
+      "over": 5,
+      "first": 1,
+      "tries": 1,
+      "size": 3,
+      "min": 148.24166666666667
+     },
+     {
+      "gym": 16,
+      "key": "rachel",
+      "lv": 57,
+      "reached": 4,
+      "top": 62.5,
+      "top3": 60.5,
+      "avg": 60.5,
+      "low": 59.25,
+      "over": 3.5,
+      "first": 0,
+      "tries": 6.75,
+      "size": 3,
+      "min": 174.025
+     },
+     {
+      "gym": 17,
+      "key": "anna",
+      "lv": 60,
+      "reached": 4,
+      "top": 68.5,
+      "top3": 66.5,
+      "avg": 66.5,
+      "low": 65.25,
+      "over": 6.5,
+      "first": 0.5,
+      "tries": 1.5,
+      "size": 3,
+      "min": 177.35833333333335
+     }
+    ],
+    "allBadges": {
+     "n": 0,
+     "min": null,
+     "p10": null,
+     "p50": null,
+     "p90": null,
+     "top": null,
+     "avg": null
+    },
+    "beforeE4": {
+     "top": null,
+     "avg": null
+    },
+    "champion": {
+     "n": 0,
+     "min": null,
+     "p10": null,
+     "p50": null,
+     "p90": null,
+     "top": null,
+     "avg": null,
+     "e4Tries": null,
+     "champTries": null
+    },
+    "lvBy": {
+     "route": 3.75,
+     "prep": 84.91666666666667,
+     "gym": 57,
+     "shamburg": 14.083333333333334,
+     "e4": 5.5
+    },
+    "perRun": {
+     "battles": 368.9166666666667,
+     "blackouts": 28.25,
+     "levelUps": 141,
+     "caught": 2,
+     "quests": 0,
+     "items": 23.916666666666668
+    }
+   },
+   "runs": [
+    {
+     "seed": 1,
+     "starter": "starter2",
+     "policy": "required",
+     "stuck": "Elite Four",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 5,
+        "levels": [
+         9,
+         7,
+         5
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 0.5666666666666667,
+       "min": 17.866666666666667,
+       "after": {
+        "top": 16,
+        "top3": 12.3,
+        "avg": 12.3,
+        "low": 10,
+        "levels": [
+         16,
+         11,
+         10
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 16,
+        "top3": 12.3,
+        "avg": 12.3,
+        "low": 10,
+        "levels": [
+         16,
+         11,
+         10
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 18.316666666666666,
+       "min": 25.833333333333332,
+       "after": {
+        "top": 19,
+        "top3": 15.7,
+        "avg": 15.7,
+        "low": 14,
+        "levels": [
+         19,
+         14,
+         14
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 19,
+        "top3": 15.7,
+        "avg": 15.7,
+        "low": 14,
+        "levels": [
+         19,
+         14,
+         14
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 26.216666666666665,
+       "min": 37.86666666666667,
+       "after": {
+        "top": 24,
+        "top3": 20.7,
+        "avg": 20.7,
+        "low": 19,
+        "levels": [
+         24,
+         19,
+         19
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 25,
+        "top3": 21.7,
+        "avg": 21.7,
+        "low": 20,
+        "levels": [
+         25,
+         20,
+         20
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 39.86666666666667,
+       "min": 41.36666666666667,
+       "after": {
+        "top": 26,
+        "top3": 23.3,
+        "avg": 23.3,
+        "low": 22,
+        "levels": [
+         26,
+         22,
+         22
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 23.3,
+        "avg": 23.3,
+        "low": 22,
+        "levels": [
+         26,
+         22,
+         22
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 41.75,
+       "min": 48.46666666666667,
+       "after": {
+        "top": 30,
+        "top3": 26.7,
+        "avg": 26.7,
+        "low": 25,
+        "levels": [
+         30,
+         25,
+         25
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 30,
+        "top3": 27,
+        "avg": 27,
+        "low": 25,
+        "levels": [
+         30,
+         26,
+         25
+        ]
+       },
+       "size": 3,
+       "attempts": 6,
+       "minAtStart": 48.95,
+       "min": 73.55,
+       "after": {
+        "top": 37,
+        "top3": 33.7,
+        "avg": 33.7,
+        "low": 32,
+        "levels": [
+         37,
+         32,
+         32
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 37,
+        "top3": 33.7,
+        "avg": 33.7,
+        "low": 32,
+        "levels": [
+         37,
+         32,
+         32
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 73.93333333333334,
+       "min": 75.26666666666667,
+       "after": {
+        "top": 38,
+        "top3": 35.3,
+        "avg": 35.3,
+        "low": 34,
+        "levels": [
+         38,
+         34,
+         34
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 38,
+        "top3": 35.3,
+        "avg": 35.3,
+        "low": 34,
+        "levels": [
+         38,
+         34,
+         34
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 75.65,
+       "min": 76.85,
+       "after": {
+        "top": 39,
+        "top3": 36.3,
+        "avg": 36.3,
+        "low": 35,
+        "levels": [
+         39,
+         35,
+         35
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 41,
+        "top3": 39,
+        "avg": 39,
+        "low": 38,
+        "levels": [
+         41,
+         38,
+         38
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 80.43333333333334,
+       "min": 81.96666666666667,
+       "after": {
+        "top": 43,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 41,
+        "levels": [
+         43,
+         41,
+         41
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 43,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 41,
+        "levels": [
+         43,
+         41,
+         41
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 82.35,
+       "min": 120.88333333333334,
+       "after": {
+        "top": 51,
+        "top3": 49.3,
+        "avg": 49.3,
+        "low": 48,
+        "levels": [
+         51,
+         49,
+         48
+        ]
+       }
+      },
+      {
+       "gym": 11,
+       "key": "theo",
+       "lv": 41,
+       "team": {
+        "top": 51,
+        "top3": 49.3,
+        "avg": 49.3,
+        "low": 48,
+        "levels": [
+         51,
+         49,
+         48
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 121.26666666666667,
+       "min": 123.98333333333333,
+       "after": {
+        "top": 52,
+        "top3": 50,
+        "avg": 50,
+        "low": 49,
+        "levels": [
+         52,
+         49,
+         49
+        ]
+       }
+      },
+      {
+       "gym": 12,
+       "key": "jack",
+       "lv": 44,
+       "team": {
+        "top": 52,
+        "top3": 50,
+        "avg": 50,
+        "low": 49,
+        "levels": [
+         52,
+         49,
+         49
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 124.36666666666666,
+       "min": 125.63333333333334,
+       "after": {
+        "top": 53,
+        "top3": 51,
+        "avg": 51,
+        "low": 50,
+        "levels": [
+         53,
+         50,
+         50
+        ]
+       }
+      },
+      {
+       "gym": 13,
+       "key": "tali",
+       "lv": 48,
+       "team": {
+        "top": 53,
+        "top3": 51,
+        "avg": 51,
+        "low": 50,
+        "levels": [
+         53,
+         50,
+         50
+        ]
+       },
+       "size": 3,
+       "attempts": 6,
+       "minAtStart": 126.01666666666667,
+       "min": 147.05,
+       "after": {
+        "top": 58,
+        "top3": 56.3,
+        "avg": 56.3,
+        "low": 55,
+        "levels": [
+         58,
+         56,
+         55
+        ]
+       }
+      },
+      {
+       "gym": 14,
+       "key": "parker",
+       "lv": 51,
+       "team": {
+        "top": 60,
+        "top3": 58.3,
+        "avg": 58.3,
+        "low": 57,
+        "levels": [
+         60,
+         58,
+         57
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 151.25,
+       "min": 152.91666666666666,
+       "after": {
+        "top": 61,
+        "top3": 59.3,
+        "avg": 59.3,
+        "low": 58,
+        "levels": [
+         61,
+         59,
+         58
+        ]
+       }
+      },
+      {
+       "gym": 15,
+       "key": "kent",
+       "lv": 54,
+       "team": {
+        "top": 61,
+        "top3": 59.3,
+        "avg": 59.3,
+        "low": 58,
+        "levels": [
+         61,
+         59,
+         58
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 153.63333333333333,
+       "min": 154.9,
+       "after": {
+        "top": 63,
+        "top3": 60.7,
+        "avg": 60.7,
+        "low": 59,
+        "levels": [
+         63,
+         60,
+         59
+        ]
+       }
+      },
+      {
+       "gym": 16,
+       "key": "rachel",
+       "lv": 57,
+       "team": {
+        "top": 63,
+        "top3": 61,
+        "avg": 61,
+        "low": 60,
+        "levels": [
+         63,
+         60,
+         60
+        ]
+       },
+       "size": 3,
+       "attempts": 7,
+       "minAtStart": 155.31666666666666,
+       "min": 185.68333333333334,
+       "after": {
+        "top": 68,
+        "top3": 66.3,
+        "avg": 66.3,
+        "low": 65,
+        "levels": [
+         68,
+         66,
+         65
+        ]
+       }
+      },
+      {
+       "gym": 17,
+       "key": "anna",
+       "lv": 60,
+       "team": {
+        "top": 69,
+        "top3": 66.7,
+        "avg": 66.7,
+        "low": 65,
+        "levels": [
+         69,
+         66,
+         65
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 186.1,
+       "min": 189.08333333333334,
+       "after": {
+        "top": 70,
+        "top3": 67.3,
+        "avg": 67.3,
+        "low": 66,
+        "levels": [
+         70,
+         66,
+         66
+        ]
+       }
+      }
+     ],
+     "marks": {
+      "allBadges": {
+       "min": 189.08333333333334,
+       "level": {
+        "top": 70,
+        "top3": 67.3,
+        "avg": 67.3,
+        "low": 66,
+        "levels": [
+         70,
+         66,
+         66
+        ]
+       }
+      },
+      "beforeE4": {
+       "min": 189.43333333333334,
+       "level": {
+        "top": 70,
+        "top3": 67.7,
+        "avg": 67.7,
+        "low": 66,
+        "levels": [
+         70,
+         67,
+         66
+        ]
+       }
+      },
+      "e4": {
+       "min": 275.4166666666667,
+       "level": {
+        "top": 79,
+        "top3": 77.7,
+        "avg": 77.7,
+        "low": 77,
+        "levels": [
+         79,
+         77,
+         77
+        ]
+       },
+       "attempts": 8
+      }
+     },
+     "minutes": 275.4166666666667,
+     "battles": 615,
+     "turns": 1506,
+     "blackouts": 43,
+     "levelUps": 198,
+     "evolutions": 4,
+     "itemsUsed": 48,
+     "lvBy": {
+      "route": 5,
+      "prep": 118,
+      "gym": 63,
+      "shamburg": 16,
+      "e4": 18
+     },
+     "prepFights": 516,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Shardizar",
+       "level": 79
+      },
+      {
+       "species": "Leggyhen",
+       "level": 77
+      },
+      {
+       "species": "Sycamage",
+       "level": 77
+      }
+     ]
+    },
+    {
+     "seed": 2,
+     "starter": "starter3",
+     "policy": "required",
+     "stuck": "Gym 10",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 8,
+        "top3": 7,
+        "avg": 7,
+        "low": 6,
+        "levels": [
+         8,
+         7,
+         6
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 0.9333333333333333,
+       "min": 16.316666666666666,
+       "after": {
+        "top": 16,
+        "top3": 13.7,
+        "avg": 13.7,
+        "low": 12,
+        "levels": [
+         16,
+         13,
+         12
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 16,
+        "top3": 14,
+        "avg": 14,
+        "low": 13,
+        "levels": [
+         16,
+         13,
+         13
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 16.733333333333334,
+       "min": 18.883333333333333,
+       "after": {
+        "top": 18,
+        "top3": 15.3,
+        "avg": 15.3,
+        "low": 14,
+        "levels": [
+         18,
+         14,
+         14
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 19,
+        "top3": 16,
+        "avg": 16,
+        "low": 14,
+        "levels": [
+         19,
+         15,
+         14
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 19.333333333333332,
+       "min": 38.55,
+       "after": {
+        "top": 25,
+        "top3": 22.3,
+        "avg": 22.3,
+        "low": 21,
+        "levels": [
+         25,
+         21,
+         21
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 26,
+        "top3": 23.3,
+        "avg": 23.3,
+        "low": 22,
+        "levels": [
+         26,
+         22,
+         22
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 40.65,
+       "min": 42.18333333333333,
+       "after": {
+        "top": 27,
+        "top3": 24.3,
+        "avg": 24.3,
+        "low": 23,
+        "levels": [
+         27,
+         23,
+         23
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 27,
+        "top3": 24.3,
+        "avg": 24.3,
+        "low": 23,
+        "levels": [
+         27,
+         23,
+         23
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 42.63333333333333,
+       "min": 51.833333333333336,
+       "after": {
+        "top": 30,
+        "top3": 28.3,
+        "avg": 28.3,
+        "low": 27,
+        "levels": [
+         30,
+         28,
+         27
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 30,
+        "top3": 28.3,
+        "avg": 28.3,
+        "low": 27,
+        "levels": [
+         30,
+         28,
+         27
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 52.21666666666667,
+       "min": 53.75,
+       "after": {
+        "top": 33,
+        "top3": 30.3,
+        "avg": 30.3,
+        "low": 29,
+        "levels": [
+         33,
+         29,
+         29
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 30.3,
+        "avg": 30.3,
+        "low": 29,
+        "levels": [
+         33,
+         29,
+         29
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 54.2,
+       "min": 55.766666666666666,
+       "after": {
+        "top": 36,
+        "top3": 32.3,
+        "avg": 32.3,
+        "low": 30,
+        "levels": [
+         36,
+         31,
+         30
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 32.3,
+        "avg": 32.3,
+        "low": 30,
+        "levels": [
+         36,
+         31,
+         30
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 56.15,
+       "min": 66.78333333333333,
+       "after": {
+        "top": 40,
+        "top3": 37,
+        "avg": 37,
+        "low": 35,
+        "levels": [
+         40,
+         36,
+         35
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 42,
+        "top3": 39.7,
+        "avg": 39.7,
+        "low": 38,
+        "levels": [
+         42,
+         39,
+         38
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 70.63333333333334,
+       "min": 71.83333333333333,
+       "after": {
+        "top": 43,
+        "top3": 41,
+        "avg": 41,
+        "low": 40,
+        "levels": [
+         43,
+         40,
+         40
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 43,
+        "top3": 41,
+        "avg": 41,
+        "low": 40,
+        "levels": [
+         43,
+         40,
+         40
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 72.28333333333333,
+       "min": 123.2,
+       "failed": true
+      }
+     ],
+     "marks": {},
+     "minutes": 123.2,
+     "battles": 272,
+     "turns": 640,
+     "blackouts": 20,
+     "levelUps": 111,
+     "evolutions": 4,
+     "itemsUsed": 9,
+     "lvBy": {
+      "route": 3,
+      "prep": 72,
+      "gym": 47,
+      "shamburg": 11
+     },
+     "prepFights": 228,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Bellowtoise",
+       "level": 52
+      },
+      {
+       "species": "Sycamage",
+       "level": 49
+      },
+      {
+       "species": "Leggyhen",
+       "level": 49
+      }
+     ]
+    },
+    {
+     "seed": 3,
+     "starter": "starter1",
+     "policy": "required",
+     "stuck": "Gym 10",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 6,
+        "levels": [
+         9,
+         6,
+         6
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 0.5,
+       "min": 20.933333333333334,
+       "after": {
+        "top": 17,
+        "top3": 14.3,
+        "avg": 14.3,
+        "low": 13,
+        "levels": [
+         17,
+         13,
+         13
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 17,
+        "top3": 14.3,
+        "avg": 14.3,
+        "low": 13,
+        "levels": [
+         17,
+         13,
+         13
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 21.316666666666666,
+       "min": 32.016666666666666,
+       "after": {
+        "top": 20,
+        "top3": 17.3,
+        "avg": 17.3,
+        "low": 16,
+        "levels": [
+         20,
+         16,
+         16
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 17.3,
+        "avg": 17.3,
+        "low": 16,
+        "levels": [
+         20,
+         16,
+         16
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 32.4,
+       "min": 34,
+       "after": {
+        "top": 23,
+        "top3": 19.3,
+        "avg": 19.3,
+        "low": 17,
+        "levels": [
+         23,
+         18,
+         17
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 24,
+        "top3": 20.3,
+        "avg": 20.3,
+        "low": 18,
+        "levels": [
+         24,
+         19,
+         18
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 36.13333333333333,
+       "min": 37.6,
+       "after": {
+        "top": 26,
+        "top3": 22,
+        "avg": 22,
+        "low": 20,
+        "levels": [
+         26,
+         20,
+         20
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 22,
+        "avg": 22,
+        "low": 20,
+        "levels": [
+         26,
+         20,
+         20
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 38.05,
+       "min": 46.766666666666666,
+       "after": {
+        "top": 30,
+        "top3": 26.3,
+        "avg": 26.3,
+        "low": 24,
+        "levels": [
+         30,
+         25,
+         24
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 30,
+        "top3": 27,
+        "avg": 27,
+        "low": 25,
+        "levels": [
+         30,
+         26,
+         25
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 47.28333333333333,
+       "min": 48.75,
+       "after": {
+        "top": 33,
+        "top3": 28.7,
+        "avg": 28.7,
+        "low": 26,
+        "levels": [
+         33,
+         27,
+         26
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 28.7,
+        "avg": 28.7,
+        "low": 26,
+        "levels": [
+         33,
+         27,
+         26
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 49.2,
+       "min": 51.333333333333336,
+       "after": {
+        "top": 36,
+        "top3": 31.3,
+        "avg": 31.3,
+        "low": 28,
+        "levels": [
+         36,
+         30,
+         28
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 31.3,
+        "avg": 31.3,
+        "low": 28,
+        "levels": [
+         36,
+         30,
+         28
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 51.78333333333333,
+       "min": 59.36666666666667,
+       "after": {
+        "top": 39,
+        "top3": 35,
+        "avg": 35,
+        "low": 31,
+        "levels": [
+         39,
+         35,
+         31
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 41,
+        "top3": 38.3,
+        "avg": 38.3,
+        "low": 36,
+        "levels": [
+         41,
+         38,
+         36
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 63.85,
+       "min": 68.28333333333333,
+       "after": {
+        "top": 43,
+        "top3": 40.7,
+        "avg": 40.7,
+        "low": 38,
+        "levels": [
+         43,
+         41,
+         38
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 43,
+        "top3": 41,
+        "avg": 41,
+        "low": 39,
+        "levels": [
+         43,
+         41,
+         39
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 68.7,
+       "min": 117.75,
+       "failed": true
+      }
+     ],
+     "marks": {},
+     "minutes": 117.75,
+     "battles": 256,
+     "turns": 607,
+     "blackouts": 20,
+     "levelUps": 107,
+     "evolutions": 4,
+     "itemsUsed": 11,
+     "lvBy": {
+      "route": 3,
+      "prep": 67,
+      "gym": 52,
+      "shamburg": 13
+     },
+     "prepFights": 212,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Venuzoid",
+       "level": 51
+      },
+      {
+       "species": "Leggyhen",
+       "level": 51
+      },
+      {
+       "species": "Poseigunk",
+       "level": 48
+      }
+     ]
+    },
+    {
+     "seed": 4,
+     "starter": "starter2",
+     "policy": "required",
+     "stuck": "Elite Four",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 5,
+        "levels": [
+         9,
+         7,
+         5
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 0.5666666666666667,
+       "min": 50.03333333333333,
+       "after": {
+        "top": 16,
+        "top3": 13,
+        "avg": 13,
+        "low": 11,
+        "levels": [
+         16,
+         12,
+         11
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 16,
+        "top3": 13,
+        "avg": 13,
+        "low": 11,
+        "levels": [
+         16,
+         12,
+         11
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 50.61666666666667,
+       "min": 62.81666666666667,
+       "after": {
+        "top": 20,
+        "top3": 17.7,
+        "avg": 17.7,
+        "low": 16,
+        "levels": [
+         20,
+         17,
+         16
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 18,
+        "avg": 18,
+        "low": 16,
+        "levels": [
+         20,
+         18,
+         16
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 63.233333333333334,
+       "min": 72.55,
+       "after": {
+        "top": 23,
+        "top3": 20.7,
+        "avg": 20.7,
+        "low": 19,
+        "levels": [
+         23,
+         20,
+         19
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 24,
+        "top3": 21.7,
+        "avg": 21.7,
+        "low": 20,
+        "levels": [
+         24,
+         21,
+         20
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 74.81666666666666,
+       "min": 76.15,
+       "after": {
+        "top": 26,
+        "top3": 23.3,
+        "avg": 23.3,
+        "low": 22,
+        "levels": [
+         26,
+         22,
+         22
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 23.7,
+        "avg": 23.7,
+        "low": 22,
+        "levels": [
+         26,
+         23,
+         22
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 76.56666666666666,
+       "min": 95.31666666666666,
+       "after": {
+        "top": 32,
+        "top3": 29.7,
+        "avg": 29.7,
+        "low": 28,
+        "levels": [
+         32,
+         29,
+         28
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 32,
+        "top3": 30,
+        "avg": 30,
+        "low": 28,
+        "levels": [
+         32,
+         30,
+         28
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 95.73333333333333,
+       "min": 97.33333333333333,
+       "after": {
+        "top": 33,
+        "top3": 31.7,
+        "avg": 31.7,
+        "low": 30,
+        "levels": [
+         33,
+         32,
+         30
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 32,
+        "avg": 32,
+        "low": 31,
+        "levels": [
+         33,
+         32,
+         31
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 97.88333333333334,
+       "min": 109.78333333333333,
+       "after": {
+        "top": 37,
+        "top3": 35.3,
+        "avg": 35.3,
+        "low": 34,
+        "levels": [
+         37,
+         35,
+         34
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 37,
+        "top3": 35.3,
+        "avg": 35.3,
+        "low": 34,
+        "levels": [
+         37,
+         35,
+         34
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 110.16666666666667,
+       "min": 111.5,
+       "after": {
+        "top": 39,
+        "top3": 36.7,
+        "avg": 36.7,
+        "low": 35,
+        "levels": [
+         39,
+         36,
+         35
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 41,
+        "top3": 39.3,
+        "avg": 39.3,
+        "low": 38,
+        "levels": [
+         41,
+         39,
+         38
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 115.18333333333334,
+       "min": 118.26666666666667,
+       "after": {
+        "top": 42,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 41,
+        "levels": [
+         42,
+         42,
+         41
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 43,
+        "top3": 42,
+        "avg": 42,
+        "low": 41,
+        "levels": [
+         43,
+         42,
+         41
+        ]
+       },
+       "size": 3,
+       "attempts": 6,
+       "minAtStart": 118.75,
+       "min": 135.73333333333332,
+       "after": {
+        "top": 47,
+        "top3": 46,
+        "avg": 46,
+        "low": 45,
+        "levels": [
+         47,
+         46,
+         45
+        ]
+       }
+      },
+      {
+       "gym": 11,
+       "key": "theo",
+       "lv": 41,
+       "team": {
+        "top": 47,
+        "top3": 46,
+        "avg": 46,
+        "low": 45,
+        "levels": [
+         47,
+         46,
+         45
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 136.18333333333334,
+       "min": 137.38333333333333,
+       "after": {
+        "top": 49,
+        "top3": 47.3,
+        "avg": 47.3,
+        "low": 46,
+        "levels": [
+         49,
+         47,
+         46
+        ]
+       }
+      },
+      {
+       "gym": 12,
+       "key": "jack",
+       "lv": 44,
+       "team": {
+        "top": 49,
+        "top3": 47.7,
+        "avg": 47.7,
+        "low": 47,
+        "levels": [
+         49,
+         47,
+         47
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 137.86666666666667,
+       "min": 139.33333333333334,
+       "after": {
+        "top": 51,
+        "top3": 49,
+        "avg": 49,
+        "low": 48,
+        "levels": [
+         51,
+         48,
+         48
+        ]
+       }
+      },
+      {
+       "gym": 13,
+       "key": "tali",
+       "lv": 48,
+       "team": {
+        "top": 51,
+        "top3": 49,
+        "avg": 49,
+        "low": 48,
+        "levels": [
+         51,
+         48,
+         48
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 139.78333333333333,
+       "min": 157.06666666666666,
+       "after": {
+        "top": 56,
+        "top3": 54.7,
+        "avg": 54.7,
+        "low": 54,
+        "levels": [
+         56,
+         54,
+         54
+        ]
+       }
+      },
+      {
+       "gym": 14,
+       "key": "parker",
+       "lv": 51,
+       "team": {
+        "top": 59,
+        "top3": 57.7,
+        "avg": 57.7,
+        "low": 56,
+        "levels": [
+         59,
+         58,
+         56
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 161.76666666666668,
+       "min": 163.56666666666666,
+       "after": {
+        "top": 60,
+        "top3": 58.7,
+        "avg": 58.7,
+        "low": 57,
+        "levels": [
+         60,
+         59,
+         57
+        ]
+       }
+      },
+      {
+       "gym": 15,
+       "key": "kent",
+       "lv": 54,
+       "team": {
+        "top": 60,
+        "top3": 58.7,
+        "avg": 58.7,
+        "low": 57,
+        "levels": [
+         60,
+         59,
+         57
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 163.95,
+       "min": 165.21666666666667,
+       "after": {
+        "top": 62,
+        "top3": 60.3,
+        "avg": 60.3,
+        "low": 59,
+        "levels": [
+         62,
+         60,
+         59
+        ]
+       }
+      },
+      {
+       "gym": 16,
+       "key": "rachel",
+       "lv": 57,
+       "team": {
+        "top": 62,
+        "top3": 60.3,
+        "avg": 60.3,
+        "low": 59,
+        "levels": [
+         62,
+         60,
+         59
+        ]
+       },
+       "size": 3,
+       "attempts": 7,
+       "minAtStart": 165.6,
+       "min": 196.61666666666667,
+       "after": {
+        "top": 69,
+        "top3": 67,
+        "avg": 67,
+        "low": 66,
+        "levels": [
+         69,
+         66,
+         66
+        ]
+       }
+      },
+      {
+       "gym": 17,
+       "key": "anna",
+       "lv": 60,
+       "team": {
+        "top": 69,
+        "top3": 67,
+        "avg": 67,
+        "low": 66,
+        "levels": [
+         69,
+         66,
+         66
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 197,
+       "min": 198.23333333333332,
+       "after": {
+        "top": 70,
+        "top3": 67.7,
+        "avg": 67.7,
+        "low": 66,
+        "levels": [
+         70,
+         67,
+         66
+        ]
+       }
+      }
+     ],
+     "marks": {
+      "allBadges": {
+       "min": 198.23333333333332,
+       "level": {
+        "top": 70,
+        "top3": 67.7,
+        "avg": 67.7,
+        "low": 66,
+        "levels": [
+         70,
+         67,
+         66
+        ]
+       }
+      },
+      "beforeE4": {
+       "min": 198.58333333333334,
+       "level": {
+        "top": 70,
+        "top3": 68,
+        "avg": 68,
+        "low": 67,
+        "levels": [
+         70,
+         67,
+         67
+        ]
+       }
+      },
+      "e4": {
+       "min": 265.3833333333333,
+       "level": {
+        "top": 79,
+        "top3": 78,
+        "avg": 78,
+        "low": 77,
+        "levels": [
+         79,
+         78,
+         77
+        ]
+       },
+       "attempts": 8
+      }
+     },
+     "minutes": 265.3833333333333,
+     "battles": 446,
+     "turns": 1839,
+     "blackouts": 41,
+     "levelUps": 188,
+     "evolutions": 4,
+     "itemsUsed": 41,
+     "lvBy": {
+      "route": 8,
+      "prep": 87,
+      "gym": 75,
+      "shamburg": 19,
+      "e4": 29
+     },
+     "prepFights": 345,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Shardizar",
+       "level": 79
+      },
+      {
+       "species": "Sycamage",
+       "level": 78
+      },
+      {
+       "species": "Sycamage",
+       "level": 77
+      }
+     ]
+    },
+    {
+     "seed": 5,
+     "starter": "starter3",
+     "policy": "required",
+     "stuck": "Gym 10",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 4,
+        "levels": [
+         9,
+         8,
+         4
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 1.6333333333333333,
+       "min": 18.016666666666666,
+       "after": {
+        "top": 16,
+        "top3": 13.3,
+        "avg": 13.3,
+        "low": 10,
+        "levels": [
+         16,
+         14,
+         10
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 16,
+        "top3": 13.3,
+        "avg": 13.3,
+        "low": 10,
+        "levels": [
+         16,
+         14,
+         10
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 18.4,
+       "min": 20.683333333333334,
+       "after": {
+        "top": 19,
+        "top3": 15.3,
+        "avg": 15.3,
+        "low": 11,
+        "levels": [
+         19,
+         16,
+         11
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 19,
+        "top3": 15.3,
+        "avg": 15.3,
+        "low": 11,
+        "levels": [
+         19,
+         16,
+         11
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 21.2,
+       "min": 23.6,
+       "after": {
+        "top": 22,
+        "top3": 17.3,
+        "avg": 17.3,
+        "low": 13,
+        "levels": [
+         22,
+         17,
+         13
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 23,
+        "top3": 19,
+        "avg": 19,
+        "low": 15,
+        "levels": [
+         23,
+         19,
+         15
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 25.466666666666665,
+       "min": 27.266666666666666,
+       "after": {
+        "top": 26,
+        "top3": 21,
+        "avg": 21,
+        "low": 16,
+        "levels": [
+         26,
+         21,
+         16
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 21.3,
+        "avg": 21.3,
+        "low": 16,
+        "levels": [
+         26,
+         22,
+         16
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 27.75,
+       "min": 43.88333333333333,
+       "after": {
+        "top": 31,
+        "top3": 27.3,
+        "avg": 27.3,
+        "low": 24,
+        "levels": [
+         31,
+         27,
+         24
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 31,
+        "top3": 27.3,
+        "avg": 27.3,
+        "low": 24,
+        "levels": [
+         31,
+         27,
+         24
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 44.333333333333336,
+       "min": 45.86666666666667,
+       "after": {
+        "top": 33,
+        "top3": 29,
+        "avg": 29,
+        "low": 26,
+        "levels": [
+         33,
+         28,
+         26
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 29.3,
+        "avg": 29.3,
+        "low": 26,
+        "levels": [
+         33,
+         29,
+         26
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 46.28333333333333,
+       "min": 47.983333333333334,
+       "after": {
+        "top": 36,
+        "top3": 31,
+        "avg": 31,
+        "low": 27,
+        "levels": [
+         36,
+         30,
+         27
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 31,
+        "avg": 31,
+        "low": 27,
+        "levels": [
+         36,
+         30,
+         27
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 48.36666666666667,
+       "min": 65.41666666666667,
+       "after": {
+        "top": 41,
+        "top3": 38.3,
+        "avg": 38.3,
+        "low": 36,
+        "levels": [
+         41,
+         38,
+         36
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 43,
+        "top3": 40.3,
+        "avg": 40.3,
+        "low": 38,
+        "levels": [
+         43,
+         40,
+         38
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 69.13333333333334,
+       "min": 70.26666666666667,
+       "after": {
+        "top": 44,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 40,
+        "levels": [
+         44,
+         41,
+         40
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 44,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 40,
+        "levels": [
+         44,
+         41,
+         40
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 70.71666666666667,
+       "min": 118.9,
+       "failed": true
+      }
+     ],
+     "marks": {},
+     "minutes": 118.9,
+     "battles": 270,
+     "turns": 601,
+     "blackouts": 18,
+     "levelUps": 115,
+     "evolutions": 4,
+     "itemsUsed": 14,
+     "lvBy": {
+      "route": 6,
+      "prep": 76,
+      "gym": 46,
+      "shamburg": 7
+     },
+     "prepFights": 228,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Bellowtoise",
+       "level": 52
+      },
+      {
+       "species": "Sycamage",
+       "level": 49
+      },
+      {
+       "species": "Leggyhen",
+       "level": 49
+      }
+     ]
+    },
+    {
+     "seed": 6,
+     "starter": "starter1",
+     "policy": "required",
+     "stuck": "Team Shamburg 3",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 6,
+        "levels": [
+         9,
+         6,
+         6
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 0.6833333333333333,
+       "min": 28.983333333333334,
+       "after": {
+        "top": 19,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 15,
+        "levels": [
+         19,
+         15,
+         15
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 19,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 15,
+        "levels": [
+         19,
+         15,
+         15
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 29.366666666666667,
+       "min": 31.583333333333332,
+       "after": {
+        "top": 20,
+        "top3": 17.7,
+        "avg": 17.7,
+        "low": 16,
+        "levels": [
+         20,
+         17,
+         16
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 17.7,
+        "avg": 17.7,
+        "low": 16,
+        "levels": [
+         20,
+         17,
+         16
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 32.03333333333333,
+       "min": 35.31666666666667,
+       "after": {
+        "top": 23,
+        "top3": 19.7,
+        "avg": 19.7,
+        "low": 18,
+        "levels": [
+         23,
+         18,
+         18
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 24,
+        "top3": 20.7,
+        "avg": 20.7,
+        "low": 19,
+        "levels": [
+         24,
+         19,
+         19
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 37.38333333333333,
+       "min": 39.05,
+       "after": {
+        "top": 26,
+        "top3": 22.3,
+        "avg": 22.3,
+        "low": 20,
+        "levels": [
+         26,
+         21,
+         20
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 22.7,
+        "avg": 22.7,
+        "low": 21,
+        "levels": [
+         26,
+         21,
+         21
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 39.46666666666667,
+       "min": 61.233333333333334,
+       "after": {
+        "top": 32,
+        "top3": 29.7,
+        "avg": 29.7,
+        "low": 28,
+        "levels": [
+         32,
+         29,
+         28
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 32,
+        "top3": 29.7,
+        "avg": 29.7,
+        "low": 28,
+        "levels": [
+         32,
+         29,
+         28
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 61.68333333333333,
+       "min": 63.016666666666666,
+       "after": {
+        "top": 34,
+        "top3": 31.3,
+        "avg": 31.3,
+        "low": 29,
+        "levels": [
+         34,
+         31,
+         29
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 34,
+        "top3": 31.3,
+        "avg": 31.3,
+        "low": 29,
+        "levels": [
+         34,
+         31,
+         29
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 63.46666666666667,
+       "min": 66.85,
+       "after": {
+        "top": 36,
+        "top3": 33.7,
+        "avg": 33.7,
+        "low": 31,
+        "levels": [
+         36,
+         34,
+         31
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 33.7,
+        "avg": 33.7,
+        "low": 31,
+        "levels": [
+         36,
+         34,
+         31
+        ]
+       },
+       "size": 3,
+       "attempts": 6,
+       "minAtStart": 67.23333333333333,
+       "min": 91.46666666666667,
+       "after": {
+        "top": 42,
+        "top3": 40,
+        "avg": 40,
+        "low": 38,
+        "levels": [
+         42,
+         40,
+         38
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 44,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 39,
+        "levels": [
+         44,
+         42,
+         39
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 94.95,
+       "min": 96.48333333333333,
+       "after": {
+        "top": 45,
+        "top3": 43.3,
+        "avg": 43.3,
+        "low": 42,
+        "levels": [
+         45,
+         43,
+         42
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 45,
+        "top3": 43.3,
+        "avg": 43.3,
+        "low": 42,
+        "levels": [
+         45,
+         43,
+         42
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 96.86666666666666,
+       "min": 133.26666666666668,
+       "after": {
+        "top": 51,
+        "top3": 49.7,
+        "avg": 49.7,
+        "low": 48,
+        "levels": [
+         51,
+         50,
+         48
+        ]
+       }
+      },
+      {
+       "gym": 11,
+       "key": "theo",
+       "lv": 41,
+       "team": {
+        "top": 51,
+        "top3": 49.7,
+        "avg": 49.7,
+        "low": 48,
+        "levels": [
+         51,
+         50,
+         48
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 133.65,
+       "min": 158.2,
+       "after": {
+        "top": 54,
+        "top3": 52.7,
+        "avg": 52.7,
+        "low": 51,
+        "levels": [
+         54,
+         53,
+         51
+        ]
+       }
+      },
+      {
+       "gym": 12,
+       "key": "jack",
+       "lv": 44,
+       "team": {
+        "top": 54,
+        "top3": 52.7,
+        "avg": 52.7,
+        "low": 51,
+        "levels": [
+         54,
+         53,
+         51
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 158.58333333333334,
+       "min": 159.95,
+       "after": {
+        "top": 54,
+        "top3": 53.7,
+        "avg": 53.7,
+        "low": 53,
+        "levels": [
+         54,
+         54,
+         53
+        ]
+       }
+      },
+      {
+       "gym": 13,
+       "key": "tali",
+       "lv": 48,
+       "team": {
+        "top": 55,
+        "top3": 54,
+        "avg": 54,
+        "low": 53,
+        "levels": [
+         55,
+         54,
+         53
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 160.36666666666667,
+       "min": 161.96666666666667,
+       "after": {
+        "top": 56,
+        "top3": 55,
+        "avg": 55,
+        "low": 54,
+        "levels": [
+         56,
+         55,
+         54
+        ]
+       }
+      }
+     ],
+     "marks": {},
+     "minutes": 422.43333333333334,
+     "battles": 374,
+     "turns": 4464,
+     "blackouts": 37,
+     "levelUps": 151,
+     "evolutions": 4,
+     "itemsUsed": 33,
+     "lvBy": {
+      "route": 3,
+      "prep": 83,
+      "gym": 56,
+      "shamburg": 28
+     },
+     "prepFights": 288,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Venuzoid",
+       "level": 63
+      },
+      {
+       "species": "Sycamage",
+       "level": 62
+      },
+      {
+       "species": "Sycamage",
+       "level": 61
+      }
+     ]
+    },
+    {
+     "seed": 7,
+     "starter": "starter2",
+     "policy": "required",
+     "stuck": "Elite Four",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 5,
+        "levels": [
+         9,
+         7,
+         5
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 0.6833333333333333,
+       "min": 16.066666666666666,
+       "after": {
+        "top": 16,
+        "top3": 13,
+        "avg": 13,
+        "low": 10,
+        "levels": [
+         16,
+         13,
+         10
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 16,
+        "top3": 13.3,
+        "avg": 13.3,
+        "low": 10,
+        "levels": [
+         16,
+         14,
+         10
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 16.55,
+       "min": 30.016666666666666,
+       "after": {
+        "top": 20,
+        "top3": 17.7,
+        "avg": 17.7,
+        "low": 16,
+        "levels": [
+         20,
+         17,
+         16
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 17.7,
+        "avg": 17.7,
+        "low": 16,
+        "levels": [
+         20,
+         17,
+         16
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 30.466666666666665,
+       "min": 32.4,
+       "after": {
+        "top": 23,
+        "top3": 19.7,
+        "avg": 19.7,
+        "low": 17,
+        "levels": [
+         23,
+         19,
+         17
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 24,
+        "top3": 21,
+        "avg": 21,
+        "low": 19,
+        "levels": [
+         24,
+         20,
+         19
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 34.5,
+       "min": 37.65,
+       "after": {
+        "top": 26,
+        "top3": 22.3,
+        "avg": 22.3,
+        "low": 20,
+        "levels": [
+         26,
+         21,
+         20
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 22.3,
+        "avg": 22.3,
+        "low": 20,
+        "levels": [
+         26,
+         21,
+         20
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 38.03333333333333,
+       "min": 44.68333333333333,
+       "after": {
+        "top": 30,
+        "top3": 26.3,
+        "avg": 26.3,
+        "low": 23,
+        "levels": [
+         30,
+         26,
+         23
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 30,
+        "top3": 26.3,
+        "avg": 26.3,
+        "low": 23,
+        "levels": [
+         30,
+         26,
+         23
+        ]
+       },
+       "size": 3,
+       "attempts": 6,
+       "minAtStart": 45.06666666666667,
+       "min": 70.13333333333334,
+       "after": {
+        "top": 37,
+        "top3": 33.3,
+        "avg": 33.3,
+        "low": 31,
+        "levels": [
+         37,
+         32,
+         31
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 37,
+        "top3": 33.3,
+        "avg": 33.3,
+        "low": 31,
+        "levels": [
+         37,
+         32,
+         31
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 70.51666666666667,
+       "min": 71.91666666666667,
+       "after": {
+        "top": 38,
+        "top3": 35.3,
+        "avg": 35.3,
+        "low": 33,
+        "levels": [
+         38,
+         35,
+         33
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 38,
+        "top3": 35.3,
+        "avg": 35.3,
+        "low": 33,
+        "levels": [
+         38,
+         35,
+         33
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 72.3,
+       "min": 73.56666666666666,
+       "after": {
+        "top": 39,
+        "top3": 36.7,
+        "avg": 36.7,
+        "low": 34,
+        "levels": [
+         39,
+         37,
+         34
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 41,
+        "top3": 38.7,
+        "avg": 38.7,
+        "low": 37,
+        "levels": [
+         41,
+         38,
+         37
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 77.35,
+       "min": 78.81666666666666,
+       "after": {
+        "top": 43,
+        "top3": 41,
+        "avg": 41,
+        "low": 39,
+        "levels": [
+         43,
+         41,
+         39
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 43,
+        "top3": 41.3,
+        "avg": 41.3,
+        "low": 40,
+        "levels": [
+         43,
+         41,
+         40
+        ]
+       },
+       "size": 3,
+       "attempts": 7,
+       "minAtStart": 79.23333333333333,
+       "min": 106.88333333333334,
+       "after": {
+        "top": 50,
+        "top3": 47.7,
+        "avg": 47.7,
+        "low": 46,
+        "levels": [
+         50,
+         47,
+         46
+        ]
+       }
+      },
+      {
+       "gym": 11,
+       "key": "theo",
+       "lv": 41,
+       "team": {
+        "top": 50,
+        "top3": 47.7,
+        "avg": 47.7,
+        "low": 46,
+        "levels": [
+         50,
+         47,
+         46
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 107.33333333333333,
+       "min": 108.53333333333333,
+       "after": {
+        "top": 51,
+        "top3": 48.7,
+        "avg": 48.7,
+        "low": 47,
+        "levels": [
+         51,
+         48,
+         47
+        ]
+       }
+      },
+      {
+       "gym": 12,
+       "key": "jack",
+       "lv": 44,
+       "team": {
+        "top": 51,
+        "top3": 48.7,
+        "avg": 48.7,
+        "low": 47,
+        "levels": [
+         51,
+         48,
+         47
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 108.98333333333333,
+       "min": 110.45,
+       "after": {
+        "top": 52,
+        "top3": 49.7,
+        "avg": 49.7,
+        "low": 48,
+        "levels": [
+         52,
+         49,
+         48
+        ]
+       }
+      },
+      {
+       "gym": 13,
+       "key": "tali",
+       "lv": 48,
+       "team": {
+        "top": 52,
+        "top3": 50,
+        "avg": 50,
+        "low": 49,
+        "levels": [
+         52,
+         49,
+         49
+        ]
+       },
+       "size": 3,
+       "attempts": 6,
+       "minAtStart": 110.86666666666666,
+       "min": 134.03333333333333,
+       "after": {
+        "top": 58,
+        "top3": 55.7,
+        "avg": 55.7,
+        "low": 54,
+        "levels": [
+         58,
+         55,
+         54
+        ]
+       }
+      },
+      {
+       "gym": 14,
+       "key": "parker",
+       "lv": 51,
+       "team": {
+        "top": 60,
+        "top3": 58,
+        "avg": 58,
+        "low": 57,
+        "levels": [
+         60,
+         57,
+         57
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 138.33333333333334,
+       "min": 140.06666666666666,
+       "after": {
+        "top": 61,
+        "top3": 59.3,
+        "avg": 59.3,
+        "low": 58,
+        "levels": [
+         61,
+         59,
+         58
+        ]
+       }
+      },
+      {
+       "gym": 15,
+       "key": "kent",
+       "lv": 54,
+       "team": {
+        "top": 61,
+        "top3": 59.3,
+        "avg": 59.3,
+        "low": 58,
+        "levels": [
+         61,
+         59,
+         58
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 140.45,
+       "min": 141.58333333333334,
+       "after": {
+        "top": 63,
+        "top3": 60.7,
+        "avg": 60.7,
+        "low": 59,
+        "levels": [
+         63,
+         60,
+         59
+        ]
+       }
+      },
+      {
+       "gym": 16,
+       "key": "rachel",
+       "lv": 57,
+       "team": {
+        "top": 63,
+        "top3": 60.7,
+        "avg": 60.7,
+        "low": 59,
+        "levels": [
+         63,
+         60,
+         59
+        ]
+       },
+       "size": 3,
+       "attempts": 6,
+       "minAtStart": 141.96666666666667,
+       "min": 162.36666666666667,
+       "after": {
+        "top": 67,
+        "top3": 65.3,
+        "avg": 65.3,
+        "low": 64,
+        "levels": [
+         67,
+         65,
+         64
+        ]
+       }
+      },
+      {
+       "gym": 17,
+       "key": "anna",
+       "lv": 60,
+       "team": {
+        "top": 67,
+        "top3": 65.3,
+        "avg": 65.3,
+        "low": 64,
+        "levels": [
+         67,
+         65,
+         64
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 162.75,
+       "min": 165.63333333333333,
+       "after": {
+        "top": 69,
+        "top3": 67,
+        "avg": 67,
+        "low": 65,
+        "levels": [
+         69,
+         67,
+         65
+        ]
+       }
+      }
+     ],
+     "marks": {
+      "allBadges": {
+       "min": 165.63333333333333,
+       "level": {
+        "top": 69,
+        "top3": 67,
+        "avg": 67,
+        "low": 65,
+        "levels": [
+         69,
+         67,
+         65
+        ]
+       }
+      },
+      "beforeE4": {
+       "min": 165.98333333333332,
+       "level": {
+        "top": 69,
+        "top3": 67.3,
+        "avg": 67.3,
+        "low": 66,
+        "levels": [
+         69,
+         67,
+         66
+        ]
+       }
+      },
+      "e4": {
+       "min": 245.8,
+       "level": {
+        "top": 77,
+        "top3": 76.7,
+        "avg": 76.7,
+        "low": 76,
+        "levels": [
+         77,
+         77,
+         76
+        ]
+       },
+       "attempts": 8
+      }
+     },
+     "minutes": 245.8,
+     "battles": 524,
+     "turns": 1367,
+     "blackouts": 39,
+     "levelUps": 186,
+     "evolutions": 4,
+     "itemsUsed": 54,
+     "lvBy": {
+      "route": 5,
+      "prep": 101,
+      "gym": 73,
+      "shamburg": 16,
+      "e4": 19
+     },
+     "prepFights": 433,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Shardizar",
+       "level": 77
+      },
+      {
+       "species": "Sycamage",
+       "level": 77
+      },
+      {
+       "species": "Leggyhen",
+       "level": 76
+      }
+     ]
+    },
+    {
+     "seed": 8,
+     "starter": "starter3",
+     "policy": "required",
+     "stuck": "Gym 10",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 5,
+        "levels": [
+         9,
+         7,
+         5
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 0.6333333333333333,
+       "min": 24.3,
+       "after": {
+        "top": 17,
+        "top3": 14.3,
+        "avg": 14.3,
+        "low": 13,
+        "levels": [
+         17,
+         13,
+         13
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 17,
+        "top3": 14.3,
+        "avg": 14.3,
+        "low": 13,
+        "levels": [
+         17,
+         13,
+         13
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 24.75,
+       "min": 29.116666666666667,
+       "after": {
+        "top": 20,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 14,
+        "levels": [
+         20,
+         15,
+         14
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 14,
+        "levels": [
+         20,
+         15,
+         14
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 29.5,
+       "min": 36.25,
+       "after": {
+        "top": 22,
+        "top3": 18.3,
+        "avg": 18.3,
+        "low": 16,
+        "levels": [
+         22,
+         17,
+         16
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 24,
+        "top3": 20,
+        "avg": 20,
+        "low": 18,
+        "levels": [
+         24,
+         18,
+         18
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 38.38333333333333,
+       "min": 40.05,
+       "after": {
+        "top": 25,
+        "top3": 21.3,
+        "avg": 21.3,
+        "low": 19,
+        "levels": [
+         25,
+         20,
+         19
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 25,
+        "top3": 21.3,
+        "avg": 21.3,
+        "low": 19,
+        "levels": [
+         25,
+         20,
+         19
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 40.5,
+       "min": 50.483333333333334,
+       "after": {
+        "top": 29,
+        "top3": 26,
+        "avg": 26,
+        "low": 23,
+        "levels": [
+         29,
+         26,
+         23
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 29,
+        "top3": 26,
+        "avg": 26,
+        "low": 23,
+        "levels": [
+         29,
+         26,
+         23
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 50.86666666666667,
+       "min": 52.733333333333334,
+       "after": {
+        "top": 32,
+        "top3": 28,
+        "avg": 28,
+        "low": 25,
+        "levels": [
+         32,
+         27,
+         25
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 32,
+        "top3": 28,
+        "avg": 28,
+        "low": 25,
+        "levels": [
+         32,
+         27,
+         25
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 53.11666666666667,
+       "min": 54.45,
+       "after": {
+        "top": 35,
+        "top3": 30,
+        "avg": 30,
+        "low": 26,
+        "levels": [
+         35,
+         29,
+         26
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 35,
+        "top3": 30,
+        "avg": 30,
+        "low": 26,
+        "levels": [
+         35,
+         29,
+         26
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 54.9,
+       "min": 65.31666666666666,
+       "after": {
+        "top": 39,
+        "top3": 34.7,
+        "avg": 34.7,
+        "low": 31,
+        "levels": [
+         39,
+         34,
+         31
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 41,
+        "top3": 38,
+        "avg": 38,
+        "low": 35,
+        "levels": [
+         41,
+         38,
+         35
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 69.46666666666667,
+       "min": 70.93333333333334,
+       "after": {
+        "top": 43,
+        "top3": 40.3,
+        "avg": 40.3,
+        "low": 37,
+        "levels": [
+         43,
+         41,
+         37
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 43,
+        "top3": 40.7,
+        "avg": 40.7,
+        "low": 38,
+        "levels": [
+         43,
+         41,
+         38
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 71.55,
+       "min": 121.78333333333333,
+       "failed": true
+      }
+     ],
+     "marks": {},
+     "minutes": 121.78333333333333,
+     "battles": 262,
+     "turns": 657,
+     "blackouts": 19,
+     "levelUps": 113,
+     "evolutions": 4,
+     "itemsUsed": 13,
+     "lvBy": {
+      "route": 2,
+      "prep": 73,
+      "gym": 46,
+      "shamburg": 14
+     },
+     "prepFights": 219,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Bellowtoise",
+       "level": 52
+      },
+      {
+       "species": "Leggyhen",
+       "level": 50
+      },
+      {
+       "species": "Poseigunk",
+       "level": 48
+      }
+     ]
+    },
+    {
+     "seed": 9,
+     "starter": "starter1",
+     "policy": "required",
+     "stuck": "Gym 10",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 4,
+        "levels": [
+         9,
+         8,
+         4
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 0.75,
+       "min": 21.616666666666667,
+       "after": {
+        "top": 17,
+        "top3": 14.3,
+        "avg": 14.3,
+        "low": 12,
+        "levels": [
+         17,
+         14,
+         12
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 17,
+        "top3": 14.3,
+        "avg": 14.3,
+        "low": 12,
+        "levels": [
+         17,
+         14,
+         12
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 22.066666666666666,
+       "min": 24.416666666666668,
+       "after": {
+        "top": 20,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 14,
+        "levels": [
+         20,
+         15,
+         14
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 14,
+        "levels": [
+         20,
+         15,
+         14
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 24.866666666666667,
+       "min": 35.61666666666667,
+       "after": {
+        "top": 24,
+        "top3": 20.3,
+        "avg": 20.3,
+        "low": 18,
+        "levels": [
+         24,
+         19,
+         18
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 25,
+        "top3": 21.7,
+        "avg": 21.7,
+        "low": 19,
+        "levels": [
+         25,
+         21,
+         19
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 37.78333333333333,
+       "min": 39.38333333333333,
+       "after": {
+        "top": 26,
+        "top3": 23,
+        "avg": 23,
+        "low": 21,
+        "levels": [
+         26,
+         22,
+         21
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 23,
+        "avg": 23,
+        "low": 21,
+        "levels": [
+         26,
+         22,
+         21
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 39.766666666666666,
+       "min": 51.68333333333333,
+       "after": {
+        "top": 30,
+        "top3": 27.3,
+        "avg": 27.3,
+        "low": 26,
+        "levels": [
+         30,
+         26,
+         26
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 30,
+        "top3": 27.7,
+        "avg": 27.7,
+        "low": 26,
+        "levels": [
+         30,
+         27,
+         26
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 52.1,
+       "min": 53.5,
+       "after": {
+        "top": 33,
+        "top3": 30,
+        "avg": 30,
+        "low": 28,
+        "levels": [
+         33,
+         29,
+         28
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 30,
+        "avg": 30,
+        "low": 28,
+        "levels": [
+         33,
+         29,
+         28
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 53.95,
+       "min": 56.05,
+       "after": {
+        "top": 36,
+        "top3": 32.3,
+        "avg": 32.3,
+        "low": 29,
+        "levels": [
+         36,
+         32,
+         29
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 32.3,
+        "avg": 32.3,
+        "low": 29,
+        "levels": [
+         36,
+         32,
+         29
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 56.43333333333333,
+       "min": 72.71666666666667,
+       "after": {
+        "top": 41,
+        "top3": 39,
+        "avg": 39,
+        "low": 37,
+        "levels": [
+         41,
+         39,
+         37
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 43,
+        "top3": 41,
+        "avg": 41,
+        "low": 39,
+        "levels": [
+         43,
+         41,
+         39
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 76.16666666666667,
+       "min": 77.5,
+       "after": {
+        "top": 44,
+        "top3": 42,
+        "avg": 42,
+        "low": 40,
+        "levels": [
+         44,
+         42,
+         40
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 44,
+        "top3": 42.3,
+        "avg": 42.3,
+        "low": 41,
+        "levels": [
+         44,
+         42,
+         41
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 77.98333333333333,
+       "min": 126.71666666666667,
+       "failed": true
+      }
+     ],
+     "marks": {},
+     "minutes": 126.71666666666667,
+     "battles": 286,
+     "turns": 639,
+     "blackouts": 21,
+     "levelUps": 119,
+     "evolutions": 4,
+     "itemsUsed": 9,
+     "lvBy": {
+      "route": 2,
+      "prep": 80,
+      "gym": 45,
+      "shamburg": 10
+     },
+     "prepFights": 241,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Venuzoid",
+       "level": 52
+      },
+      {
+       "species": "Sycamage",
+       "level": 50
+      },
+      {
+       "species": "Sycamage",
+       "level": 49
+      }
+     ]
+    },
+    {
+     "seed": 10,
+     "starter": "starter2",
+     "policy": "required",
+     "stuck": "Elite Four",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 6,
+        "levels": [
+         9,
+         6,
+         6
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 1.3166666666666667,
+       "min": 18.366666666666667,
+       "after": {
+        "top": 16,
+        "top3": 13,
+        "avg": 13,
+        "low": 11,
+        "levels": [
+         16,
+         12,
+         11
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 16,
+        "top3": 13.3,
+        "avg": 13.3,
+        "low": 11,
+        "levels": [
+         16,
+         13,
+         11
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 18.916666666666668,
+       "min": 25.8,
+       "after": {
+        "top": 20,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 13,
+        "levels": [
+         20,
+         16,
+         13
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 16.3,
+        "avg": 16.3,
+        "low": 13,
+        "levels": [
+         20,
+         16,
+         13
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 26.183333333333334,
+       "min": 38.15,
+       "after": {
+        "top": 24,
+        "top3": 20.7,
+        "avg": 20.7,
+        "low": 18,
+        "levels": [
+         24,
+         20,
+         18
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 25,
+        "top3": 21.7,
+        "avg": 21.7,
+        "low": 19,
+        "levels": [
+         25,
+         21,
+         19
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 39.95,
+       "min": 41.71666666666667,
+       "after": {
+        "top": 26,
+        "top3": 23,
+        "avg": 23,
+        "low": 21,
+        "levels": [
+         26,
+         22,
+         21
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 23,
+        "avg": 23,
+        "low": 21,
+        "levels": [
+         26,
+         22,
+         21
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 42.166666666666664,
+       "min": 59.93333333333333,
+       "after": {
+        "top": 32,
+        "top3": 29.3,
+        "avg": 29.3,
+        "low": 28,
+        "levels": [
+         32,
+         28,
+         28
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 32,
+        "top3": 29.3,
+        "avg": 29.3,
+        "low": 28,
+        "levels": [
+         32,
+         28,
+         28
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 60.31666666666667,
+       "min": 63.53333333333333,
+       "after": {
+        "top": 33,
+        "top3": 31.7,
+        "avg": 31.7,
+        "low": 31,
+        "levels": [
+         33,
+         31,
+         31
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 31.7,
+        "avg": 31.7,
+        "low": 31,
+        "levels": [
+         33,
+         31,
+         31
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 63.916666666666664,
+       "min": 66.01666666666667,
+       "after": {
+        "top": 36,
+        "top3": 34.7,
+        "avg": 34.7,
+        "low": 34,
+        "levels": [
+         36,
+         34,
+         34
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 34.7,
+        "avg": 34.7,
+        "low": 34,
+        "levels": [
+         36,
+         34,
+         34
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 66.4,
+       "min": 68,
+       "after": {
+        "top": 39,
+        "top3": 37.3,
+        "avg": 37.3,
+        "low": 36,
+        "levels": [
+         39,
+         37,
+         36
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 41,
+        "top3": 39,
+        "avg": 39,
+        "low": 38,
+        "levels": [
+         41,
+         38,
+         38
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 71.35,
+       "min": 74.36666666666666,
+       "after": {
+        "top": 43,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 41,
+        "levels": [
+         43,
+         41,
+         41
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 43,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 41,
+        "levels": [
+         43,
+         41,
+         41
+        ]
+       },
+       "size": 3,
+       "attempts": 7,
+       "minAtStart": 74.75,
+       "min": 100.98333333333333,
+       "after": {
+        "top": 49,
+        "top3": 47.3,
+        "avg": 47.3,
+        "low": 46,
+        "levels": [
+         49,
+         47,
+         46
+        ]
+       }
+      },
+      {
+       "gym": 11,
+       "key": "theo",
+       "lv": 41,
+       "team": {
+        "top": 49,
+        "top3": 47.3,
+        "avg": 47.3,
+        "low": 46,
+        "levels": [
+         49,
+         47,
+         46
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 101.36666666666666,
+       "min": 103.81666666666666,
+       "after": {
+        "top": 51,
+        "top3": 48.3,
+        "avg": 48.3,
+        "low": 47,
+        "levels": [
+         51,
+         47,
+         47
+        ]
+       }
+      },
+      {
+       "gym": 12,
+       "key": "jack",
+       "lv": 44,
+       "team": {
+        "top": 51,
+        "top3": 48.3,
+        "avg": 48.3,
+        "low": 47,
+        "levels": [
+         51,
+         47,
+         47
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 104.2,
+       "min": 105.6,
+       "after": {
+        "top": 52,
+        "top3": 49.7,
+        "avg": 49.7,
+        "low": 48,
+        "levels": [
+         52,
+         49,
+         48
+        ]
+       }
+      },
+      {
+       "gym": 13,
+       "key": "tali",
+       "lv": 48,
+       "team": {
+        "top": 52,
+        "top3": 50,
+        "avg": 50,
+        "low": 49,
+        "levels": [
+         52,
+         49,
+         49
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 106.08333333333333,
+       "min": 119.76666666666667,
+       "after": {
+        "top": 56,
+        "top3": 54.3,
+        "avg": 54.3,
+        "low": 53,
+        "levels": [
+         56,
+         54,
+         53
+        ]
+       }
+      },
+      {
+       "gym": 14,
+       "key": "parker",
+       "lv": 51,
+       "team": {
+        "top": 59,
+        "top3": 57,
+        "avg": 57,
+        "low": 56,
+        "levels": [
+         59,
+         56,
+         56
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 124.16666666666667,
+       "min": 125.96666666666667,
+       "after": {
+        "top": 60,
+        "top3": 58.7,
+        "avg": 58.7,
+        "low": 58,
+        "levels": [
+         60,
+         58,
+         58
+        ]
+       }
+      },
+      {
+       "gym": 15,
+       "key": "kent",
+       "lv": 54,
+       "team": {
+        "top": 60,
+        "top3": 58.7,
+        "avg": 58.7,
+        "low": 58,
+        "levels": [
+         60,
+         58,
+         58
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 126.41666666666667,
+       "min": 127.55,
+       "after": {
+        "top": 62,
+        "top3": 60,
+        "avg": 60,
+        "low": 59,
+        "levels": [
+         62,
+         59,
+         59
+        ]
+       }
+      },
+      {
+       "gym": 16,
+       "key": "rachel",
+       "lv": 57,
+       "team": {
+        "top": 62,
+        "top3": 60,
+        "avg": 60,
+        "low": 59,
+        "levels": [
+         62,
+         59,
+         59
+        ]
+       },
+       "size": 3,
+       "attempts": 7,
+       "minAtStart": 127.93333333333334,
+       "min": 159.41666666666666,
+       "after": {
+        "top": 69,
+        "top3": 67,
+        "avg": 67,
+        "low": 66,
+        "levels": [
+         69,
+         66,
+         66
+        ]
+       }
+      },
+      {
+       "gym": 17,
+       "key": "anna",
+       "lv": 60,
+       "team": {
+        "top": 69,
+        "top3": 67,
+        "avg": 67,
+        "low": 66,
+        "levels": [
+         69,
+         66,
+         66
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 159.8,
+       "min": 161.03333333333333,
+       "after": {
+        "top": 70,
+        "top3": 67.7,
+        "avg": 67.7,
+        "low": 66,
+        "levels": [
+         70,
+         67,
+         66
+        ]
+       }
+      }
+     ],
+     "marks": {
+      "allBadges": {
+       "min": 161.03333333333333,
+       "level": {
+        "top": 70,
+        "top3": 67.7,
+        "avg": 67.7,
+        "low": 66,
+        "levels": [
+         70,
+         67,
+         66
+        ]
+       }
+      },
+      "beforeE4": {
+       "min": 161.38333333333333,
+       "level": {
+        "top": 70,
+        "top3": 68,
+        "avg": 68,
+        "low": 67,
+        "levels": [
+         70,
+         67,
+         67
+        ]
+       }
+      },
+      "e4": {
+       "min": 244.61666666666667,
+       "level": {
+        "top": 77,
+        "top3": 75.7,
+        "avg": 75.7,
+        "low": 75,
+        "levels": [
+         77,
+         75,
+         75
+        ]
+       },
+       "attempts": 8
+      }
+     },
+     "minutes": 244.61666666666667,
+     "battles": 563,
+     "turns": 1286,
+     "blackouts": 40,
+     "levelUps": 176,
+     "evolutions": 4,
+     "itemsUsed": 46,
+     "lvBy": {
+      "route": 3,
+      "prep": 111,
+      "gym": 83,
+      "shamburg": 16
+     },
+     "prepFights": 479,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Shardizar",
+       "level": 77
+      },
+      {
+       "species": "Sycamage",
+       "level": 75
+      },
+      {
+       "species": "Leggyhen",
+       "level": 75
+      }
+     ]
+    },
+    {
+     "seed": 11,
+     "starter": "starter3",
+     "policy": "required",
+     "stuck": "Gym 10",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 5,
+        "levels": [
+         9,
+         7,
+         5
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 0.6333333333333333,
+       "min": 56.96666666666667,
+       "after": {
+        "top": 17,
+        "top3": 14,
+        "avg": 14,
+        "low": 12,
+        "levels": [
+         17,
+         13,
+         12
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 17,
+        "top3": 14,
+        "avg": 14,
+        "low": 12,
+        "levels": [
+         17,
+         13,
+         12
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 57.35,
+       "min": 68.26666666666667,
+       "after": {
+        "top": 20,
+        "top3": 17,
+        "avg": 17,
+        "low": 15,
+        "levels": [
+         20,
+         16,
+         15
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 17.3,
+        "avg": 17.3,
+        "low": 16,
+        "levels": [
+         20,
+         16,
+         16
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 68.68333333333334,
+       "min": 73.36666666666666,
+       "after": {
+        "top": 23,
+        "top3": 19.7,
+        "avg": 19.7,
+        "low": 17,
+        "levels": [
+         23,
+         19,
+         17
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 24,
+        "top3": 20.7,
+        "avg": 20.7,
+        "low": 18,
+        "levels": [
+         24,
+         20,
+         18
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 75.3,
+       "min": 76.96666666666667,
+       "after": {
+        "top": 26,
+        "top3": 23,
+        "avg": 23,
+        "low": 20,
+        "levels": [
+         26,
+         23,
+         20
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 23,
+        "avg": 23,
+        "low": 20,
+        "levels": [
+         26,
+         23,
+         20
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 77.41666666666667,
+       "min": 89.41666666666667,
+       "after": {
+        "top": 30,
+        "top3": 27.3,
+        "avg": 27.3,
+        "low": 25,
+        "levels": [
+         30,
+         27,
+         25
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 30,
+        "top3": 27.3,
+        "avg": 27.3,
+        "low": 25,
+        "levels": [
+         30,
+         27,
+         25
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 89.8,
+       "min": 91.7,
+       "after": {
+        "top": 33,
+        "top3": 29.3,
+        "avg": 29.3,
+        "low": 27,
+        "levels": [
+         33,
+         28,
+         27
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 29.7,
+        "avg": 29.7,
+        "low": 27,
+        "levels": [
+         33,
+         29,
+         27
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 92.11666666666666,
+       "min": 93.68333333333334,
+       "after": {
+        "top": 36,
+        "top3": 31.3,
+        "avg": 31.3,
+        "low": 28,
+        "levels": [
+         36,
+         30,
+         28
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 31.7,
+        "avg": 31.7,
+        "low": 29,
+        "levels": [
+         36,
+         30,
+         29
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 94.1,
+       "min": 110.68333333333334,
+       "after": {
+        "top": 42,
+        "top3": 38.3,
+        "avg": 38.3,
+        "low": 36,
+        "levels": [
+         42,
+         37,
+         36
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 43,
+        "top3": 40.3,
+        "avg": 40.3,
+        "low": 39,
+        "levels": [
+         43,
+         39,
+         39
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 114.63333333333334,
+       "min": 115.76666666666667,
+       "after": {
+        "top": 44,
+        "top3": 41.3,
+        "avg": 41.3,
+        "low": 40,
+        "levels": [
+         44,
+         40,
+         40
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 44,
+        "top3": 41.7,
+        "avg": 41.7,
+        "low": 40,
+        "levels": [
+         44,
+         41,
+         40
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 116.25,
+       "min": 166.63333333333333,
+       "failed": true
+      }
+     ],
+     "marks": {},
+     "minutes": 166.63333333333333,
+     "battles": 298,
+     "turns": 1191,
+     "blackouts": 23,
+     "levelUps": 122,
+     "evolutions": 4,
+     "itemsUsed": 3,
+     "lvBy": {
+      "route": 4,
+      "prep": 83,
+      "gym": 41,
+      "shamburg": 9
+     },
+     "prepFights": 251,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Bellowtoise",
+       "level": 52
+      },
+      {
+       "species": "Leggyhen",
+       "level": 50
+      },
+      {
+       "species": "Poseigunk",
+       "level": 49
+      }
+     ]
+    },
+    {
+     "seed": 12,
+     "starter": "starter1",
+     "policy": "required",
+     "stuck": "Gym 10",
+     "gyms": [
+      {
+       "gym": 1,
+       "key": "lillian",
+       "lv": 10,
+       "team": {
+        "top": 9,
+        "top3": 7,
+        "avg": 7,
+        "low": 5,
+        "levels": [
+         9,
+         7,
+         5
+        ]
+       },
+       "size": 3,
+       "attempts": 4,
+       "minAtStart": 0.5666666666666667,
+       "min": 22.4,
+       "after": {
+        "top": 17,
+        "top3": 14.7,
+        "avg": 14.7,
+        "low": 13,
+        "levels": [
+         17,
+         14,
+         13
+        ]
+       }
+      },
+      {
+       "gym": 2,
+       "key": "trever",
+       "lv": 13,
+       "team": {
+        "top": 17,
+        "top3": 14.7,
+        "avg": 14.7,
+        "low": 13,
+        "levels": [
+         17,
+         14,
+         13
+        ]
+       },
+       "size": 3,
+       "attempts": 2,
+       "minAtStart": 22.85,
+       "min": 27.483333333333334,
+       "after": {
+        "top": 20,
+        "top3": 17.7,
+        "avg": 17.7,
+        "low": 16,
+        "levels": [
+         20,
+         17,
+         16
+        ]
+       }
+      },
+      {
+       "gym": 3,
+       "key": "oksana",
+       "lv": 16,
+       "team": {
+        "top": 20,
+        "top3": 17.7,
+        "avg": 17.7,
+        "low": 16,
+        "levels": [
+         20,
+         17,
+         16
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 27.933333333333334,
+       "min": 29.533333333333335,
+       "after": {
+        "top": 23,
+        "top3": 19.3,
+        "avg": 19.3,
+        "low": 17,
+        "levels": [
+         23,
+         18,
+         17
+        ]
+       }
+      },
+      {
+       "gym": 4,
+       "key": "charlotte",
+       "lv": 19,
+       "team": {
+        "top": 24,
+        "top3": 20.3,
+        "avg": 20.3,
+        "low": 18,
+        "levels": [
+         24,
+         19,
+         18
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 31.733333333333334,
+       "min": 33.4,
+       "after": {
+        "top": 26,
+        "top3": 22.7,
+        "avg": 22.7,
+        "low": 20,
+        "levels": [
+         26,
+         22,
+         20
+        ]
+       }
+      },
+      {
+       "gym": 5,
+       "key": "tyler",
+       "lv": 23,
+       "team": {
+        "top": 26,
+        "top3": 22.7,
+        "avg": 22.7,
+        "low": 20,
+        "levels": [
+         26,
+         22,
+         20
+        ]
+       },
+       "size": 3,
+       "attempts": 3,
+       "minAtStart": 33.85,
+       "min": 42.61666666666667,
+       "after": {
+        "top": 30,
+        "top3": 26.7,
+        "avg": 26.7,
+        "low": 24,
+        "levels": [
+         30,
+         26,
+         24
+        ]
+       }
+      },
+      {
+       "gym": 6,
+       "key": "tucker",
+       "lv": 26,
+       "team": {
+        "top": 30,
+        "top3": 27,
+        "avg": 27,
+        "low": 25,
+        "levels": [
+         30,
+         26,
+         25
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 43.03333333333333,
+       "min": 44.86666666666667,
+       "after": {
+        "top": 33,
+        "top3": 29.3,
+        "avg": 29.3,
+        "low": 26,
+        "levels": [
+         33,
+         29,
+         26
+        ]
+       }
+      },
+      {
+       "gym": 7,
+       "key": "kaley",
+       "lv": 29,
+       "team": {
+        "top": 33,
+        "top3": 29.3,
+        "avg": 29.3,
+        "low": 26,
+        "levels": [
+         33,
+         29,
+         26
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 45.31666666666667,
+       "min": 47.416666666666664,
+       "after": {
+        "top": 36,
+        "top3": 32.3,
+        "avg": 32.3,
+        "low": 29,
+        "levels": [
+         36,
+         32,
+         29
+        ]
+       }
+      },
+      {
+       "gym": 8,
+       "key": "makenna",
+       "lv": 32,
+       "team": {
+        "top": 36,
+        "top3": 32.3,
+        "avg": 32.3,
+        "low": 29,
+        "levels": [
+         36,
+         32,
+         29
+        ]
+       },
+       "size": 3,
+       "attempts": 5,
+       "minAtStart": 47.8,
+       "min": 65.63333333333334,
+       "after": {
+        "top": 41,
+        "top3": 38.3,
+        "avg": 38.3,
+        "low": 37,
+        "levels": [
+         41,
+         37,
+         37
+        ]
+       }
+      },
+      {
+       "gym": 9,
+       "key": "lynne",
+       "lv": 35,
+       "team": {
+        "top": 43,
+        "top3": 40.7,
+        "avg": 40.7,
+        "low": 39,
+        "levels": [
+         43,
+         40,
+         39
+        ]
+       },
+       "size": 3,
+       "attempts": 1,
+       "minAtStart": 69.45,
+       "min": 70.71666666666667,
+       "after": {
+        "top": 44,
+        "top3": 42,
+        "avg": 42,
+        "low": 41,
+        "levels": [
+         44,
+         41,
+         41
+        ]
+       }
+      },
+      {
+       "gym": 10,
+       "key": "tanner",
+       "lv": 38,
+       "team": {
+        "top": 44,
+        "top3": 42,
+        "avg": 42,
+        "low": 41,
+        "levels": [
+         44,
+         41,
+         41
+        ]
+       },
+       "size": 3,
+       "attempts": 8,
+       "minAtStart": 71.1,
+       "min": 118.96666666666667,
+       "failed": true
+      }
+     ],
+     "marks": {},
+     "minutes": 118.96666666666667,
+     "battles": 261,
+     "turns": 636,
+     "blackouts": 18,
+     "levelUps": 106,
+     "evolutions": 4,
+     "itemsUsed": 6,
+     "lvBy": {
+      "route": 1,
+      "prep": 68,
+      "gym": 57,
+      "shamburg": 10
+     },
+     "prepFights": 219,
+     "caught": 2,
+     "quests": 0,
+     "teamSize": 3,
+     "finalTeam": [
+      {
+       "species": "Venuzoid",
+       "level": 52
+      },
+      {
+       "species": "Leggyhen",
+       "level": 50
+      },
+      {
+       "species": "Poseigunk",
+       "level": 49
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
