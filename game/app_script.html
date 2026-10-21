@@ -1700,7 +1700,7 @@ const AREAS = [
   {name: "Dragon's Den", kind: 'Den', types: ['Dragon', 'Water'], trainer: 'Dragon Tamer', color: '#6f86e8', icon: 'dragon'},
   {name: 'Victory Road', kind: 'Road', types: null, trainer: 'Ace Trainer', color: '#e8c76a', icon: 'crown'},
 ];
-// Legendary side quests on the Triumph Trail (they open one after another once the last gym leader is beaten)
+// Legendary side quests on the Laurel Pass (they open one after another once the last gym leader is beaten)
 AREAS.push(
   {name: 'Whiteout Summit', kind: 'Peak', types: ['Ice'], trainer: 'Nivalux', color: '#bfe0f5', icon: 'flake', legend: 'nivalux', lv: 62},
   {name: 'Stormcall Ridge', kind: 'Ridge', types: ['Electric'], trainer: 'Storment', color: '#e8c040', icon: 'bolt', legend: 'storment', lv: 63},
@@ -1709,7 +1709,7 @@ AREAS.push(
   {name: 'Tarwing Crater', kind: 'Crater', types: ['Fire', 'Poison'], trainer: 'Hexabeake', color: '#8e7cc3', icon: 'flame', legend: 'hexabeake', lv: 66},
   {name: 'Whisperwind Perch', kind: 'Perch', types: ['Psychic', 'Flying'], trainer: 'Aerialyn', color: '#f4a58a', icon: 'wing', legend: 'aerialyn', lv: 67},
 );
-const TRAIL = 'Triumph Trail';
+const TRAIL = 'Laurel Pass';
 const TRAIL_TRAINERS = ['Ace Trainer Mira', 'Veteran Boone', 'Cooltrainer Juno', 'Black Belt Ryo', 'Psychic Elsie', 'Dragon Tamer Kell',
   'Beauty Sable', 'Ranger Tobin', 'Scientist Quill', 'Sailor Marlow', 'Biker Dash', 'Expert Hana'];
 const trailLv = i => 58 + Math.round(i * 8 / 11);
@@ -2334,7 +2334,7 @@ $('questLeave').addEventListener('click', () => { if (AREAS[questIdx()] && AREAS
 $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
 
-// --- Triumph Trail (opens after the 17th badge) ---
+// --- Laurel Pass (opens after the 17th badge) ---
 function openTrail() {
   if (!trailOpen()) { openAdvMap({}); return; }
   mapMode = 'adventure';
@@ -2369,7 +2369,7 @@ async function trailFight(i) {
   const lv = trailLv(i), name = TRAIL_TRAINERS[i];
   const keys = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
   const sets = [0, 1, 2].map(() => E.regionalWild(17, lv, keys[Math.floor(Math.random() * keys.length)]));
-  await talk({name, key: null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Triumph Trail for a worthy challenger. Show me what you have got!']);
+  await talk({name, key: null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Laurel Pass for a worthy challenger. Show me what you have got!']);
   advFight({type: 'trailTrainer', idx: i, lv, sets, foe: {name, key: null, color: '#e8c76a', icon: 'crown', title: name, subtitle: `${TRAIL} · level ${lv}`}});
 }
 $('trailLeave').addEventListener('click', () => openAdvMap({}));
