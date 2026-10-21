@@ -57,27 +57,27 @@ export const FAMILIES = [
   // ---------- wild ----------
   {key: 'wild1', color: '#f2a7b8', catchRate: 190,
     stages: [
-      {name: 'Eggyhen', types: ['Normal', 'Flying'], stats: S(45, 50, 45, 35, 40, 55), abilities: ['Early Bird', 'Big Pecks'], h: .3, w: 1.8,
+      {name: 'Eggyhen', types: ['Fairy'], stats: S(45, 50, 45, 35, 40, 55), abilities: ['Early Bird', 'Big Pecks'], h: .3, w: 1.8,
         entry: 'A round puff of pink fluff that waddles after anything that moves. Designed by Tyler.'},
-      {name: 'Leggyhen', at: 22, types: ['Normal', 'Flying'], stats: S(80, 100, 70, 50, 65, 95), abilities: ['Early Bird', 'Intimidate'], h: 1.2, w: 24,
+      {name: 'Leggyhen', at: 22, types: ['Fairy', 'Flying'], stats: S(80, 100, 70, 50, 65, 95), abilities: ['Early Bird', 'Intimidate'], h: 1.2, w: 24,
         entry: 'It spreads its big pink wings and crows loud enough to wake a whole town. Designed by Tyler.'},
     ],
-    moves: [[1, 'Peck'], [1, 'Growl'], [5, 'Quick Attack'], [9, 'Wing Attack'], [13, 'Feather Dance'], [17, 'Aerial Ace'], [22, 'Roost'],
-      [27, 'Body Slam'], [32, 'Drill Peck'], [38, 'Brave Bird'], [44, 'Double-Edge']],
+    moves: [[1, 'Peck'], [1, 'Growl'], [5, 'Fairy Wind'], [9, 'Wing Attack'], [13, 'Draining Kiss'], [17, 'Aerial Ace'], [22, 'Roost'],
+      [27, 'Play Rough'], [32, 'Drill Peck'], [38, 'Brave Bird'], [44, 'Double-Edge']],
     evoMoves: {},
-    final: {ability: 'Intimidate', item: 'Life Orb', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Brave Bird', 'Double-Edge', 'Roost', 'Swords Dance']}},
+    final: {ability: 'Intimidate', item: 'Life Orb', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Brave Bird', 'Play Rough', 'Roost', 'Swords Dance']}},
 
   {key: 'wild2', color: '#7fa8e6', catchRate: 150,
     stages: [
-      {name: 'Sycasqeek', types: ['Psychic'], stats: S(40, 45, 40, 60, 50, 65), abilities: ['Synchronize', 'Inner Focus'], h: .4, w: 5,
+      {name: 'Sycasqeek', types: ['Normal'], stats: S(40, 45, 40, 60, 50, 65), abilities: ['Synchronize', 'Inner Focus'], h: .4, w: 5,
         entry: 'A curious little critter with a striped tail. It senses what others are thinking. Designed by Tyler.'},
-      {name: 'Sycamage', at: 26, types: ['Psychic', 'Dark'], stats: S(70, 60, 65, 110, 90, 105), abilities: ['Synchronize', 'Magic Guard'], h: 1.3, w: 30,
+      {name: 'Sycamage', at: 26, types: ['Normal', 'Psychic'], stats: S(70, 60, 65, 110, 90, 105), abilities: ['Synchronize', 'Magic Guard'], h: 1.3, w: 30,
         entry: 'Wrapped in a tattered dark cloak, it spins rings of psychic power around its claws. Designed by Tyler.'},
     ],
-    moves: [[1, 'Scratch'], [1, 'Leer'], [5, 'Confusion'], [10, 'Bite'], [15, 'Psybeam'], [20, 'Swift'], [26, 'Dark Pulse'],
-      [31, 'Psychic'], [36, 'Nasty Plot'], [42, 'Psyshock'], [48, 'Shadow Ball']],
-    evoMoves: {'Sycamage': ['Dark Pulse']},
-    final: {ability: 'Magic Guard', item: 'Life Orb', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Nasty Plot', 'Psychic', 'Dark Pulse', 'Focus Blast']}},
+    moves: [[1, 'Scratch'], [1, 'Leer'], [5, 'Quick Attack'], [10, 'Confusion'], [15, 'Swift'], [20, 'Psybeam'], [26, 'Psychic'],
+      [31, 'Hyper Voice'], [36, 'Nasty Plot'], [42, 'Psyshock'], [48, 'Shadow Ball']],
+    evoMoves: {'Sycamage': ['Psychic']},
+    final: {ability: 'Magic Guard', item: 'Life Orb', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Nasty Plot', 'Psychic', 'Hyper Voice', 'Focus Blast']}},
 
   {key: 'wild3', color: '#f2d04a', catchRate: 120,
     stages: [
@@ -93,7 +93,7 @@ export const FAMILIES = [
     stages: [
       {name: 'Bloogilp', types: ['Water'], stats: S(45, 50, 45, 40, 40, 60), abilities: ['Swift Swim', 'Water Veil'], h: .3, w: 1.5,
         entry: 'A round little fish with blue stripes. Schools of them flash through every pond in Neofield. Designed by Tyler.'},
-      {name: 'Poseigunk', at: 28, types: ['Water', 'Poison'], stats: S(95, 95, 85, 70, 80, 55), abilities: ['Swift Swim', 'Poison Touch'], h: 1.6, w: 120,
+      {name: 'Poseigunk', at: 28, types: ['Water'], stats: S(95, 95, 85, 70, 80, 55), abilities: ['Swift Swim', 'Poison Touch'], h: 1.6, w: 120,
         entry: 'It lurks in murky water under a coat of slime and grabs prey with its long, wriggling whiskers. Designed by Tyler.'},
     ],
     moves: [[1, 'Water Gun'], [1, 'Tail Whip'], [5, 'Supersonic'], [9, 'Aqua Jet'], [14, 'Bite'], [19, 'Water Pulse'], [24, 'Aqua Tail'],
@@ -103,25 +103,25 @@ export const FAMILIES = [
 
   {key: 'yucrane', color: '#e8b830', catchRate: 75,
     stages: [
-      {name: 'Yucrane', types: ['Water', 'Flying'], stats: S(80, 90, 70, 95, 80, 100), abilities: ['Keen Eye', 'Sniper'], h: 1.7, w: 22,
+      {name: 'Yucrane', types: ['Normal', 'Flying'], stats: S(80, 90, 70, 95, 80, 100), abilities: ['Keen Eye', 'Sniper'], h: 1.7, w: 22,
         entry: 'A graceful crane with blue and gold wings. It stands perfectly still in the shallows, then strikes in a flash. Designed by Tyler.'},
     ],
-    moves: [[1, 'Peck'], [1, 'Water Gun'], [5, 'Gust'], [9, 'Wing Attack'], [14, 'Water Pulse'], [19, 'Air Cutter'], [24, 'Roost'],
-      [29, 'Air Slash'], [34, 'Scald'], [40, 'Hurricane'], [46, 'Hydro Pump']],
+    moves: [[1, 'Peck'], [1, 'Growl'], [5, 'Gust'], [9, 'Wing Attack'], [14, 'Quick Attack'], [19, 'Air Cutter'], [24, 'Roost'],
+      [29, 'Air Slash'], [34, 'Hyper Voice'], [40, 'Hurricane'], [46, 'Boomburst']],
     evoMoves: {},
-    final: {ability: 'Sniper', item: 'Scope Lens', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Hurricane', 'Hydro Pump', 'Roost', 'U-turn']}},
+    final: {ability: 'Sniper', item: 'Scope Lens', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Hurricane', 'Boomburst', 'Roost', 'U-turn']}},
 
   {key: 'bizon', color: '#6b4f3f', catchRate: 120,
     stages: [
-      {name: 'Bizon', types: ['Normal'], stats: S(70, 70, 60, 30, 45, 45), abilities: ['Reckless', 'Thick Fat'], h: 1.0, w: 85,
+      {name: 'Bizon', types: ['Dark'], stats: S(70, 70, 60, 30, 45, 45), abilities: ['Intimidate', 'Thick Fat'], h: 1.0, w: 85,
         entry: 'A shaggy young bison with a crescent moon on its side. It charges at anything that wakes it up at night. Designed by Tyler.'},
-      {name: 'Werebizon', at: 30, types: ['Normal', 'Fighting'], stats: S(105, 130, 90, 40, 70, 75), abilities: ['Reckless', 'Iron Fist'], h: 2.1, w: 260,
+      {name: 'Werebizon', at: 30, types: ['Dark'], stats: S(105, 130, 90, 40, 70, 75), abilities: ['Intimidate', 'Iron Fist'], h: 2.1, w: 260,
         entry: 'Under a full moon it rises up on two legs. The glowing moon on its chest gives it the strength to toss boulders. Designed by Tyler.'},
     ],
-    moves: [[1, 'Tackle'], [1, 'Leer'], [5, 'Horn Attack'], [10, 'Headbutt'], [15, 'Rock Smash'], [20, 'Stomp'], [25, 'Take Down'],
-      [30, 'Brick Break'], [35, 'Zen Headbutt'], [40, 'Bulk Up'], [45, 'Close Combat'], [52, 'Double-Edge']],
+    moves: [[1, 'Tackle'], [1, 'Leer'], [5, 'Bite'], [10, 'Horn Attack'], [15, 'Assurance'], [20, 'Stomp'], [25, 'Crunch'],
+      [30, 'Brick Break'], [35, 'Night Slash'], [40, 'Bulk Up'], [45, 'Close Combat'], [52, 'Knock Off']],
     evoMoves: {'Werebizon': ['Brick Break']},
-    final: {ability: 'Reckless', item: 'Choice Band', nature: 'Adamant', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Double-Edge', 'Close Combat', 'Earthquake', 'Zen Headbutt']}},
+    final: {ability: 'Intimidate', item: 'Life Orb', nature: 'Adamant', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Knock Off', 'Close Combat', 'Sucker Punch', 'Bulk Up']}},
 
   {key: 'wild6', color: '#8f7cc2', catchRate: 120,
     stages: [
@@ -139,7 +139,7 @@ export const FAMILIES = [
 
   {key: 'campyre', color: '#f07a3a', catchRate: 150,
     stages: [
-      {name: 'Campyre', types: ['Fire'], stats: S(45, 50, 45, 60, 50, 60), abilities: ['Flash Fire', 'Flame Body'], h: .5, w: 6,
+      {name: 'Campyre', types: ['Fire', 'Grass'], stats: S(45, 50, 45, 60, 50, 60), abilities: ['Flash Fire', 'Flame Body'], h: .5, w: 6,
         entry: 'A cheerful little campfire that roasts marshmallows on its stick arms. It loves a good story. Designed by Tyler.'},
       {name: 'Bonpyre', at: 30, types: ['Fire', 'Grass'], stats: S(85, 90, 80, 110, 85, 65), abilities: ['Flash Fire', 'Flame Body'], h: 1.8, w: 140,
         entry: 'A roaring heap of branches and autumn leaves. Anything that gets too close is swept into its blaze. Designed by Tyler.'},
@@ -163,7 +163,7 @@ export const FAMILIES = [
 
   {key: 'wild5', color: '#86d8ec', catchRate: 150,
     stages: [
-      {name: 'Icerpent', types: ['Ice'], stats: S(45, 55, 45, 50, 45, 55), abilities: ['Shed Skin', 'Ice Body'], h: 1.5, w: 7,
+      {name: 'Icerpent', types: ['Ice', 'Poison'], stats: S(45, 55, 45, 50, 45, 55), abilities: ['Shed Skin', 'Ice Body'], h: 1.5, w: 7,
         entry: 'A frosty snake covered in snowflake scales. Its rattle chimes like icicles in the wind. Designed by Tyler.'},
       {name: 'Coldbra', at: 28, types: ['Ice', 'Poison'], stats: S(80, 95, 75, 85, 80, 95), abilities: ['Intimidate', 'Ice Body'], h: 3.2, w: 60,
         entry: 'When it spreads its hood a great snowflake appears, and the air around it freezes solid. Designed by Tyler.'},
@@ -185,13 +185,13 @@ export const FAMILIES = [
 
   {key: 'weldonrust', color: '#a8573a', catchRate: 75,
     stages: [
-      {name: 'Weldonrust', types: ['Steel', 'Fighting'], stats: S(95, 120, 120, 50, 75, 40), abilities: ['Iron Fist', 'Heavy Metal'], h: 2.2, w: 380,
+      {name: 'Weldonrust', types: ['Steel', 'Ground'], stats: S(95, 120, 120, 50, 75, 40), abilities: ['Iron Fist', 'Sand Force'], h: 2.2, w: 380,
         entry: 'An old welding robot that woke up in a junkyard. The rust on its arms never slows its punches. Designed by Tyler.'},
     ],
-    moves: [[1, 'Metal Claw'], [1, 'Harden'], [6, 'Mach Punch'], [12, 'Iron Defense'], [18, 'Rock Smash'], [24, 'Bullet Punch'], [30, 'Hammer Arm'],
-      [36, 'Iron Head'], [42, 'Drain Punch'], [48, 'Heavy Slam'], [54, 'Meteor Mash']],
+    moves: [[1, 'Metal Claw'], [1, 'Harden'], [6, 'Mud-Slap'], [12, 'Iron Defense'], [18, 'Bulldoze'], [24, 'Bullet Punch'], [30, 'Iron Head'],
+      [36, 'Drill Run'], [42, 'Earthquake'], [48, 'Heavy Slam'], [54, 'Meteor Mash']],
     evoMoves: {},
-    final: {ability: 'Iron Fist', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, def: 4}, moves: ['Meteor Mash', 'Drain Punch', 'Bullet Punch', 'Ice Punch']}},
+    final: {ability: 'Iron Fist', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, def: 4}, moves: ['Meteor Mash', 'Earthquake', 'Bullet Punch', 'Stealth Rock']}},
 
   {key: 'noterish', color: '#3fae4a', catchRate: 120,
     stages: [
