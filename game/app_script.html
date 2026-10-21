@@ -2361,27 +2361,14 @@ const artOf = name => (E && E.isRegional(name)) ? E.monArt(toId(name)) : '';
 const BALL_SVG = `<svg class="ballicon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/><path d="M1.5 10a8.5 8.5 0 0 1 17 0Z" fill="#e25b4f" stroke="#1b1f2a" stroke-width="1.6"/><circle cx="10" cy="10" r="2.6" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/></svg>`;
 
 // --- the professor (an original character) ---
-const PROF_SVG = `<svg viewBox="0 0 120 150" aria-hidden="true" style="width:100%;height:100%">
-  <path d="M14 150 q4 -46 46 -50 q42 4 46 50Z" fill="#eef2f7" stroke="#1b1f2a" stroke-width="3"/>
-  <path d="M44 104 l16 30 l16 -30 q-16 -6 -32 0Z" fill="#3d8f8a" stroke="#1b1f2a" stroke-width="2.5"/>
-  <path d="M44 104 l-8 46 M76 104 l8 46" stroke="#1b1f2a" stroke-width="2.5"/>
-  <rect x="80" y="120" width="12" height="16" rx="2" fill="#c9d4e4" stroke="#1b1f2a" stroke-width="2"/>
-  <path d="M50 92 l0 12 q10 6 20 0 l0 -12Z" fill="#f2c9a5" stroke="#1b1f2a" stroke-width="2.5"/>
-  <ellipse cx="60" cy="62" rx="27" ry="31" fill="#f5d1b0" stroke="#1b1f2a" stroke-width="3"/>
-  <path d="M32 58 q-4 -34 28 -36 q32 2 28 36 q-6 -16 -14 -18 q-10 10 -30 6 q-8 4 -12 12Z" fill="#c4c9d2" stroke="#1b1f2a" stroke-width="3"/>
-  <path d="M33 60 q-6 4 -2 14 q4 2 6 -2Z M87 60 q6 4 2 14 q-4 2 -6 -2Z" fill="#f5d1b0" stroke="#1b1f2a" stroke-width="2"/>
-  <circle cx="49" cy="64" r="8" fill="none" stroke="#1b1f2a" stroke-width="2.5"/><circle cx="71" cy="64" r="8" fill="none" stroke="#1b1f2a" stroke-width="2.5"/><path d="M57 64 h6" stroke="#1b1f2a" stroke-width="2.5"/>
-  <circle cx="49" cy="65" r="2.5" fill="#1b1f2a"/><circle cx="71" cy="65" r="2.5" fill="#1b1f2a"/>
-  <path d="M43 53 q6 -4 12 0 M65 53 q6 -4 12 0" fill="none" stroke="#8d939e" stroke-width="3" stroke-linecap="round"/>
-  <path d="M50 80 q10 8 20 0" fill="none" stroke="#1b1f2a" stroke-width="2.5" stroke-linecap="round"/>
-  <path d="M46 84 q14 10 28 0 q-2 8 -14 9 q-12 -1 -14 -9Z" fill="#c4c9d2" stroke="#1b1f2a" stroke-width="2"/>
-</svg>`;
-const PROF = {name: 'Professor Okla', key: null, color: '#7fb8e6', svg: PROF_SVG};
+// Professor Okla, drawn for the game (portraits/okla.png is his head and shoulders, okla-full.png all of him)
+const PROF_IMG = '<img src="portraits/okla.png" alt="">';
+const PROF = {name: 'Professor Okla', key: null, color: '#7fb8e6', svg: PROF_IMG};
 
 function labSceneHTML() {
   const jars = ['#72c25a', '#f08a4b', '#5f9cf0', '#ee9ad0', '#f2d04a'].map((c, i) => `<span class="jar" style="left:${20 + i * 18}px;top:${14}px;background:${c}"></span>`).join('');
   return `<div class="labscene" aria-hidden="true"><span class="shelf" style="left:16px"></span>${jars}<span class="shelf" style="right:16px;width:80px"></span>
-    <div class="prof">${PROF_SVG}</div><div class="ballrow">${BALL_SVG.repeat(3).replace(/ballicon/g, 'ballicon" style="width:26px;height:26px')}</div></div>`;
+    <div class="prof"><img src="portraits/okla-full.png" alt=""></div><div class="ballrow">${BALL_SVG.repeat(3).replace(/ballicon/g, 'ballicon" style="width:26px;height:26px')}</div></div>`;
 }
 let introName = '', introPick = null;
 async function openProfessor() {
