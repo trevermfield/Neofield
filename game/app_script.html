@@ -1782,10 +1782,10 @@ function openAdvMap({fromBattle, msg} = {}) {
   const dest = A.done ? 18 : Math.min(A.pos, 17) + 1;
   // Neofield: every new town is reached by winning one wild battle on the route that leads to it
   const gated = !!A.regional && A.travelled < dest;
-  if (gated && !fromBattle && (A.loc == null || A.loc > dest - 1)) A.loc = dest - 1;
+  if (gated && !fromBattle && ((A.loc == null && advTown() === dest) || A.loc > dest - 1)) A.loc = dest - 1;
   const firstTrip = !A.regional && A.travelled < dest && !fromBattle;
   if (firstTrip) A.loc = null;
-  const from = firstTrip ? Math.max(0, dest - 1) : A.regional && A.loc != null ? A.loc : dest;
+  const from = firstTrip ? Math.max(0, dest - 1) : A.regional && A.loc != null ? A.loc : A.regional ? advTown() : dest;
   renderWorldMap(from, {stage: aStage, done: A.done, pos: A.pos, order: A.order}, routeOverlay() + questOverlay());
   $('mapSub').textContent = `${money(A.money)} · ${A.pos} of 17 badges · ${DIFFS[A.difficulty].label}`;
   $('mapMenu').hidden = mapFromBattle;
@@ -1805,6 +1805,13 @@ function renderAdvNextBar() {
   const bar = $('nextBar');
   if (mapFromBattle) { bar.innerHTML = `<button class="btn primary" id="mapBackBattle">Back to battle</button>`; return; }
   if (A.regional && A.loc != null) { bar.innerHTML = routeCardHTML(A.loc); return; }
+  if (A.regional && advTown() < advDest()) {
+    const ti = advTown(), L = ti > 0 ? LEADERS[A.order[ti - 1]] : null, c = L ? L.color : '#c9d3e3';
+    const gated = A.travelled < advDest();
+    bar.innerHTML = `<div class="nextcard" style="--c:${c}"><span class="face">${emblem(L ? L.icon : 'star', c)}</span><div><b>${esc(placeName(ti))}</b><small>${L ? `${esc(L.badge)} already earned here.` : 'Your hometown.'} Shop and heal, then tap a route on the map to head out again.</small></div></div>
+    <div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aCenter">Heal team</button></div>`;
+    return;
+  }
   const st = aStage();
   const actions = `<div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aCenter">Heal team</button></div>`;
   if (st.kind === 'done') {
@@ -1834,7 +1841,7 @@ $('mapSvg').addEventListener('click', e => {
   const g = e.target.closest('[data-quest]');
   if (g) { openQuest(+g.dataset.quest); return; }
   const t = e.target.closest('[data-town]');
-  if (t) { openTown(); return; }
+  if (t) { openTown(+t.dataset.town); return; }
   const r = e.target.closest('[data-route]');
   if (r) openRoute(+r.dataset.route);
 });
@@ -2118,7 +2125,7 @@ async function advBattleOver(won) {
   readAdvHP();
   saveA();
   if (!won) {
-    advHealAll(); A.loc = null;
+    advHealAll(); A.loc = null; A.townAt = null;
     if (fight.type === 'e4' || fight.type === 'champion') A.e4pos = 0;
     if (fight.quest != null) A.quests[fight.quest].step = 0;
     if (fight.sham != null) A.shamburg.step[fight.sham] = 0;
@@ -2191,7 +2198,7 @@ async function advBattleOver(won) {
     const caughtMsg = fight.caught ? addCaught(fight.caught) + ' ' : '';
     const lines = null; saveA();
     advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', `${esc(caughtMsg)}${q.step < (q.legend ? 2 : 3) ? `${(q.legend ? 2 : 3) - q.step} more wild Mon${(q.legend ? 2 : 3) - q.step > 1 ? 's' : ''} before the ${q.legend ? 'legendary Mon' : 'trainer'}.` : q.legend ? `${esc(q.trainer)}, a legendary Mon, is waiting at the end of the path.` : `The ${esc(q.trainer)} is waiting at the end of the path.`}`, lines,
-      `<button class="btn primary" id="aQuestNext">Keep going</button><button class="btn" id="aToQuest">Quest map</button>`);
+      `<button class="btn primary" id="aQuestMap">Keep going</button><button class="btn" id="aToQuest">Quest map</button>`);
     return;
   }
   if (fight.type === 'questTrainer') {
@@ -2212,7 +2219,7 @@ async function advBattleOver(won) {
     const L = LEADERS[fight.stage.key];
     badgesFor(A.difficulty)[fight.stage.key] = true; store.set('badgeBook', badgeBook);
     const prize = gymPrize(fight.level);
-    A.money += prize; A.pos++;
+    A.money += prize; A.pos++; A.townAt = null;
     const lines = await growAndShow(2);
     advHealAll();
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
@@ -2233,7 +2240,7 @@ async function advBattleOver(won) {
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
-  if (!['aToMap', 'aToMapTown', 'aShamNext', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
+  if (!['aToMap', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
   endBattleQuietly(); ctx = null;
@@ -2241,8 +2248,9 @@ $('result').addEventListener('click', e => {
   else if (id === 'aRouteAgain') routeBattle(fight.route);
   else if (id === 'aShamNext') shamFight(fight.sham);
   else if (id === 'aToTrail') openTrail();
-  else if (id === 'aToMapTown') { A.loc = null; saveA(); openAdvMap({}); }
+  else if (id === 'aToMapTown') { A.loc = null; A.townAt = null; saveA(); openAdvMap({}); }
   else if (id === 'aQuestNext') questContinue(fight.quest);
+  else if (id === 'aQuestMap') openQuest(fight.quest, {animate: true});
   else if (id === 'aToQuest') openQuest(fight.quest);
   else openAdvMap({});
 });
@@ -2269,7 +2277,7 @@ function ensureQuest(i) {
   saveA();
   return A.quests[i];
 }
-function openQuest(i) {
+function openQuest(i, opts = {}) {
   mapMode = 'adventure';
   const q = ensureQuest(i), ar = AREAS[i];
   setAccent(ar.color);
@@ -2300,6 +2308,8 @@ function openQuest(i) {
     svg += k < nodes ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
     svg += `<text x="${p.x}" y="${p.y + 32}" text-anchor="middle" font-size="11" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(label)}</text>`;
   }
+  const mk0 = opts.animate && q.step > 0 ? pts[Math.min(q.step, nodes) - 1] : pts[Math.min(q.step, nodes)];
+  svg += `<g id="qmarker" transform="translate(${mk0.x} ${mk0.y})"><circle r="12" fill="${ar.color}" opacity=".3"/><circle r="6.5" fill="#fff" stroke="#10131a" stroke-width="2"/></g>`;
   $('questSvg').innerHTML = svg;
   let card;
   if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>${q.legend ? `You caught ${esc(q.trainer)} here.` : `You beat the ${esc(q.trainer)} here.`} Nothing left to do.</small></div></div>`;
@@ -2311,6 +2321,20 @@ function openQuest(i) {
     <button class="btn primary" id="qGo">Challenge the ${esc(q.trainer)}</button>`;
   $('questBar').innerHTML = card;
   show('quest');
+  if (opts.animate && q.step > 0 && !q.done) {
+    const go = $('qGo'); if (go) go.disabled = true;
+    const k = Math.min(q.step, nodes), a = pts[k - 1], b = pts[k], c = {x: (a.x + b.x) / 2 + (k % 2 ? 40 : -40), y: (a.y + b.y) / 2};
+    const t0 = performance.now();
+    const tick = now => {
+      const mk = $('questSvg').querySelector('#qmarker');
+      if (!mk || curScreen !== 'quest') return;
+      const t = Math.min(1, (now - t0) / 2000), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const x = (1 - e) * (1 - e) * a.x + 2 * (1 - e) * e * c.x + e * e * b.x, y = (1 - e) * (1 - e) * a.y + 2 * (1 - e) * e * c.y + e * e * b.y;
+      mk.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+      if (t < 1) requestAnimationFrame(tick); else { const g = $('qGo'); if (g) g.disabled = false; }
+    };
+    requestAnimationFrame(tick);
+  }
 }
 function questContinue(i) {
   const q = ensureQuest(i), ar = AREAS[i];
@@ -2635,8 +2659,8 @@ const placeName = i => i === 0 ? HOME : i <= 17 ? TOWNS[A.order[i - 1]] : LEAGUE
 function routeOverlay() {
   if (!A || !A.regional) return '';
   const pts = mapPoints();
-  const tp = pts[advDest()];
-  let svg = `<g data-town="1" role="button" aria-label="${esc(placeName(advDest()))}"><circle cx="${tp.x}" cy="${tp.y}" r="30" fill="transparent"/></g>`;
+  let svg = '';
+  for (let ti = 0; ti <= advDest(); ti++) { const tp = pts[ti]; svg += `<g data-town="${ti}" role="button" aria-label="${esc(placeName(ti))}"><circle cx="${tp.x}" cy="${tp.y}" r="28" fill="transparent"/></g>`; }
   for (let r = 0; r < E.ROUTES.length; r++) {
     if (!routeOpen(r)) continue;
     const a = pts[r], b = pts[r + 1], c = segCtrl(a, b, r + 1);
@@ -2667,11 +2691,14 @@ function openRoute(r) {
   openAdvMap({});
 }
 const advDest = () => A.done ? 18 : Math.min(A.pos, 17) + 1;
-function openTown() {
+// The town you are standing in: the newest one, or an earlier one you went back to for the shop and healing.
+const advTown = () => (A.townAt != null && A.townAt <= A.travelled && A.townAt < advDest()) ? A.townAt : advDest();
+function openTown(idx) {
   if (!A || !A.regional) return;
   const d = advDest();
-  if (A.travelled < d) { toast(`Beat one wild Mon on ${E.ROUTES[d - 1].name} to reach ${placeName(d)}.`); return; }
-  A.loc = null; saveA(); openAdvMap({});
+  if (idx == null) idx = d;
+  if (idx > A.travelled) { toast(`${shamOpen(d - 1) ? 'Beat Team Shamburg' : `Beat one wild Mon on ${E.ROUTES[d - 1].name}`} to reach ${placeName(d)}.`); return; }
+  A.loc = null; A.townAt = idx < d ? idx : null; saveA(); openAdvMap({});
 }
 function routeCardHTML(r) {
   const R = E.ROUTES[r], lv = routeLevel(r);
@@ -2685,7 +2712,7 @@ function routeCardHTML(r) {
   return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Mons around level ${lv} · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
     <div class="routemons">${mons}</div>
     ${sgOpen ? `<div class="nextcard" style="--c:${SHAM_COLOR}"><span class="face">${emblem('star', SHAM_COLOR)}</span><div><b>Team Shamburg</b><small>${SHAMBURG[sg].trainers.length} trainers in a row, with no healing in between · ${SHAMBURG[sg].levels} levels when you win${A.shamburg.step[sg] ? ` · ${A.shamburg.step[sg]} beaten so far` : ''}</small></div></div>` : ''}
-    ${gatedHere ? `<p class="note">${sgOpen ? `Team Shamburg blocks the way to ${esc(placeName(r + 1))}. Beat all of them to get through.` : `Beat or catch one wild Mon here to reach ${esc(placeName(r + 1))}.`}</p>` : `<p class="note">Tap ${esc(placeName(advDest()))} on the map to go back to town.</p>`}
+    ${gatedHere ? `<p class="note">${sgOpen ? `Team Shamburg blocks the way to ${esc(placeName(r + 1))}. Beat all of them to get through.` : `Beat or catch one wild Mon here to reach ${esc(placeName(r + 1))}.`} You can tap a town you already visited to shop or heal.</p>` : `<p class="note">Tap ${esc(placeName(advDest()))} on the map to go back to town.</p>`}
     <div class="row">${sgOpen ? `<button class="btn primary" id="sGo">${A.shamburg.step[sg] ? 'Keep fighting Team Shamburg' : 'Confront Team Shamburg'}</button>` : ''}<button class="btn ${sgOpen ? '' : 'primary'}" id="rGrass">Walk in the tall grass</button></div>`;
 }
 async function shamFight(k) {
