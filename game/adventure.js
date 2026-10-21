@@ -263,9 +263,16 @@ export function evolutionPath(finalSpecies) { return chainOf(finalSpecies).map(c
 // ---------- Neofield Region (invented Mons) ----------
 export * from './regional.js';
 // A wild invented Mons from a route, at the right evolution stage for its level.
+// Rare (legendary) Mons turn up about 1 time in 40 on their routes; everything else is equally likely.
+function pickFamily(keys) {
+  const w = keys.map(k => familyOf(k).rare ? 0.025 * (keys.length - keys.filter(x => familyOf(x).rare).length) / Math.max(1, keys.filter(x => familyOf(x).rare).length) : 1);
+  let x = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < keys.length; i++) { x -= w[i]; if (x < 0) return keys[i]; }
+  return keys[0];
+}
 export function regionalWild(routeIdx, level, famKey) {
   const r = ROUTES[Math.max(0, Math.min(ROUTES.length - 1, routeIdx))];
-  const fam = familyOf(famKey || r.families[Math.floor(Math.random() * r.families.length)]);
+  const fam = familyOf(famKey || pickFamily(r.families));
   const set = setAtLevel(fam.finalSet, level);
   set.item = ''; set.evs = {}; set.nature = ['Hardy', 'Bold', 'Modest', 'Jolly', 'Calm', 'Adamant', 'Timid', 'Careful'][Math.floor(Math.random() * 8)];
   set.family = fam.key;
