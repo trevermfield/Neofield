@@ -103,13 +103,13 @@ export const FAMILIES = [
 
   {key: 'yucrane', color: '#e8b830', catchRate: 75,
     stages: [
-      {name: 'Yucrane', types: ['Normal', 'Flying'], stats: S(80, 90, 70, 95, 80, 100), abilities: ['Keen Eye', 'Sniper'], h: 1.7, w: 22,
+      {name: 'Yucrane', types: ['Water', 'Flying'], stats: S(80, 90, 70, 95, 80, 100), abilities: ['Keen Eye', 'Sniper'], h: 1.7, w: 22,
         entry: 'A graceful crane with blue and gold wings. It stands perfectly still in the shallows, then strikes in a flash. Designed by Tyler.'},
     ],
-    moves: [[1, 'Peck'], [1, 'Growl'], [5, 'Gust'], [9, 'Wing Attack'], [14, 'Quick Attack'], [19, 'Air Cutter'], [24, 'Roost'],
-      [29, 'Air Slash'], [34, 'Hyper Voice'], [40, 'Hurricane'], [46, 'Boomburst']],
+    moves: [[1, 'Peck'], [1, 'Growl'], [5, 'Water Gun'], [9, 'Wing Attack'], [14, 'Aqua Jet'], [19, 'Air Cutter'], [24, 'Roost'],
+      [29, 'Air Slash'], [34, 'Surf'], [40, 'Hurricane'], [46, 'Hydro Pump']],
     evoMoves: {},
-    final: {ability: 'Sniper', item: 'Scope Lens', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Hurricane', 'Boomburst', 'Roost', 'U-turn']}},
+    final: {ability: 'Sniper', item: 'Scope Lens', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Hurricane', 'Hydro Pump', 'Roost', 'U-turn']}},
 
   {key: 'bizon', color: '#6b4f3f', catchRate: 120,
     stages: [
@@ -207,9 +207,9 @@ export const FAMILIES = [
 
   {key: 'pinedale', color: '#4f9a3c', catchRate: 45,
     stages: [
-      {name: 'Pinedale', types: ['Grass'], stats: S(45, 55, 45, 40, 45, 60), abilities: ['Run Away', 'Sap Sipper'], h: .9, w: 30,
+      {name: 'Pinedale', types: ['Grass', 'Steel'], stats: S(45, 55, 45, 40, 45, 60), abilities: ['Run Away', 'Sap Sipper'], h: .9, w: 30,
         entry: 'A spry foal with a pine-needle mane. It wears a pinecone charm and gallops through the forest all day. Designed by Tyler.'},
-      {name: 'Broncho', at: 18, types: ['Grass'], stats: S(65, 80, 60, 50, 60, 85), abilities: ['Run Away', 'Sap Sipper'], h: 1.6, w: 220,
+      {name: 'Broncho', at: 18, types: ['Grass', 'Steel'], stats: S(65, 80, 60, 50, 60, 85), abilities: ['Run Away', 'Sap Sipper'], h: 1.6, w: 220,
         entry: 'A wild, bucking horse with flowers in its mane. Nobody has ever kept it in a stable for long. Designed by Tyler.'},
       {name: 'Coltmare', at: 38, types: ['Grass', 'Steel'], stats: S(90, 120, 105, 60, 85, 90), abilities: ['Sap Sipper', 'Steadfast'], h: 2.2, w: 620,
         entry: 'A mighty warhorse clad in silver armor and white roses. Its steel horseshoes ring like bells. Designed by Tyler.'},
@@ -231,17 +231,17 @@ export const FAMILIES = [
 
   {key: 'nidomonk', color: '#d85a8a', catchRate: 60,
     stages: [
-      {name: 'Nidomonk', types: ['Rock', 'Psychic'], stats: S(95, 90, 100, 100, 90, 55), abilities: ['Sturdy', 'Inner Focus'], h: 1.4, w: 160,
+      {name: 'Nidomonk', types: ['Psychic', 'Dragon'], stats: S(95, 90, 100, 100, 90, 55), abilities: ['Sturdy', 'Inner Focus'], h: 1.4, w: 160,
         entry: 'It sits so still in meditation that rocks float around it. The crystal on its brow glows with calm power. Designed by Tyler.'},
     ],
-    moves: [[1, 'Tackle'], [1, 'Confusion'], [6, 'Rock Throw'], [12, 'Calm Mind'], [18, 'Psybeam'], [24, 'Ancient Power'], [30, 'Psychic'],
-      [36, 'Power Gem'], [42, 'Stealth Rock'], [48, 'Future Sight']],
+    moves: [[1, 'Tackle'], [1, 'Confusion'], [6, 'Dragon Breath'], [12, 'Calm Mind'], [18, 'Psybeam'], [24, 'Dragon Pulse'], [30, 'Psychic'],
+      [36, 'Recover'], [42, 'Draco Meteor'], [48, 'Future Sight']],
     evoMoves: {},
-    final: {ability: 'Sturdy', item: 'Leftovers', nature: 'Modest', evs: {hp: 252, spa: 252, spd: 4}, moves: ['Psychic', 'Power Gem', 'Calm Mind', 'Stealth Rock']}},
+    final: {ability: 'Sturdy', item: 'Leftovers', nature: 'Modest', evs: {hp: 252, spa: 252, spd: 4}, moves: ['Psychic', 'Draco Meteor', 'Calm Mind', 'Recover']}},
 
   {key: 'chetswatch', color: '#6aa6e6', catchRate: 75,
     stages: [
-      {name: 'Chetswatch', types: ['Normal', 'Fighting'], stats: S(100, 115, 75, 50, 70, 90), abilities: ['Scrappy', 'Hustle'], h: 2.4, w: 210,
+      {name: 'Chetswatch', types: ['Normal'], stats: S(100, 115, 75, 50, 70, 90), abilities: ['Scrappy', 'Hustle'], h: 2.4, w: 210,
         entry: 'A long-armed blue giant who never misses a game. It can reach the hoop without even jumping. Designed by Tyler.'},
     ],
     moves: [[1, 'Pound'], [1, 'Leer'], [6, 'Low Kick'], [12, 'Fake Out'], [18, 'Slam'], [24, 'Brick Break'], [30, 'Body Slam'],
@@ -275,9 +275,9 @@ export const FAMILIES = [
     stages: [
       {name: 'Wyrmie', types: ['Bug'], stats: S(45, 55, 45, 35, 40, 40), abilities: ['Shed Skin', 'Shield Dust'], h: .5, w: 6,
         entry: 'A spiky green caterpillar with a red stripe. It eats leaves all day to grow into something far more fearsome. Designed by Tyler.'},
-      {name: 'Wyrmpod', at: 22, types: ['Bug', 'Dragon'], stats: S(65, 80, 110, 50, 70, 30), abilities: ['Shed Skin', 'Shell Armor'], h: 1.0, w: 90,
+      {name: 'Wyrmpod', at: 22, types: ['Bug'], stats: S(65, 80, 110, 50, 70, 30), abilities: ['Shed Skin', 'Shell Armor'], h: 1.0, w: 90,
         entry: 'It curls into a spiked ball and waits. Its glowing eyes peek out from inside the shell. Designed by Tyler.'},
-      {name: 'Wyrmega', at: 45, types: ['Dragon', 'Bug'], stats: S(91, 134, 95, 80, 90, 110), abilities: ['Moxie', 'Tough Claws'], h: 3.0, w: 250,
+      {name: 'Wyrmega', at: 45, types: ['Bug', 'Dragon'], stats: S(91, 134, 95, 80, 90, 110), abilities: ['Moxie', 'Tough Claws'], h: 3.0, w: 250,
         entry: 'A huge winged dragon born from Wyrmpod. Its roar shakes the trees, and its torn wings carry it across the region. Designed by Tyler.'},
     ],
     moves: [[1, 'Tackle'], [1, 'String Shot'], [5, 'Bug Bite'], [10, 'Twister'], [15, 'Harden'], [22, 'Dragon Breath'], [28, 'X-Scissor'],
@@ -297,7 +297,7 @@ export const FAMILIES = [
 
   {key: 'storment', color: '#e8c040', catchRate: 30, rare: true,
     stages: [
-      {name: 'Storment', types: ['Electric', 'Dark'], stats: S(90, 120, 85, 95, 85, 115), abilities: ['Pressure', 'Strong Jaw'], h: 2.0, w: 175,
+      {name: 'Storment', types: ['Electric'], stats: S(90, 120, 85, 95, 85, 115), abilities: ['Pressure', 'Strong Jaw'], h: 2.0, w: 175,
         entry: 'A black wolf streaked with lightning. Thunder rolls across the sky wherever it runs. Designed by Tyler.'},
     ],
     moves: [[1, 'Thunder Fang'], [1, 'Bite'], [10, 'Spark'], [20, 'Crunch'], [30, 'Wild Charge'], [40, 'Volt Switch'], [50, 'Psychic Fangs'], [60, 'Thunder']],
@@ -306,12 +306,12 @@ export const FAMILIES = [
 
   {key: 'rensylk', color: '#f08a4b', catchRate: 30, rare: true,
     stages: [
-      {name: 'Rensylk', types: ['Fire', 'Fairy'], stats: S(90, 85, 85, 120, 110, 100), abilities: ['Pressure', 'Flash Fire'], h: 1.8, w: 120,
+      {name: 'Rensylk', types: ['Fire'], stats: S(90, 85, 85, 120, 110, 100), abilities: ['Pressure', 'Flash Fire'], h: 1.8, w: 120,
         entry: 'A fox whose fur glows in the colors of a sunset. Its ears flicker with soft flames. Designed by Tyler.'},
     ],
-    moves: [[1, 'Ember'], [1, 'Fairy Wind'], [10, 'Flame Charge'], [20, 'Dazzling Gleam'], [30, 'Flamethrower'], [40, 'Calm Mind'], [50, 'Moonblast'], [60, 'Fire Blast']],
+    moves: [[1, 'Ember'], [1, 'Quick Attack'], [10, 'Flame Charge'], [20, 'Extrasensory'], [30, 'Flamethrower'], [40, 'Calm Mind'], [50, 'Energy Ball'], [60, 'Fire Blast']],
     evoMoves: {},
-    final: {ability: 'Flash Fire', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Flamethrower', 'Moonblast', 'Calm Mind', 'Morning Sun']}},
+    final: {ability: 'Flash Fire', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Flamethrower', 'Energy Ball', 'Calm Mind', 'Morning Sun']}},
 
   {key: 'okloyama', color: '#e88a9a', catchRate: 20, rare: true,
     stages: [
@@ -324,21 +324,21 @@ export const FAMILIES = [
 
   {key: 'hexabeake', color: '#3a2a2a', catchRate: 20, rare: true,
     stages: [
-      {name: 'Hexabeake', types: ['Fire', 'Dark'], stats: S(100, 115, 90, 125, 90, 100), abilities: ['Pressure', 'Flame Body'], h: 3.5, w: 200,
+      {name: 'Hexabeake', types: ['Fire', 'Poison'], stats: S(100, 115, 90, 125, 90, 100), abilities: ['Pressure', 'Flame Body'], h: 3.5, w: 200,
         entry: 'A dark phoenix whose wings drip with burning tar. Legends say it curses anyone who looks at it too long. Designed by Tyler.'},
     ],
-    moves: [[1, 'Ember'], [1, 'Snarl'], [10, 'Wing Attack'], [20, 'Dark Pulse'], [30, 'Flamethrower'], [40, 'Nasty Plot'], [50, 'Fiery Wrath'], [60, 'Overheat']],
+    moves: [[1, 'Ember'], [1, 'Poison Sting'], [10, 'Wing Attack'], [20, 'Sludge Bomb'], [30, 'Flamethrower'], [40, 'Nasty Plot'], [50, 'Sludge Wave'], [60, 'Overheat']],
     evoMoves: {},
-    final: {ability: 'Flame Body', item: 'Life Orb', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Fiery Wrath', 'Flamethrower', 'Nasty Plot', 'Roost']}},
+    final: {ability: 'Flame Body', item: 'Life Orb', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Sludge Bomb', 'Flamethrower', 'Nasty Plot', 'Roost']}},
 
   {key: 'aerialyn', color: '#f4a58a', catchRate: 20, rare: true,
     stages: [
-      {name: 'Aerialyn', types: ['Flying', 'Fairy'], stats: S(100, 100, 100, 100, 100, 100), abilities: ['Serene Grace', 'Pixilate'], h: .4, w: 2,
+      {name: 'Aerialyn', types: ['Psychic', 'Flying'], stats: S(100, 100, 100, 100, 100, 100), abilities: ['Serene Grace', 'Inner Focus'], h: .4, w: 2,
         entry: 'A tiny, playful bird that is almost never seen. It is said to know a little of every move there is. Designed by Tyler.'},
     ],
-    moves: [[1, 'Pound'], [1, 'Gust'], [10, 'Fairy Wind'], [20, 'Air Slash'], [30, 'Moonblast'], [40, 'Roost'], [50, 'Hurricane'], [60, 'Calm Mind']],
+    moves: [[1, 'Pound'], [1, 'Gust'], [10, 'Confusion'], [20, 'Air Slash'], [30, 'Psychic'], [40, 'Roost'], [50, 'Hurricane'], [60, 'Calm Mind']],
     evoMoves: {},
-    final: {ability: 'Serene Grace', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Air Slash', 'Moonblast', 'Calm Mind', 'Roost']}},
+    final: {ability: 'Serene Grace', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Air Slash', 'Psychic', 'Calm Mind', 'Roost']}},
 ];
 
 // Routes: index i joins map point i and i+1 (0 = home town, 18 = Victory Summit).
