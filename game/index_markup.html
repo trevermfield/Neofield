@@ -103,6 +103,10 @@ textarea { width: 100%; box-sizing: border-box; min-height: 160px; background: v
 /* Battle */
 .topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-block: 10px 6px; }
 .topbar .vs { font-family: var(--font-display); font-weight: 800; font-size: 18px; text-transform: uppercase; line-height: 1.1; min-width: 0; }
+.topbar { flex-wrap: wrap; row-gap: 2px; }
+.topbar .vsmeta { flex: 0 0 100%; font-size: 11px; letter-spacing: .1em; color: var(--accent); font-weight: 700; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar .vsmeta:empty { display: none; }
+.tself { display: grid; place-items: center; width: 44px; height: 44px; justify-self: center; align-self: center; border-radius: 8px; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); font-size: 9px; line-height: 1.05; text-align: center; overflow: hidden; padding: 2px; word-break: break-word; }
 .topbar .vs small { display: block; font-family: var(--font-body); font-size: 11px; letter-spacing: .1em; color: var(--accent); font-weight: 700; }
 .ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--muted); }
 .weather { font-size: 12px; color: var(--muted); text-align: center; min-height: 16px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600; }
@@ -841,6 +845,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <!-- BATTLE -->
   <section class="screen battle" id="battle" hidden>
     <div class="topbar">
+      <div class="vsmeta" id="vsMeta"></div>
       <div class="vs" id="vsLabel"></div>
       <div class="row"><button class="ghost" id="battleMap" hidden>Map</button><button class="ghost" id="battleGuide">Team</button><button class="ghost" id="devWin" hidden>Auto win</button><button class="ghost" id="forfeit">Forfeit</button></div>
     </div>

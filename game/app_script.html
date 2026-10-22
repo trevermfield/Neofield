@@ -188,7 +188,8 @@ function beginBattle(p1, p2, seed, gameType) {
   panel = 'fight'; resultShown = false;
   $('log').innerHTML = '';
   $('overlay').hidden = true;
-  $('vsLabel').innerHTML = `<small>${esc(mode === 'online' ? 'Online battle' : (foe.subtitle || ''))}</small>You vs ${esc(foe.name)}`;
+  $('vsMeta').textContent = mode === 'online' ? 'Online battle' : (foe.subtitle || '');
+  $('vsLabel').textContent = `You vs ${foe.name}`;
   for (const id of ['myCard', 'foeCard']) $(id).classList.remove('fx-hit', 'fx-shake', 'fx-act', 'fx-faint');
   bagSel = null;
 }
@@ -859,15 +860,16 @@ function renderControlsMulti(req) {
     // two rows laid out like the battle: foes on top, your side below; only the Mons that can be picked get a button
     const cols = Array.from({length: n}, () => ({foe: null, me: null}));
     for (const t of locs) { const k = Math.abs(t.loc) - 1; if (t.foe) cols[n - 1 - k].foe = t; else cols[k].me = t; }
-    const cell = t => {
-      if (!t) return '<span class="tgap"></span>';
+    const cell = (t, ci, row) => {
+      if (!t) return row === 1 && ci === idx ? `<span class="tself" title="${mcName(me)} is using the move">${artOf(me.species.name) || `<b>${mcName(me)}</b>`}</span>` : '<span class="tgap"></span>';
       const tm = t.mon, pct = Math.round(tm.hp / tm.maxhp * 100);
       let eff = '';
       if (t.foe && mv.category !== 'Status') { const r = E.estimate(battle, me, tm.illusion ? Object.assign(Object.create(tm), {types: tm.illusion.types, species: tm.illusion.species, ability: ''}) : tm, m.id); eff = r.eff === 0 ? 'No effect' : r.eff > 1 ? 'Super effective' : r.eff < 1 ? 'Resisted' : ''; }
       return `<button class="btn ${t.foe ? '' : 'ghost'}" data-mt="${t.loc}">${esc(tm.illusion ? tm.illusion.species.name : tm.species.name)}${t.mon === me ? ' (you)' : t.foe ? '' : ' (ally)'}<small>${pct}% HP${eff ? ' · ' + eff : ''}</small></button>`;
     };
-    const rows = [cols.map(c => c.foe), cols.map(c => c.me)].filter(r => r.some(Boolean));
-    html += `<div class="tgrid" style="--n:${n}">${rows.map(r => r.map(cell).join('')).join('')}</div><div class="row"><button class="btn ghost" data-mback="1">Back</button></div>`;
+    const rows = [cols.map(c => c.foe), cols.map(c => c.me)];
+    if (!rows[0].some(Boolean)) rows.shift();
+    html += `<div class="tgrid" style="--n:${n}">${rows.map((r, ri) => r.map((t, ci) => cell(t, ci, rows.length === 2 ? ri : 1)).join('')).join('')}</div><div class="row"><button class="btn ghost" data-mback="1">Back</button></div>`;
   } else {
     html += `<div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-fight" aria-selected="${panel === 'fight'}" data-panel="fight">Fight</button>
