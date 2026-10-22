@@ -3058,7 +3058,7 @@ function showDexEntry(name) {
   try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
   const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
   const status = adv && reg ? (A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : 'Seen') : '';
-  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
+  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
   const dexNames = [...$('dexList').querySelectorAll('[data-dex]:not([disabled])')].map(b => b.dataset.dex);
   const di = dexNames.indexOf(sp.name), prevN = di > 0 ? dexNames[di - 1] : '', nextN = di >= 0 && di < dexNames.length - 1 ? dexNames[di + 1] : '';
   const dexNav = `<div class="dexnav"><button class="btn ghost" data-dexgo="${esc(prevN)}" ${prevN ? '' : 'disabled'}>‹ Previous</button><button class="btn ghost" data-dexgo="${esc(nextN)}" ${nextN ? '' : 'disabled'}>Next ›</button></div>`;

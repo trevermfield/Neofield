@@ -342,7 +342,7 @@ export const FAMILIES = [
 ];
 
 // Routes: index i joins map point i and i+1 (0 = home town, 18 = Victory Summit).
-// Rare (legendary) families live only on the Laurel Pass (and its side quests); see regionalWild in adventure.js.
+// Rare (legendary) families are never random encounters: each one guards a legendary side quest on the Laurel Pass.
 export const ROUTES = [
   ['Route 1', ['wild1', 'wild2', 'wild4']],
   ['Route 2', ['wild3', 'campyre', 'wild1']],
@@ -361,7 +361,7 @@ export const ROUTES = [
   ['Route 15', ['wild6', 'pinedale', 'cryodon']],
   ['Route 16', ['maraudur', 'banchief', 'noterish']],
   ['Route 17', ['wyrmie', 'weldonrust', 'bizon']],
-  ['Laurel Pass', ['chetswatch', 'nidomonk', 'wild5', 'wild2', 'nivalux', 'storment', 'rensylk', 'okloyama', 'hexabeake', 'aerialyn']],
+  ['Laurel Pass', ['chetswatch', 'nidomonk', 'wild5', 'wild2']],
 ].map(([name, fams], i) => ({name, families: fams, idx: i}));
 
 // ---------- inject into the simulator ----------
@@ -399,7 +399,7 @@ export function regionalInfo(name) {
   if (!st) return null;
   const fam = FAMILIES.find(f => f.key === st.family);
   const routes = ROUTES.filter(r => r.families.includes(fam.key)).map(r => r.name);
-  return {...st, familyKey: fam.key, color: fam.color, catchRate: fam.catchRate, starter: !!fam.starter, routes, line: fam.stages.map(s => ({name: s.name, at: s.at || 1}))};
+  return {...st, familyKey: fam.key, color: fam.color, catchRate: fam.catchRate, starter: !!fam.starter, rare: !!fam.rare, routes, line: fam.stages.map(s => ({name: s.name, at: s.at || 1}))};
 }
 export const familyOf = key => FAMILIES.find(f => f.key === key);
 export const STARTERS = FAMILIES.filter(f => f.starter);
