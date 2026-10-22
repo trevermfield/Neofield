@@ -14,6 +14,11 @@ export const XP = {
   falloff: [[-5, 0.6], [-10, 0.3], [-15, 0.1], [-20, 0]],
 };
 
+// XP to climb out of a level: early levels are quicker (half up to level 14, three quarters up to 19)
+export function xpNeed(level, cfg = XP) {
+  return Math.round(cfg.perLevel * (level < 15 ? 0.5 : level < 20 ? 0.75 : 1));
+}
+
 export function xpMultiplier(foeLevel, myLevel, cfg = XP) {
   const gap = foeLevel - myLevel;
   if (gap >= cfg.bonusGap) return cfg.bonusMult;

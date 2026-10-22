@@ -2,7 +2,7 @@
 // All evolution levels and level-up moves come from Showdown's data, which mirrors the games.
 import {Dex, Teams} from '@pkmn/sim';
 import {ROUTES, familyOf, FAMILIES} from './regional.js';
-import {XP, xpForKO} from './progress.js';
+import {XP, xpForKO, xpNeed} from './progress.js';
 
 const dex = Dex.forFormat('gen9nationaldexubers');
 const toID = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -232,7 +232,7 @@ export function awardXP(team, parts, kind, foeLevels, cfg = XP) {
     const before = m.level;
     m.xp = (m.xp || 0) + gain;
     let n = 0;
-    while (m.xp >= cfg.perLevel && before + n < 100) { m.xp -= cfg.perLevel; n++; }
+    while (m.xp >= xpNeed(before + n, cfg) && before + n < 100) { m.xp -= xpNeed(before + n, cfg); n++; }
     if (before + n >= 100) m.xp = 0;
     events.push({type: 'xp', slot, species, gained: gain, xp: m.xp, levels: n});
     if (n > 0) events.push(...growMember(m, slot, n));
@@ -313,9 +313,9 @@ export function newMember(famKey, level) {
   return {final, level, frac: 1, tutored: [], moves: setAtLevel(final, level).moves};
 }
 // Chance one Mon Ball works. hpFrac 0..1, status like 'slp'. Friendlier than the main games.
-export function catchChance(catchRate, hpFrac, status) {
+export function catchChance(catchRate, hpFrac, status, boost = 1) {
   const bonus = status === 'slp' || status === 'frz' ? 2 : status ? 1.5 : 1;
-  const a = (3 - 2 * Math.max(0, Math.min(1, hpFrac))) / 3 * catchRate * bonus;
+  const a = (3 - 2 * Math.max(0, Math.min(1, hpFrac))) / 3 * catchRate * bonus * boost;
   return Math.min(1, Math.pow(a / 255, 0.6));
 }
 export const familyKeys = () => FAMILIES.map(f => f.key);

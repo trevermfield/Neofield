@@ -591,8 +591,8 @@ function battleXPBar() {
   const act = battle && battle[ME].active[0];
   const i = act ? ctx.names.indexOf(act.name) : -1;
   if (i < 0 || !A.team[i]) return '';
-  const xp = A.team[i].level >= 100 ? 100 : (A.team[i].xp || 0);
-  return `<div class="xpbar" title="XP ${xp} of ${E.XP.perLevel}"><i style="width:${xp / E.XP.perLevel * 100}%"></i></div>`;
+  const lvl = A.team[i].level, xp = lvl >= 100 ? E.xpNeed(lvl) : (A.team[i].xp || 0);
+  return `<div class="xpbar" title="XP ${xp} of ${E.xpNeed(lvl)}"><i style="width:${Math.min(100, xp / E.xpNeed(lvl) * 100)}%"></i></div>`;
 }
 function cardHTML(side) {
   const v = view[side];
@@ -1958,7 +1958,7 @@ $('jbagBack').addEventListener('click', () => { if (mapMode !== 'adventure') ope
 // ---------- Adventure mode ----------
 // Gym levels climb from 10 to 60, the Elite Four from 62 to 68, the Champion is level 70.
 const ADV_START_LV = 8;
-const GYM_LV = JORDER.map((_, i) => Math.round(10 + i * 50 / 16));
+const GYM_LV = JORDER.map((_, i) => i === 0 ? 8 : i === 1 ? 11 : i === 2 ? 14 : Math.round(10 + i * 50 / 16));
 const E4_LV = [62, 64, 66, 68];
 const CHAMP_LV = 70;
 // each rematch of the Summit is 5 levels tougher
@@ -3358,8 +3358,8 @@ function teamCard(set, idx, levelLabel, extra) {
     .replace('<div class="dexbody">', `<div class="dexbody">${extra}`);
 }
 function xpBlock(m) {
-  const xp = m.level >= 100 ? E.XP.perLevel : (m.xp || 0);
-  return `<div class="teamtop"><div class="lbl">XP</div><div class="hp xpb"><i style="width:${xp / E.XP.perLevel * 100}%"></i></div><small class="note">${m.level >= 100 ? 'Max level' : `${xp} of ${E.XP.perLevel} to level ${m.level + 1}`}</small></div>`;
+  const need = E.xpNeed(m.level), xp = m.level >= 100 ? need : (m.xp || 0);
+  return `<div class="teamtop"><div class="lbl">XP</div><div class="hp xpb"><i style="width:${Math.min(100, xp / need * 100)}%"></i></div><small class="note">${m.level >= 100 ? 'Max level' : `${xp} of ${need} to level ${m.level + 1}`}</small></div>`;
 }
 function hpBlock(frac, text) {
   const pct = Math.max(0, frac * 100);
@@ -3485,7 +3485,7 @@ function startRegionalAdventure(name, famKey) {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null,
-    money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 5}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
+    money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
   touchProfile({name});
   saveA();
@@ -3661,7 +3661,7 @@ async function throwBall() {
   saveA();
   $('controls').innerHTML = '<div class="waiting">…</div>';
   const fam = E.familyOf(fight.sets[0].family);
-  const ok = Math.random() < E.catchChance(fam.catchRate, mon.hp / mon.maxhp, mon.status);
+  const ok = Math.random() < E.catchChance(fam.catchRate, mon.hp / mon.maxhp, mon.status, A.pos < 3 ? 1.6 : 1);
   const shakes = ok ? 3 : Math.floor(Math.random() * 3);
   addLine(`${BALL_SVG} You threw a Mon Ball!`);
   await sleep(700);
