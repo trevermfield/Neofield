@@ -1050,6 +1050,7 @@ function endBattleQuietly() {
   if (unsubMoves) { unsubMoves(); unsubMoves = null; }
   if (unsubMatch) { unsubMatch(); unsubMatch = null; }
   battle = null; match = null;
+  if (typeof gloomOff === 'function') gloomOff();
   $('overlay').hidden = true;
   $('battleMap').hidden = true;
 }
@@ -2164,6 +2165,7 @@ function advFight(fight) {
   const seen = {};
   ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
   startVsCpu(fight.sets, null, sets, A.playerName, fight.gameType);
+  if (fight.type === 'champion') gloomOn();
   if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
 }
 function applyAdvHP() {
@@ -2312,7 +2314,8 @@ async function advChallenge() {
     sets = E.leaderSets(A.champTeam, lv);
   }
   const sp = speakerFor(st);
-  await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
+  if (st.kind === 'champion') await championIntro(sets, lv, sp);
+  else await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
   const f = st.kind === 'champion'
     ? {...CHAMP, key: null, subtitle: `Victory Summit · level ${lv}`}
     : {name: LEADERS[st.key].first, key: st.key, color: LEADERS[st.key].color, icon: LEADERS[st.key].icon,
@@ -2657,7 +2660,7 @@ async function advBattleOver(won) {
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); if (A.e4pos === 3) await talk(fight.speaker, E4_LAST); }
   else await talk(fight.speaker, fight.type === 'gym' ? LINES[fight.stage.key].win : CHAMP_LINES.win);
-  if (fight.type === 'champion') await finale();
+  if (fight.type === 'champion') { gloomOff(); await finale(); }
   endBattleQuietly(); ctx = null;
   if (fight.type === 'gym') {
     const L = LEADERS[fight.stage.key];
@@ -2682,6 +2685,97 @@ async function advBattleOver(won) {
     saveA();
     advResult('crown', CHAMP.color, 'Hall of Fame', `You beat the level ${fight.level} Champion and won ${money(CHAMP_PRIZE)}. Your team: ${A.team.map(m => esc(mset(m).species) + ' Lv ' + m.level).join(', ')}.`, null, `<button class="btn primary" id="aToMap">See the map</button>`);
   }
+}
+
+// --- the Champion: a dark introduction, and a gloomy battle (fog, rain, a slow heartbeat) ---
+const CI_LINES = {
+  fatigue: 'So tired. Even resting does not help.',
+  isolation: 'Alone, even in a crowded room.',
+  pain: 'It aches, and it never asks first.',
+  chemo: 'The cure that takes so much with it.',
+  fear: 'What if it all comes back?',
+  relapse: '...',
+};
+async function championIntro(sets, lv, sp) {
+  const el = $('champIntro'), stage = $('ciStage');
+  let skipped = false, pending = [];
+  const release = () => { const p = pending; pending = []; p.forEach(f => f()); };
+  const sleepOrSkip = ms => new Promise(r => { const t = setTimeout(r, skipped || reducedMotion() ? 0 : ms); pending.push(() => { clearTimeout(t); r(); }); });
+  const tap = () => new Promise(r => { const h = () => { el.removeEventListener('click', h); r(); }; el.addEventListener('click', h); pending.push(() => { el.removeEventListener('click', h); r(); }); });
+  const beat = () => { tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22); };
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
+  $('ciSkip').onclick = e => { e.stopPropagation(); skipped = true; release(); };
+  el.hidden = false; el.classList.remove('out');
+  const fx = gloomFX($('ciCanvas'));
+  // 1. the title, out of the dark
+  stage.innerHTML = `<div class="ciTitle"><small>${esc(LEAGUE)}</small><b>THE CHAMPION</b><span>level ${lv}</span></div>`;
+  beat(); await sleepOrSkip(1100); beat(); tone(98, 0, 2.5, 'sine', .12); tone(147, .1, 2.5, 'sine', .05);
+  await Promise.race([sleepOrSkip(3600), tap()]);
+  // 2. the six it carries, one by one
+  for (let i = 0; i < sets.length && !skipped; i++) {
+    const set = sets[i], last = i === sets.length - 1, sp2 = E.Dex.species.get(set.species), t = sp2.types[0];
+    const col = TYPE_COLORS[t] || '#999';
+    const line = CI_LINES[E.toId ? E.toId(set.species) : set.species.toLowerCase()] || '...';
+    stage.innerHTML = `<div class="ciMon" style="--c:${col}"><span class="ciArt${last ? ' dark' : ''}">${artOf(set.species)}</span><b>${last ? '? ? ?' : esc(set.species)}</b><small>${last ? 'It is always there.' : esc(line)}</small></div>`;
+    beat(); tone(220 - i * 12, 0, 1.6, 'sine', .07); tone(330 - i * 18, .05, 1.4, 'triangle', .035);
+    requestAnimationFrame(() => requestAnimationFrame(() => { const a = stage.querySelector('.ciArt'); if (a && !last) a.classList.add('lit'); }));
+    await Promise.race([sleepOrSkip(900), tap()]);
+    if (!skipped) await Promise.race([sleepOrSkip(5200), tap()]);
+  }
+  // 3. the Champion speaks
+  stage.innerHTML = `<div class="ciTitle sm"><b>THE CHAMPION</b></div>`;
+  tone(98, 0, 1.8, 'sine', .14); await sleepOrSkip(900);
+  if (!skipped) { $('talk').style.zIndex = 55; await talk(sp, CHAMP_LINES.intro); $('talk').style.zIndex = ''; }
+  // 4. out through the dark into the battle
+  const fl = $('ciFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+  el.classList.add('quake'); tone(60, 0, 1.2, 'sine', .35); tone(90, .05, .9, 'sawtooth', .05);
+  await new Promise(r => setTimeout(r, skipped ? 100 : 700));
+  fx.stop(); el.hidden = true; el.classList.remove('quake'); stage.innerHTML = ''; fl.classList.remove('go');
+}
+// slow rain / drifting ash on a canvas
+function gloomFX(canvas, ash) {
+  const cx = canvas.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
+  let W = 0, H = 0, alive = true, drops = [];
+  const size = () => { W = canvas.clientWidth; H = canvas.clientHeight; canvas.width = W * dpr; canvas.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size();
+  const mk = () => ({x: Math.random() * (W + 80), y: Math.random() * H, v: 7 + Math.random() * 9, l: 8 + Math.random() * 14, a: .12 + Math.random() * .25});
+  for (let i = 0; i < 90; i++) drops.push(mk());
+  const loop = () => {
+    if (!alive) return;
+    cx.clearRect(0, 0, W, H); cx.lineWidth = 1;
+    for (const d of drops) {
+      cx.strokeStyle = `rgba(160,180,215,${d.a})`; cx.beginPath(); cx.moveTo(d.x, d.y); cx.lineTo(d.x - d.l * .3, d.y + d.l); cx.stroke();
+      d.y += d.v; d.x -= d.v * .3; if (d.y > H) { d.y = -20; d.x = Math.random() * (W + 80); }
+    }
+    requestAnimationFrame(loop);
+  };
+  if (!reducedMotion()) requestAnimationFrame(loop);
+  return {stop() { alive = false; cx.clearRect(0, 0, W, H); }};
+}
+let gloomFx = null, gloomBeat = null, gloomFogT = null;
+function gloomOn() {
+  if (gloomFx) return;
+  const g = $('gloom'); g.hidden = false; $('battle').classList.add('gloomy');
+  gloomFx = gloomFX($('gloomCanvas'));
+  const fog = () => {
+    const f = g.querySelector('.fog' + (1 + Math.floor(Math.random() * 2)));
+    if (f && !reducedMotion()) { f.classList.remove('pass'); void f.offsetWidth; f.classList.add('pass'); }
+    gloomFogT = setTimeout(fog, 7000 + Math.random() * 8000);
+  };
+  gloomFogT = setTimeout(fog, 1500);
+  gloomBeat = setInterval(() => { tone(50, 0, .3, 'sine', .14); tone(46, .25, .35, 'sine', .1); }, 3200);
+}
+function gloomOff() {
+  if (!gloomFx) return;
+  gloomFx.stop(); gloomFx = null; clearTimeout(gloomFogT); clearInterval(gloomBeat);
+  $('gloom').hidden = true; $('battle').classList.remove('gloomy');
+}
+async function devSummitWin() {
+  A.e4pos = 4; A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
+  champions[A.difficulty] = true; store.set('champions', champions);
+  saveA();
+  await finale();
+  advResult('crown', CHAMP.color, 'Hall of Fame', `Developer shortcut: the Summit was beaten for you and you won ${money(CHAMP_PRIZE)}.`, null, `<button class="btn primary" id="aToMap">See the map</button>`);
 }
 
 // --- the finale: confetti, the Elite Four come out to cheer, then the Hall of Fame with fireworks and music ---
@@ -2959,6 +3053,7 @@ function openSummit(opts = {}) {
     <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
+  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button></div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at the In-Laws. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
   show('summit');
@@ -2977,6 +3072,8 @@ function openSummit(opts = {}) {
 }
 $('summitBar').addEventListener('click', e => {
   if (e.target.id === 'sGoFight') advChallenge();
+  else if (e.target.id === 'sDevSkip') { A.e4pos = 4; saveA(); openSummit({animate: true}); }
+  else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.champTeam = null; saveA(); openSummit(); }
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {

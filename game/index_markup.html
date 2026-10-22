@@ -604,6 +604,34 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .mon[class*=" st-"] { border-color: var(--stc); box-shadow: inset 0 0 0 1px var(--stc), 0 0 20px color-mix(in srgb, var(--stc) 35%, transparent); }
 /* ---------- fight introductions: each trainer speaks in turn with their whole team behind them ---------- */
 
+
+.gloom { position: fixed; inset: 0; z-index: 9; pointer-events: none; overflow: hidden; background: radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(2,3,10,.72) 100%); }
+.gloom canvas, .champintro canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#battle.gloomy { filter: saturate(.55) brightness(.82) contrast(1.05); }
+.fog { position: absolute; top: 18%; left: -70%; width: 70%; height: 55%; opacity: 0; background: radial-gradient(ellipse at 50% 50%, rgba(190,200,225,.34), rgba(190,200,225,.12) 45%, transparent 70%); filter: blur(18px); }
+.fog.fog2 { top: 45%; height: 45%; }
+.fog.pass { animation: fogPass 15s ease-in-out forwards; }
+@keyframes fogPass { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(260%); opacity: 0; } }
+.champintro { position: fixed; inset: 0; z-index: 45; overflow: hidden; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer;
+  background: radial-gradient(circle at 50% 45%, #1b1426 0%, #05060c 75%); padding: 24px 16px; }
+.champintro .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 5; }
+.champintro .flash.go { animation: flash 1s ease-out; }
+.champintro .skip { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 14px; z-index: 6; background: none; border: 0; color: rgba(255,255,255,.55); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; }
+.champintro .fog { opacity: 1; animation: fogPass 18s linear infinite; }
+.champintro .fog2 { animation-delay: -9s; }
+.ciStage { position: relative; z-index: 2; width: 100%; max-width: 480px; }
+.ciTitle { display: flex; flex-direction: column; gap: 8px; animation: ciFade 3s ease-out both; }
+.ciTitle small { color: #8f86b8; letter-spacing: .3em; text-transform: uppercase; font-size: 12px; }
+.ciTitle b { font-size: clamp(34px, 11vw, 54px); letter-spacing: .14em; color: #e9e2ff; text-shadow: 0 0 30px #6a4fd6; }
+.ciTitle span { color: #8f86b8; font-size: 14px; }
+.ciTitle.sm b { font-size: 26px; }
+@keyframes ciFade { from { opacity: 0; letter-spacing: .5em; filter: blur(8px); } to { opacity: 1; } }
+.ciMon { display: flex; flex-direction: column; align-items: center; gap: 10px; animation: ciFade 1.6s ease-out both; }
+.ciArt .monart { width: min(62vw, 270px); height: min(62vw, 270px); object-fit: contain; filter: brightness(0) drop-shadow(0 0 2px #000); transition: filter 2.4s ease-out; }
+.ciArt.lit .monart { filter: drop-shadow(0 0 22px var(--c)) brightness(.9); }
+.ciArt.dark .monart { filter: brightness(0) drop-shadow(0 0 14px #5a3a7a); }
+.ciMon b { font-size: 28px; letter-spacing: .22em; text-transform: uppercase; color: var(--c); text-shadow: 0 0 18px var(--c); }
+.ciMon small { color: #b9b2d6; font-size: 16px; font-style: italic; max-width: 22em; }
 .finale { position: fixed; inset: 0; z-index: 45; overflow: hidden; color: #fff; display: flex; flex-direction: column; align-items: center; padding: calc(40px + env(safe-area-inset-top, 0px)) 14px calc(130px + env(safe-area-inset-bottom, 0px));
   background: radial-gradient(circle at 50% 30%, #4a3a12 0%, #1a1426 55%, #07090f 100%); }
 .finale canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
@@ -1033,6 +1061,14 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <button class="skip" id="evoSkip" type="button">Skip</button>
 </div>
 
+<div class="gloom" id="gloom" hidden><div class="fog fog1"></div><div class="fog fog2"></div><canvas id="gloomCanvas"></canvas></div>
+<div class="champintro" id="champIntro" hidden>
+  <canvas id="ciCanvas"></canvas>
+  <div class="fog fog1"></div><div class="fog fog2"></div>
+  <div class="flash" id="ciFlash"></div>
+  <button class="skip" id="ciSkip" type="button">Skip</button>
+  <div class="ciStage" id="ciStage"></div>
+</div>
 <div class="finale" id="finale" hidden aria-live="polite">
   <canvas id="finCanvas"></canvas>
   <div class="flash" id="finFlash"></div>
