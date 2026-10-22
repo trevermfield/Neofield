@@ -2673,6 +2673,7 @@ function openTeamView(from) {
   $('info').querySelector('h1').textContent = 'Your team';
   $('infoChips').innerHTML = '';
   $('infoBody').innerHTML = cards.join('');
+  $('infoBody').querySelectorAll('details.dex[open]').forEach(d => { d.open = false; });   // start with every Mon closed
   show('info');
   $('info').querySelector('.scroll').scrollTop = 0;
 }
