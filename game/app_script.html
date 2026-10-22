@@ -2293,11 +2293,21 @@ function e4Team(g, lv) {
 async function e4Talk(g, which) {
   for (const [k, line] of E4_TALK[g.key][which]) await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line]);
 }
+// the first two gyms are shorter (2 fewer Mons, then 1 fewer); the ones matching the gym's type are kept, weakest others go first
+function gymSets(key, pos, lv) {
+  const sets = E.leaderSets(E.TEAM_TEXT[key], lv);
+  const drop = pos === 0 ? 2 : pos === 1 ? 1 : 0;
+  if (!drop) return sets;
+  const type = LEADERS[key].type;
+  const rank = sets.map((set, i) => { const sp = E.Dex.species.get(set.species); return {i, match: sp.types.includes(type) ? 1 : 0, bst: Object.values(sp.baseStats).reduce((x, y) => x + y, 0)}; });
+  const out = rank.sort((x, y) => (x.match - y.match) || (x.bst - y.bst)).slice(0, drop).map(x => x.i);
+  return sets.filter((_, i) => !out.includes(i));
+}
 async function advChallenge() {
   const st = aStage();
   if (!st || st.kind === 'done') return;
   let sets, lv;
-  if (st.kind === 'gym') { lv = GYM_LV[A.pos]; sets = E.leaderSets(E.TEAM_TEXT[st.key], lv); }
+  if (st.kind === 'gym') { lv = GYM_LV[A.pos]; sets = gymSets(st.key, A.pos, lv); }
   else if (st.kind === 'e4') {
     const g = {...E4_FIGHTS[st.key], key: st.key};
     lv = e4Lv(A.e4pos);
