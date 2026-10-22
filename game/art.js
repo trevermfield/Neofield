@@ -1,6 +1,6 @@
 // Art for the Neofield Mons. Tyler's finished designs live in www/mons/<id>.png and are listed in MON_PICS.
 // Everything else shows a placeholder: a type-colored silhouette with a question mark.
-import {SPECIES} from './regional.js';
+import {SPECIES, BOSS_SPECIES} from './regional.js';
 
 const TYPE_COLORS = {
   Normal: '#b8b29a', Fire: '#f08a4b', Water: '#5f9cf0', Electric: '#f2d04a', Grass: '#72c25a', Ice: '#86d8ec',
@@ -73,13 +73,14 @@ export const MON_PICS = Object.fromEntries([
   'okloyama',
   'hexabeake',
   'aerialyn',
+  'chemo', 'fatigue', 'fear', 'pain', 'isolation',
 ].map(id => [id, `mons/${id}.png`]));
 
 export function monArt(id, cls = '') {
-  const st = SPECIES.find(s => s.id === id);
+  const st = SPECIES.find(s => s.id === id) || BOSS_SPECIES.find(s => s.id === id);
   if (!st) return '';
   const pic = MON_PICS[id];
   if (pic) return `<img class="monart monpic ${cls}" src="${pic}" alt="" aria-hidden="true" draggable="false">`;
   return `<svg class="monart ${cls}" viewBox="0 0 120 120" aria-hidden="true">${placeholder(st)}</svg>`;
 }
-export const hasArt = id => SPECIES.some(s => s.id === id);
+export const hasArt = id => SPECIES.some(s => s.id === id) || BOSS_SPECIES.some(s => s.id === id);

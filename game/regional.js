@@ -339,6 +339,31 @@ export const FAMILIES = [
     moves: [[1, 'Pound'], [1, 'Gust'], [10, 'Confusion'], [20, 'Air Slash'], [30, 'Psychic'], [40, 'Roost'], [50, 'Hurricane'], [60, 'Calm Mind']],
     evoMoves: {},
     final: {ability: 'Serene Grace', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Air Slash', 'Psychic', 'Calm Mind', 'Roost']}},
+  // ---------- the Champion's six (never wild, never in the MonDex) ----------
+  {key: 'chemo', boss: true, rare: true, color: '#8bd42a', catchRate: 0,
+    stages: [{name: 'Chemo', types: ['Poison', 'Steel'], stats: S(100, 110, 120, 80, 100, 60), abilities: ['Corrosion'], h: 2.0, w: 80, entry: 'A skeleton in a tattered hospital gown, pushing an IV stand full of glowing green poison.'}],
+    moves: [[1, 'Poison Sting'], [30, 'Iron Head'], [50, 'Gunk Shot'], [60, 'Toxic']], evoMoves: {},
+    final: {ability: 'Corrosion', item: '', nature: 'Impish', evs: {hp: 252, def: 252, atk: 4}, moves: ['Gunk Shot', 'Iron Head', 'Toxic', 'Recover']}},
+  {key: 'fatigue', boss: true, rare: true, color: '#6b6fa8', catchRate: 0,
+    stages: [{name: 'Fatigue', types: ['Normal', 'Dark'], stats: S(140, 120, 90, 50, 90, 40), abilities: ['Thick Fat'], h: 1.4, w: 300, entry: 'A huge sloth that is always half asleep. Faint ghosts drift off its heavy fur.'}],
+    moves: [[1, 'Tackle'], [30, 'Crunch'], [50, 'Body Slam'], [60, 'Yawn']], evoMoves: {},
+    final: {ability: 'Thick Fat', item: '', nature: 'Adamant', evs: {hp: 252, atk: 252, spd: 4}, moves: ['Yawn', 'Body Slam', 'Crunch', 'Slack Off']}},
+  {key: 'fear', boss: true, rare: true, color: '#7a4fd6', catchRate: 0,
+    stages: [{name: 'Fear', types: ['Ghost', 'Psychic'], stats: S(80, 60, 75, 130, 105, 110), abilities: ['Pressure'], h: 2.2, w: 1, entry: 'A tall shadow with huge claws, wrapped in screaming faces.'}],
+    moves: [[1, 'Astonish'], [30, 'Shadow Ball'], [50, 'Psychic'], [60, 'Nasty Plot']], evoMoves: {},
+    final: {ability: 'Pressure', item: '', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Shadow Ball', 'Psychic', 'Nasty Plot', 'Dark Pulse']}},
+  {key: 'pain', boss: true, rare: true, color: '#d6283a', catchRate: 0,
+    stages: [{name: 'Pain', types: ['Rock', 'Fighting'], stats: S(85, 140, 100, 60, 70, 105), abilities: ['Sturdy'], h: 1.8, w: 400, entry: 'A wolf made of jagged red crystal. Every step cracks the ground.'}],
+    moves: [[1, 'Rock Throw'], [30, 'Stone Edge'], [50, 'Close Combat'], [60, 'Swords Dance']], evoMoves: {},
+    final: {ability: 'Sturdy', item: '', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Swords Dance', 'Close Combat', 'Stone Edge', 'Earthquake']}},
+  {key: 'isolation', boss: true, rare: true, color: '#7fb6e8', catchRate: 0,
+    stages: [{name: 'Isolation', types: ['Ice', 'Psychic'], stats: S(95, 55, 110, 125, 115, 70), abilities: ['Snow Cloak'], h: 1.2, w: 30, entry: 'A lonely child curled up inside a sphere of ice, circled by pale ghosts.'}],
+    moves: [[1, 'Icy Wind'], [30, 'Psychic'], [50, 'Freeze-Dry'], [60, 'Calm Mind']], evoMoves: {},
+    final: {ability: 'Snow Cloak', item: '', nature: 'Calm', evs: {hp: 252, spa: 252, spd: 4}, moves: ['Freeze-Dry', 'Psychic', 'Calm Mind', 'Recover']}},
+  {key: 'relapse', boss: true, rare: true, color: '#4a2a5a', catchRate: 0,
+    stages: [{name: 'Relapse', types: ['Dragon', 'Dark'], stats: S(95, 110, 95, 115, 95, 90), abilities: ['Regenerator'], h: 3.0, w: 250, entry: 'It comes back stronger every time it is cut down. Art coming soon.'}],
+    moves: [[1, 'Bite'], [30, 'Dragon Pulse'], [50, 'Dark Pulse'], [60, 'Draco Meteor']], evoMoves: {},
+    final: {ability: 'Regenerator', item: '', nature: 'Naive', evs: {atk: 128, spa: 128, spe: 252}, moves: ['Draco Meteor', 'Dark Pulse', 'Flamethrower', 'Recover']}},
 ];
 
 // Routes: index i joins map point i and i+1 (0 = home town, 18 = Victory Summit).
@@ -370,6 +395,7 @@ const CATEGORY = {Bulbazoid: 'Bulb', Ivyzoid: 'Spotlight', Venuzoid: 'Satellite'
 // ---------- inject into the simulator ----------
 let num = 1;
 export const SPECIES = []; // flat list in dex order
+export const BOSS_SPECIES = []; // the Champion's six: battle-only, kept out of the MonDex
 for (const fam of FAMILIES) {
   fam.stages.forEach((st, i) => {
     const id = toID(st.name);
@@ -390,16 +416,16 @@ for (const fam of FAMILIES) {
     for (const mv of (fam.evoMoves[st.name] || [])) { const m = toID(mv); ls[m] = (ls[m] || []).filter(s => !s.startsWith('9L')); ls[m].unshift('9L0'); }
     if (isLast) for (const mv of fam.final.moves) { const m = toID(mv); if (!ls[m]) ls[m] = ['9M']; }
     dex.data.Learnsets[id] = {learnset: ls};
-    SPECIES.push(st);
+    (fam.boss ? BOSS_SPECIES : SPECIES).push(st);
   });
   const last = fam.stages[fam.stages.length - 1];
   fam.finalSet = {name: last.name, species: last.name, ...JSON.parse(JSON.stringify(fam.final)), ivs: {hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31}};
 }
-export const REGIONAL_IDS = new Set(SPECIES.map(s => s.id));
+export const REGIONAL_IDS = new Set([...SPECIES, ...BOSS_SPECIES].map(s => s.id));
 export const isRegional = name => REGIONAL_IDS.has(toID(name));
 export function regionalInfo(name) {
   const id = toID(name);
-  const st = SPECIES.find(s => s.id === id);
+  const st = SPECIES.find(s => s.id === id) || BOSS_SPECIES.find(s => s.id === id);
   if (!st) return null;
   const fam = FAMILIES.find(f => f.key === st.family);
   const routes = ROUTES.filter(r => r.families.includes(fam.key)).map(r => r.name);
@@ -407,3 +433,11 @@ export function regionalInfo(name) {
 }
 export const familyOf = key => FAMILIES.find(f => f.key === key);
 export const STARTERS = FAMILIES.filter(f => f.starter);
+
+// The Champion's team (Victory Summit), as set text
+const SHORT = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
+export const CHAMPION_ORDER = ['fatigue', 'isolation', 'pain', 'chemo', 'fear', 'relapse'];
+export const CHAMPION_TEXT = CHAMPION_ORDER.map(k => {
+  const f = FAMILIES.find(x => x.key === k), fs = f.final, n = f.stages[0].name;
+  return `${n}\nAbility: ${fs.ability}\nEVs: ${Object.entries(fs.evs).map(([a, v]) => v + ' ' + SHORT[a]).join(' / ')}\n${fs.nature} Nature\n${fs.moves.map(m => '- ' + m).join('\n')}`;
+}).join('\n\n');

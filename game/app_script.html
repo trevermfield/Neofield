@@ -1496,7 +1496,7 @@ const E4_TALK = {
 };
 const E4_LAST = ["That's the whole Elite Four. The Champion is waiting at the top of Victory Summit."];
 const CHAMP_LINES = {
-  intro: ["So you're the one who beat every gym in the region, then the whole Elite Four.", "I've borrowed a little power from every leader you faced. This is the final battle."],
+  intro: ["So you're the one who beat every gym in the region, then the whole Elite Four.", "Some fights can't be won with strength alone. Meet the six I carry with me. This is the final battle."],
   win: ['...Incredible. The title is yours.', 'From today, you are the Champion of the Neofield Region.'],
 };
 // after the Champion falls, the whole Elite Four has a word ({n} is the player's name)
@@ -1958,6 +1958,10 @@ const ADV_START_LV = 8;
 const GYM_LV = JORDER.map((_, i) => Math.round(10 + i * 50 / 16));
 const E4_LV = [62, 64, 66, 68];
 const CHAMP_LV = 70;
+// each rematch of the Summit is 5 levels tougher
+const lvBonus = () => Math.min(25, 5 * ((A && A.rematch) || 0));
+const e4Lv = i => Math.min(100, E4_LV[i] + lvBonus());
+const champLv = () => Math.min(100, CHAMP_LV + lvBonus());
 const ADV_START_BAG = {hyperpotion: 6, fullrestore: 1, fullheal: 3, revive: 2, maxrevive: 0};
 const PRICES = {pokeball: 200, hyperpotion: 600, fullrestore: 1500, fullheal: 300, revive: 1000, maxrevive: 2500};
 const TUTOR_PRICE = 1500;
@@ -2109,11 +2113,12 @@ function renderAdvNextBarMain() {
   const st = aStage();
   const actions = `<div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aFarm">Farm</button><button class="btn" id="aCenter">Heal team</button></div>`;
   if (st.kind === 'done') {
-    bar.innerHTML = `<div class="nextcard" style="--c:${CHAMP.color}"><span class="face">${emblem('crown', CHAMP.color)}</span><div><b>Adventure complete</b><small>You beat the level ${CHAMP_LV} Champion.</small></div></div>${actions}`;
+    bar.innerHTML = `<div class="nextcard" style="--c:${CHAMP.color}"><span class="face">${emblem('crown', CHAMP.color)}</span><div><b>Adventure complete</b><small>You beat the level ${champLv()} Champion.</small></div></div>
+      <button class="btn primary" id="aSummit">Visit ${LEAGUE}</button>${actions}`;
     return;
   }
   const sp = speakerFor(st);
-  const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? E4_LV[A.e4pos] : CHAMP_LV;
+  const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? e4Lv(A.e4pos) : champLv();
   const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `Victory Summit · level ${lv}`;
   const label = st.kind === 'gym' ? `Challenge ${LEADERS[st.key].first}` : '';   // gyms only: the Summit has its own button
   if (st.kind !== 'gym') {   // the Elite Four and the Champion are fought on the Victory Summit map
@@ -2291,7 +2296,7 @@ async function advChallenge() {
   if (st.kind === 'gym') { lv = GYM_LV[A.pos]; sets = E.leaderSets(E.TEAM_TEXT[st.key], lv); }
   else if (st.kind === 'e4') {
     const g = {...E4_FIGHTS[st.key], key: st.key};
-    lv = E4_LV[A.e4pos];
+    lv = e4Lv(A.e4pos);
     const t = e4Team(g, lv);
     await introScene({kicker: `Elite Four · ${A.e4pos + 1} of 4`, title: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} battle · ${g.members.length} trainers`, color: g.color,
       speakers: g.members.map(k => ({key: k, first: LEADERS[k].first, name: LEADERS[k].title, color: LEADERS[k].color, line: E4_TALK[g.key].intro.find(x => x[0] === k)[1]})),
@@ -2302,8 +2307,8 @@ async function advChallenge() {
     return;
   }
   else {
-    lv = CHAMP_LV;
-    if (!A.champTeam) { A.champTeam = E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k])); saveA(); }
+    lv = champLv();
+    A.champTeam = E.CHAMPION_TEXT;
     sets = E.leaderSets(A.champTeam, lv);
   }
   const sp = speakerFor(st);
@@ -2652,10 +2657,7 @@ async function advBattleOver(won) {
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); if (A.e4pos === 3) await talk(fight.speaker, E4_LAST); }
   else await talk(fight.speaker, fight.type === 'gym' ? LINES[fight.stage.key].win : CHAMP_LINES.win);
-  if (fight.type === 'champion') {
-    const who = A.playerName || 'Tyler';
-    for (const [k, line] of E4_CHEER) await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line.replace(/\{n\}/g, who)]);
-  }
+  if (fight.type === 'champion') await finale();
   endBattleQuietly(); ctx = null;
   if (fight.type === 'gym') {
     const L = LEADERS[fight.stage.key];
@@ -2675,11 +2677,109 @@ async function advBattleOver(won) {
     const lines = await showGrowth(xpEvents);
     advResult(E4_FIGHTS[fight.stage.key].icon, E4_FIGHTS[fight.stage.key].color, `${E4_FIGHTS[fight.stage.key].title} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button><button class="btn" id="aToMap">Back to map</button>`);
   } else {
-    A.money += CHAMP_PRIZE; A.done = true;
+    A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
     champions[A.difficulty] = true; store.set('champions', champions);
     saveA();
-    advResult('crown', CHAMP.color, 'Hall of Fame', `You beat the level ${CHAMP_LV} Champion and won ${money(CHAMP_PRIZE)}. Your team: ${A.team.map(m => esc(mset(m).species) + ' Lv ' + m.level).join(', ')}.`, null, `<button class="btn primary" id="aToMap">See the map</button>`);
+    advResult('crown', CHAMP.color, 'Hall of Fame', `You beat the level ${fight.level} Champion and won ${money(CHAMP_PRIZE)}. Your team: ${A.team.map(m => esc(mset(m).species) + ' Lv ' + m.level).join(', ')}.`, null, `<button class="btn primary" id="aToMap">See the map</button>`);
   }
+}
+
+// --- the finale: confetti, the Elite Four come out to cheer, then the Hall of Fame with fireworks and music ---
+let finTimer = null;
+function finaleFX(canvas) {
+  const cx = canvas.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio || 1);
+  let W = 0, H = 0, parts = [], alive = true, shows = false, nextShow = 0, last = performance.now();
+  const size = () => { W = canvas.clientWidth; H = canvas.clientHeight; canvas.width = W * dpr; canvas.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size();
+  const COL = ['#e8c76a', '#f2668f', '#5f9cf0', '#72c25a', '#b06ee0', '#ffffff', '#f08a4b'];
+  const R = (a, b) => a + Math.random() * (b - a);
+  const loop = now => {
+    if (!alive) return;
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (shows && now > nextShow) { nextShow = now + R(450, 1100); firework(R(.15, .85) * W, R(.12, .5) * H); }
+    cx.clearRect(0, 0, W, H);
+    parts = parts.filter(p => p.life > 0 && p.y < H + 30);
+    for (const p of parts) {
+      p.life -= dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      cx.globalAlpha = Math.max(0, Math.min(1, p.life * (p.spark ? 1.4 : 2)));
+      cx.fillStyle = p.c;
+      if (p.spark) { cx.beginPath(); cx.arc(p.x, p.y, p.s, 0, 6.3); cx.fill(); }
+      else { cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot); cx.scale(1, Math.abs(Math.sin(p.rot * 2)) * .8 + .2); cx.fillRect(-p.s, -p.s * .6, p.s * 2, p.s * 1.2); cx.restore(); }
+    }
+    cx.globalAlpha = 1;
+    requestAnimationFrame(loop);
+  };
+  const firework = (x, y) => {
+    const c = COL[Math.floor(Math.random() * COL.length)], n = 46;
+    for (let i = 0; i < n; i++) { const a = i / n * 6.283, v = R(80, 190); parts.push({x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 120, life: R(.9, 1.5), s: R(1.6, 2.8), c: Math.random() < .25 ? '#fff' : c, spark: true, rot: 0, vr: 0}); }
+    tone(R(500, 900), 0, .5, 'sine', .05); tone(R(1200, 1800), .08, .3, 'triangle', .03);
+  };
+  if (!reducedMotion()) requestAnimationFrame(loop);
+  return {
+    confetti(n) { if (reducedMotion()) return; for (let i = 0; i < n; i++) parts.push({x: R(0, W), y: R(-40, -4), vx: R(-60, 60), vy: R(60, 200), g: 90, life: R(3, 5.5), s: R(3, 6), c: COL[Math.floor(Math.random() * COL.length)], rot: R(0, 6), vr: R(-8, 8)}); },
+    fireworks(on) { shows = on && !reducedMotion(); },
+    stop() { alive = false; cx.clearRect(0, 0, W, H); },
+  };
+}
+// the finale's music is made on the spot with the same synth as the evolution jingle
+function finaleFanfare() {
+  const seq = [[523, 0, .16], [523, .18, .16], [523, .36, .16], [659, .56, .5], [587, 1.1, .2], [659, 1.35, .2], [784, 1.6, 1.1], [1047, 1.6, 1.1]];
+  seq.forEach(([f, t, d]) => { tone(f, t, d, 'square', .06); tone(f / 2, t, d, 'triangle', .08); });
+}
+function finaleMusic(on) {
+  clearInterval(finTimer); finTimer = null;
+  if (!on) return;
+  const CH = [[262, 330, 392, 523], [196, 247, 294, 392], [220, 262, 330, 440], [175, 220, 262, 349]]; // C, G, Am, F
+  let bar = 0;
+  const play = () => {
+    const [r, a, b, c] = CH[bar % 4], mel = [c * 2, b * 2, a * 2 * 1.5, c * 2][bar % 4]; bar++;
+    tone(r / 2, 0, 1.9, 'triangle', .09);
+    [r, a, b, c, b, a, b, c].forEach((f, i) => tone(f, i * .25, .3, 'sine', .05));
+    tone(mel, .5, 1.3, 'triangle', .035); tone(mel * 1.5, 1.0, .9, 'sine', .02);
+  };
+  play(); finTimer = setInterval(play, 2000);
+}
+async function finale() {
+  const who = A.playerName || 'Tyler';
+  const el = $('finale'), crowd = $('finCrowd'), team = $('finTeam'), title = $('finTitle'), go = $('finGo');
+  let skipped = false;
+  const sleep = ms => new Promise(r => setTimeout(r, skipped || reducedMotion() ? 0 : ms));
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
+  crowd.innerHTML = E4_CHEER.map(([k]) => `<span class="fslot" style="--c:${LEADERS[k].color}">${portraitHTML(k, LEADERS[k].color)}</span>`).join('');
+  team.innerHTML = ''; team.hidden = true; crowd.hidden = false; go.hidden = true;
+  title.className = 'ftitle'; title.innerHTML = `<small>The Champion is beaten</small><b>CHAMPION!</b>`;
+  el.hidden = false; $('talk').style.zIndex = 55;
+  const fx = finaleFX($('finCanvas'));
+  const fl = $('finFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
+  fx.confetti(170); finaleFanfare();
+  $('finSkip').onclick = () => { skipped = true; if (talkQueue) { const r = talkQueue.resolve; talkQueue = null; $('talk').hidden = true; r(); } };
+  await sleep(1800);
+  const slots = crowd.children;
+  for (let i = 0; i < E4_CHEER.length && !skipped; i++) {
+    const [k, line] = E4_CHEER[i];
+    slots[i].classList.add('in'); tone(660 + i * 40, 0, .18, 'triangle', .07);
+    if (i % 3 === 0) fx.confetti(30);
+    await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line.replace(/\{n\}/g, who)]);
+  }
+  for (const s of slots) s.classList.add('in');
+  // Hall of Fame
+  fx.confetti(90); fx.fireworks(true); finaleMusic(true);
+  title.className = 'ftitle hof'; title.innerHTML = `<small>${esc(LEAGUE)}</small><b>HALL OF FAME</b>`;
+  await sleep(700);
+  crowd.hidden = true; team.hidden = false;
+  A.team.forEach((m, i) => {
+    const sp = mset(m).species, ty = E.Dex.species.get(sp).types;
+    team.insertAdjacentHTML('beforeend', `<div class="ftile" style="--d:${i * .75}s;--c:${TYPE_COLORS[ty[0]] || '#999'}">${artOf(sp)}<b>${esc(sp)}</b><small>Lv ${m.level}</small>${typesHTML(ty)}</div>`);
+  });
+  const last = A.team.length * .75 + (skipped || reducedMotion() ? 0 : .8);
+  A.team.forEach((_, i) => setTimeout(() => tone(523 * Math.pow(1.122, i * 2), 0, .4, 'triangle', .07), skipped ? 0 : i * 750));
+  if (skipped || reducedMotion()) team.classList.add('instant'); else team.classList.remove('instant');
+  await sleep(last * 1000);
+  title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
+  fx.confetti(60);
+  go.hidden = false;
+  await new Promise(r => { go.onclick = r; });
+  finaleMusic(false); fx.stop(); el.hidden = true; $('talk').style.zIndex = '';
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
@@ -2806,8 +2906,8 @@ function questIdx() { return AREAS.findIndex(a => a.name === $('questName').text
 
 // --- Victory Summit: the Elite Four and the Champion on one straight path, like a side quest map ---
 function summitSteps() {
-  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} · level ${E4_LV[i]}`, icon: g.icon, color: g.color}; });
-  steps.push({key: null, label: 'The Champion', sub: `Champion · level ${CHAMP_LV}`, icon: 'crown', color: CHAMP.color});
+  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} · level ${e4Lv(i)}`, icon: g.icon, color: g.color}; });
+  steps.push({key: null, label: 'The Champion', sub: `Champion · level ${champLv()}`, icon: 'crown', color: CHAMP.color});
   return steps;
 }
 function openSummit(opts = {}) {
@@ -2854,7 +2954,9 @@ function openSummit(opts = {}) {
   svg += `<g id="smarker" transform="translate(${mk0.x} ${mk0.y})"><circle r="12" fill="${gold}" opacity=".3"/><circle r="6.5" fill="#fff" stroke="#10131a" stroke-width="2"/></g>`;
   $('summitSvg').innerHTML = svg;
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
-  if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>`;
+  if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
+    <button class="btn primary" id="sRematch">Rematch the Summit</button>
+    <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at the In-Laws. Are you sure?</small></div></div>
@@ -2875,6 +2977,7 @@ function openSummit(opts = {}) {
 }
 $('summitBar').addEventListener('click', e => {
   if (e.target.id === 'sGoFight') advChallenge();
+  else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.champTeam = null; saveA(); openSummit(); }
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
     summitAsk = false; A.e4pos = 0; A.champTeam = null; saveA();
@@ -3531,7 +3634,7 @@ function openDev(msg) {
   const mrow = (m, i, where) => `<div class="devmon"><b>${esc(mset(m).species)} <span class="lvl">Lv ${m.level}</span></b><small class="note">${m.frac <= 0 ? 'Fainted' : Math.round(m.frac * 100) + '% HP'}</small>
     <div class="row"><input type="number" min="1" max="100" value="${m.level}" id="lv-${where}-${i}" aria-label="Level"><button class="btn" data-dev="setlv" data-w="${where}" data-i="${i}">Set level</button><button class="btn" data-dev="mvreset" data-w="${where}" data-i="${i}">Reset moves</button>
     ${where === 'team' && A.team.length > 1 || where === 'box' ? `<button class="btn" data-dev="remove" data-w="${where}" data-i="${i}">Remove</button>` : ''}</div></div>`;
-  const fams = E.FAMILIES.map(f => `<option value="${f.key}">${esc(f.stages[0].name)}${f.stages.length > 1 ? ' line' : ''}</option>`).join('');
+  const fams = E.FAMILIES.filter(f => !f.boss).map(f => `<option value="${f.key}">${esc(f.stages[0].name)}${f.stages.length > 1 ? ' line' : ''}</option>`).join('');
   $('devBody').innerHTML = `${msg ? `<p class="note"><b>${esc(msg)}</b></p>` : ''}<p class="note">Changes save right away. Right now: <b>${esc(stageNow)}</b> · ${money(A.money)}.</p>
     <div class="section"><h2>Jump to a point in the game</h2><div class="row"><select id="devJump">${jumps}</select></div>
       <label class="note"><input type="checkbox" id="devSetLv" checked> Also set every Mon to that level</label>
