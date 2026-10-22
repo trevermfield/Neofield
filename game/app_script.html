@@ -2319,7 +2319,7 @@ async function advChallenge() {
   if (st.kind === 'champion') await championIntro(sets, lv, sp);
   else await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
   const f = st.kind === 'champion'
-    ? {...CHAMP, key: null, subtitle: `Victory Summit · level ${lv}`}
+    ? {...CHAMP, name: 'Cancer', title: 'Cancer', key: null, subtitle: `Victory Summit · level ${lv}`}
     : {name: LEADERS[st.key].first, key: st.key, color: LEADERS[st.key].color, icon: LEADERS[st.key].icon,
        title: st.kind === 'e4' ? `Elite Four ${LEADERS[st.key].title}` : LEADERS[st.key].title,
        subtitle: st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `${TOWNS[st.key]} · ${LEADERS[st.key].badge} · level ${lv}`};
@@ -2367,8 +2367,9 @@ function chooseMove(m, newMove, opts = {}) {
 // ---- evolution spectacle ----
 let evoSound = store.get('evoSound', true);
 let audio = null;
+let toneMuted = false;
 function tone(freq, t0, dur, type = 'triangle', vol = .12) {
-  if (!evoSound || !audio) return;
+  if (!evoSound || !audio || toneMuted) return;
   const o = audio.createOscillator(), g = audio.createGain();
   o.type = type; o.frequency.value = freq;
   g.gain.setValueAtTime(0, audio.currentTime + t0);
@@ -2661,7 +2662,8 @@ async function advBattleOver(won) {
   }
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); if (A.e4pos === 3) await talk(fight.speaker, E4_LAST); }
-  else await talk(fight.speaker, fight.type === 'gym' ? LINES[fight.stage.key].win : CHAMP_LINES.win);
+  else if (fight.type === 'champion') await championDefeat();
+  else await talk(fight.speaker, LINES[fight.stage.key].win);
   if (fight.type === 'champion') { gloomOff(); await finale(); }
   endBattleQuietly(); ctx = null;
   if (fight.type === 'gym') {
@@ -2734,6 +2736,27 @@ async function championReveal(species) {
     await sleep(400);
   };
 }
+// the Champion, seen only as a dark silhouette (waist up) in the fog
+const HUMAN_SVG = `<svg class="ciHuman" viewBox="0 0 200 250" aria-hidden="true"><defs><linearGradient id="hmF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05040a"/><stop offset=".68" stop-color="#05040a"/><stop offset="1" stop-color="#05040a" stop-opacity="0"/></linearGradient></defs>
+  <g fill="url(#hmF)"><ellipse cx="100" cy="66" rx="29" ry="35"/><path d="M83 92 L117 92 L121 120 C152 130 186 160 184 250 L16 250 C14 160 48 130 79 120 Z"/></g></svg>`;
+async function ciSay(lineEl, text, ms, tap) {
+  lineEl.textContent = text; lineEl.classList.remove('say'); void lineEl.offsetWidth; lineEl.classList.add('say');
+  await Promise.race([tap, new Promise(r => setTimeout(r, reducedMotion() ? 800 : ms))]);
+}
+async function championDefeat() {
+  const el = $('champIntro'), stage = $('ciStage');
+  let release = () => {};
+  const tapP = new Promise(r => { release = r; });
+  $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
+  stage.innerHTML = `<div class="ciHumanWrap">${HUMAN_SVG}<div class="ciWho"><small>${esc(LEAGUE)}</small><b class="red">CANCER</b></div><p class="ciLine" id="ciLine"></p></div>`;
+  el.style.opacity = '0'; el.hidden = false; void el.offsetWidth; el.style.opacity = '1';
+  const fx = gloomFX($('ciCanvas'));
+  tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22);
+  setTimeout(() => el.addEventListener('click', release, {once: true}), 1500);
+  await new Promise(r => setTimeout(r, reducedMotion() ? 200 : 2600));
+  await ciSay($('ciLine'), 'You have defeated me.', 7000, tapP);
+  fx.stop();   // the overlay stays up until the finale covers it
+}
 async function championIntro(sets, lv, sp) {
   const el = $('champIntro'), stage = $('ciStage');
   let skipped = false, pending = [];
@@ -2750,10 +2773,17 @@ async function championIntro(sets, lv, sp) {
   stage.innerHTML = `<div class="ciTitle"><small>${esc(LEAGUE)}</small><b>THE CHAMPION</b><span>level ${lv}</span></div>`;
   beat(); await sleepOrSkip(1100); beat(); tone(98, 0, 2.5, 'sine', .12); tone(147, .1, 2.5, 'sine', .05);
   await Promise.race([sleepOrSkip(3600), tap()]);
-  // 3. the Champion speaks
-  stage.innerHTML = `<div class="ciTitle sm"><b>THE CHAMPION</b></div>`;
-  tone(98, 0, 1.8, 'sine', .14); await sleepOrSkip(900);
-  if (!skipped) { $('talk').style.zIndex = 55; await talk(sp, CHAMP_LINES.intro); $('talk').style.zIndex = ''; }
+  // 2. the silhouette fades in out of the fog; his words fade in and out below it
+  stage.innerHTML = `<div class="ciHumanWrap">${HUMAN_SVG}<div class="ciWho"><small>${esc(LEAGUE)}</small><b id="ciName">THE CHAMPION</b></div><p class="ciLine" id="ciLine"></p></div>`;
+  tone(98, 0, 1.8, 'sine', .14);
+  await sleepOrSkip(2600);
+  for (const line of CHAMP_LINES.intro) { if (skipped) break; await ciSay($('ciLine'), line, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); }
+  // his name, only now
+  if (!skipped) {
+    const nm = $('ciName'); nm.style.transition = 'opacity 1.4s'; nm.style.opacity = '0'; await sleepOrSkip(1500);
+    nm.textContent = 'CANCER'; nm.classList.add('red'); nm.style.opacity = '1'; beat(); tone(65, 0, 2.4, 'sine', .2);
+    await sleepOrSkip(2600);
+  }
   // 4. out through the dark into the battle
   const fl = $('ciFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
   el.classList.add('quake'); tone(60, 0, 1.2, 'sine', .35); tone(90, .05, .9, 'sawtooth', .05);
@@ -2897,11 +2927,13 @@ async function finale() {
   el.hidden = false; $('talk').style.zIndex = 55;
   const fx = finaleFX($('finCanvas'));
   const fl = $('finFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
-  fx.confetti(170); finaleFanfare();
+  toneMuted = true; bgmStart('dawn');   // after the Champion falls, the only music is Piano Dawn
+  $('champIntro').hidden = true; $('champIntro').style.opacity = '';
+  fx.confetti(170);
   $('finSkip').onclick = () => { skipped = true; if (talkQueue) { const r = talkQueue.resolve; talkQueue = null; $('talk').hidden = true; r(); } };
   await sleep(1800);
   // Hall of Fame
-  fx.confetti(90); fx.fireworks(true); bgmStart('dawn');
+  fx.confetti(90); fx.fireworks(true);
   title.className = 'ftitle hof'; title.innerHTML = `<small>${esc(LEAGUE)}</small><b>HALL OF FAME</b>`;
   await sleep(700);
   crowd.hidden = true; team.hidden = false;
@@ -2930,7 +2962,7 @@ async function finale() {
   for (const sl of slots) sl.classList.add('in');
   go.hidden = false;
   await new Promise(r => { go.onclick = r; });
-  bgmStop(); fx.stop(); el.hidden = true; $('talk').style.zIndex = '';
+  bgmStop(); toneMuted = false; fx.stop(); el.hidden = true; $('talk').style.zIndex = '';
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
