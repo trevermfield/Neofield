@@ -607,12 +607,13 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 
 .gloom { position: fixed; inset: 0; z-index: 9; pointer-events: none; overflow: hidden; background: radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(2,3,10,.72) 100%); }
 .gloom canvas, .champintro canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#battle.gloomy .mon.fx-faint { opacity: .06; transform: translateY(16px) scale(.96); filter: blur(3px); transition: opacity 1.6s ease, transform 1.6s ease, filter 1.6s ease; }
 #battle.gloomy { filter: saturate(.55) brightness(.82) contrast(1.05); }
 .fog { position: absolute; top: 18%; left: -70%; width: 70%; height: 55%; opacity: 0; background: radial-gradient(ellipse at 50% 50%, rgba(190,200,225,.34), rgba(190,200,225,.12) 45%, transparent 70%); filter: blur(18px); }
 .fog.fog2 { top: 45%; height: 45%; }
 .fog.pass { animation: fogPass 15s ease-in-out forwards; }
 @keyframes fogPass { 0% { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(260%); opacity: 0; } }
-.champintro { position: fixed; inset: 0; z-index: 45; overflow: hidden; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer;
+.champintro { transition: opacity .9s ease; position: fixed; inset: 0; z-index: 45; overflow: hidden; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer;
   background: radial-gradient(circle at 50% 45%, #1b1426 0%, #05060c 75%); padding: 24px 16px; }
 .champintro .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 5; }
 .champintro .flash.go { animation: flash 1s ease-out; }
@@ -642,8 +643,8 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .ftitle small { color: #e8c76a; letter-spacing: .18em; text-transform: uppercase; font-size: 13px; font-weight: 700; }
 .ftitle b { font-size: clamp(34px, 12vw, 58px); letter-spacing: .06em; background: linear-gradient(90deg, #b8892e, #fff3b0, #e8c76a, #fff3b0, #b8892e); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, namePop .9s ease-out both; }
 .ftitle.hof b { font-size: clamp(30px, 10vw, 48px); }
-.fcrowd { position: relative; z-index: 2; margin-top: 2vh; display: grid; grid-template-columns: repeat(6, 46px); gap: 10px 12px; justify-content: center; }
-.fslot { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; border: 3px solid var(--c); background: #10131a; opacity: 0; transform: translateY(40px) scale(.6); transition: opacity .5s, transform .5s cubic-bezier(.2,1.4,.4,1); box-shadow: 0 0 18px color-mix(in srgb, var(--c) 60%, transparent); }
+.fcrowd { position: relative; z-index: 2; margin-top: 2vh; display: grid; grid-template-columns: repeat(4, 70px); gap: 16px 20px; justify-content: center; }
+.fslot { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid var(--c); background: #10131a; opacity: 0; transform: translateY(40px) scale(.6); transition: opacity .5s, transform .5s cubic-bezier(.2,1.4,.4,1); box-shadow: 0 0 18px color-mix(in srgb, var(--c) 60%, transparent); }
 .fslot.in { opacity: 1; transform: none; }
 .fslot img, .fslot svg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .fteam { position: relative; z-index: 2; margin-top: 3vh; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(100%, 440px); }

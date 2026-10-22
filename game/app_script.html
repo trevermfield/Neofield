@@ -379,12 +379,12 @@ async function play() {
   playing = true;
   if (!events.length) { playing = false; return; }
   for (const ev of events) {
+    if (ev.before) await ev.before();
     if (ev.apply) ev.apply();
     if (ev.text) addLine(ev.text, ev.cls);
     renderCards();
     if (ev.fx) applyFx(ev.fx);
     if (ev.text && !skip) await sleep(ev.wait || (ev.cls === 'turn' ? 150 : 520));
-    if (ev.after) await ev.after();
   }
   playing = false;
   skip = false;
@@ -439,7 +439,7 @@ function translate(lines) {
       case 'switch': case 'drag': {
         const species = parts[2].split(',')[0];
         const hp = parseHP(parts[3], s);
-        out.push({fx: {side: s, kind: 'clear'}, after: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
+        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
           text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : sd === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(ownerOf(id))} sent out <span class="key">${esc(nick(id))}</span>!`});
         break;
       }
@@ -483,7 +483,7 @@ function translate(lines) {
         break;
       }
       case 'faint':
-        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: sd === ME ? 'bad' : 'good'});
+        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: sd === ME ? 'bad' : 'good', wait: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? 1800 : 0});
         break;
       case '-supereffective': out.push({text: `It's super effective!`, fx: {side: s, kind: 'shake'}}); break;
       case '-resisted': out.push({text: `It's not very effective…`, cls: 'info'}); break;
@@ -2703,14 +2703,16 @@ async function championReveal(species) {
   if (!f || f.type !== 'champion') return;
   f.revealed = f.revealed || {};
   const id = species.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (f.revealed[id] || !(id in CI_LINES)) return;
+  if (f.revealed[id] || !(id in CI_LINES)) { await sleep(700); return; }
+  const sleepBefore = 500;
   f.revealed[id] = true;
   const el = $('champIntro'), stage = $('ciStage'), last = id === 'relapse';
   let done = false, release = () => {};
   const col = TYPE_COLORS[E.Dex.species.get(species).types[0]] || '#999';
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
-  el.hidden = false; el.classList.remove('out');
+  await sleep(sleepBefore);
+  el.style.opacity = '0'; el.hidden = false; el.classList.remove('out'); void el.offsetWidth; el.style.opacity = '1';
   const fx = gloomFX($('ciCanvas'));
   stage.innerHTML = `<div class="ciMon" style="--c:${col}"><span class="ciArt${last ? ' dark' : ''}">${artOf(species)}</span><b>${last ? '? ? ?' : esc(species)}</b><small>${last ? 'It is always there.' : esc(CI_LINES[id])}</small></div>`;
   tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22); tone(220, 0, 1.6, 'sine', .07); tone(330, .05, 1.4, 'triangle', .035);
@@ -2720,7 +2722,9 @@ async function championReveal(species) {
     const tm = setTimeout(r, reducedMotion() ? 600 : 6500);
     setTimeout(() => el.addEventListener('click', () => { clearTimeout(tm); r(); }, {once: true}), 900);
   });
-  fx.stop(); el.hidden = true; stage.innerHTML = '';
+  el.style.opacity = '0'; await sleep(reducedMotion() ? 0 : 900);
+  fx.stop(); el.hidden = true; el.style.opacity = ''; stage.innerHTML = '';
+  await sleep(500);
 }
 async function championIntro(sets, lv, sp) {
   const el = $('champIntro'), stage = $('ciStage');
@@ -2903,7 +2907,9 @@ async function finale() {
   title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
   fx.confetti(60);
   await sleep(1200);
-  // then the Elite Four come out to cheer
+  // then the Elite Four come out to cheer: only the trainers on screen
+  team.style.transition = 'opacity .8s'; team.style.opacity = '0'; await sleep(900); team.hidden = true; team.style.opacity = '';
+  title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
   crowd.hidden = false;
   const slots = crowd.children;
   for (let i = 0; i < E4_CHEER.length && !skipped; i++) {
