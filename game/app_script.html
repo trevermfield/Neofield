@@ -3041,7 +3041,9 @@ $('questTeam').addEventListener('click', () => openTeamView(questIdx()));
 // ================= Neofield regional adventure: professor, routes, catching, MonDex =================
 const toId = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const REG_START_LV = 6;
-const artOf = name => (E && E.isRegional(name)) ? E.monArt(toId(name)) : '';
+// National Dex picture: dex/<4-digit number>.webp (base form art, shared by that number's other forms)
+const natArt = num => num > 0 && num <= 1025 ? `<img class="monart monpic" src="dex/${String(num).padStart(4, '0')}.webp" alt="" aria-hidden="true" draggable="false" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'numtile',textContent:'#${num}'}))">` : '';
+const artOf = name => (E && E.isRegional(name)) ? E.monArt(toId(name)) : (E ? natArt(E.Dex.species.get(name).num) : '');
 const BALL_SVG = `<svg class="ballicon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/><path d="M1.5 10a8.5 8.5 0 0 1 17 0Z" fill="#e25b4f" stroke="#1b1f2a" stroke-width="1.6"/><circle cx="10" cy="10" r="2.6" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/></svg>`;
 
 // --- the professor (an original character) ---
@@ -3373,7 +3375,7 @@ function renderDexList() {
   } else {
     let list = nationalList();
     if (adv) list = list.filter(s => A.dex.seen[s.id] && !E.isRegional(s.name));
-    rows = list.filter(s => match(s.name, s.num, s.types)).map(s => `<button class="dexrow" style="--c:${TYPE_COLORS[s.types[0]] || '#999'}" data-dex="${esc(s.name)}"><span class="thumb">${s.num}</span><span><small>#${pad3(s.num)}</small><b>${esc(s.name)}</b>${typesHTML(s.types)}</span></button>`);
+    rows = list.filter(s => match(s.name, s.num, s.types)).map(s => `<button class="dexrow" style="--c:${TYPE_COLORS[s.types[0]] || '#999'}" data-dex="${esc(s.name)}"><span class="thumb">${natArt(s.num) || s.num}</span><span><small>#${pad3(s.num)}</small><b>${esc(s.name)}</b>${typesHTML(s.types)}</span></button>`);
     if (adv && !rows.length && !q) rows = ['<p class="note">Mons you meet in gym battles and on routes show up here.</p>'];
   }
   $('dexList').innerHTML = rows.join('') || '<p class="note">No Mons match that search.</p>';
@@ -3422,7 +3424,7 @@ function showDexEntry(name) {
   const dexNav = `<div class="dexnav"><button class="btn ghost" data-dexgo="${esc(prevN)}" ${prevN ? '' : 'disabled'}>‹ Previous</button><button class="btn ghost" data-dexgo="${esc(nextN)}" ${nextN ? '' : 'disabled'}>Next ›</button></div>`;
   $('dexEntryView').innerHTML = `<div class="dexentry">
     ${dexNav}
-    <div class="dexhero" style="--c:${color}"><div class="pic">${reg ? E.monArt(reg.id) : '#' + sp.num}</div><div>
+    <div class="dexhero" style="--c:${color}"><div class="pic">${reg ? E.monArt(reg.id) : natArt(sp.num) || '#' + sp.num}</div><div>
       <div class="num">${reg ? `Neofield #${pad3(reg.num)}` : `National #${pad3(sp.num)}`}${status ? ' · ' + status : ''}</div><h2>${esc(sp.name)}</h2>${reg && reg.cat ? `<div class="dexcat">${esc(reg.cat)}</div>` : ''}${typesHTML(sp.types)}</div></div>
     ${reg ? `<p class="flavor">${esc(reg.entry)}</p>` : ''}
     <div class="kv"><div class="lbl">Facts</div><p>Height <b>${sp.heightm} m</b> · Weight <b>${sp.weightkg} kg</b>${reg ? ` · Catch rate <b>${reg.catchRate}</b>` : ''}</p><p>Abilities: ${abil}</p></div>
