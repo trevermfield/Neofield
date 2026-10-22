@@ -638,19 +638,19 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .finale .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 5; }
 .finale .flash.go { animation: flash 1.2s ease-out; }
 .finale .skip { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); left: 14px; z-index: 6; background: none; border: 0; color: rgba(255,255,255,.6); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; }
-.ftitle { position: relative; z-index: 2; text-align: center; display: flex; flex-direction: column; gap: 4px; margin-top: 4vh; }
+.ftitle { position: relative; z-index: 2; text-align: center; display: flex; flex-direction: column; gap: 4px; margin-top: 1vh; }
 .ftitle small { color: #e8c76a; letter-spacing: .18em; text-transform: uppercase; font-size: 13px; font-weight: 700; }
 .ftitle b { font-size: clamp(34px, 12vw, 58px); letter-spacing: .06em; background: linear-gradient(90deg, #b8892e, #fff3b0, #e8c76a, #fff3b0, #b8892e); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, namePop .9s ease-out both; }
 .ftitle.hof b { font-size: clamp(30px, 10vw, 48px); }
-.fcrowd { position: relative; z-index: 2; margin-top: 5vh; display: grid; grid-template-columns: repeat(4, 64px); gap: 14px 18px; justify-content: center; }
-.fslot { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; border: 3px solid var(--c); background: #10131a; opacity: 0; transform: translateY(40px) scale(.6); transition: opacity .5s, transform .5s cubic-bezier(.2,1.4,.4,1); box-shadow: 0 0 18px color-mix(in srgb, var(--c) 60%, transparent); }
+.fcrowd { position: relative; z-index: 2; margin-top: 2vh; display: grid; grid-template-columns: repeat(6, 46px); gap: 10px 12px; justify-content: center; }
+.fslot { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; border: 3px solid var(--c); background: #10131a; opacity: 0; transform: translateY(40px) scale(.6); transition: opacity .5s, transform .5s cubic-bezier(.2,1.4,.4,1); box-shadow: 0 0 18px color-mix(in srgb, var(--c) 60%, transparent); }
 .fslot.in { opacity: 1; transform: none; }
 .fslot img, .fslot svg { width: 100%; height: 100%; object-fit: cover; display: block; }
 .fteam { position: relative; z-index: 2; margin-top: 3vh; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: min(100%, 440px); }
-.ftile { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; padding: 8px 4px; border-radius: 14px; border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 14%, #10131a); opacity: 0; animation: ftIn .6s ease-out var(--d) both; box-shadow: 0 0 20px color-mix(in srgb, var(--c) 40%, transparent); }
+.ftile { display: flex; flex-direction: column; align-items: center; gap: 1px; text-align: center; padding: 5px 3px; border-radius: 14px; border: 2px solid var(--c); background: color-mix(in srgb, var(--c) 14%, #10131a); opacity: 0; animation: ftIn .6s ease-out var(--d) both; box-shadow: 0 0 20px color-mix(in srgb, var(--c) 40%, transparent); }
 .fteam.instant .ftile { animation-duration: .01s; animation-delay: 0s; }
 @keyframes ftIn { from { opacity: 0; transform: translateY(18px) scale(.85); } to { opacity: 1; transform: none; } }
-.ftile .monart { width: 84px; height: 84px; object-fit: contain; }
+.ftile .monart { width: 62px; height: 62px; object-fit: contain; }
 .ftile b { font-size: 13px; } .ftile small { opacity: .75; font-size: 11px; }
 .ftile .types { transform: scale(.85); }
 .fin-go { position: absolute; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); min-width: 220px; }

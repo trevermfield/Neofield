@@ -384,6 +384,7 @@ async function play() {
     renderCards();
     if (ev.fx) applyFx(ev.fx);
     if (ev.text && !skip) await sleep(ev.wait || (ev.cls === 'turn' ? 150 : 520));
+    if (ev.after) await ev.after();
   }
   playing = false;
   skip = false;
@@ -438,7 +439,7 @@ function translate(lines) {
       case 'switch': case 'drag': {
         const species = parts[2].split(',')[0];
         const hp = parseHP(parts[3], s);
-        out.push({fx: {side: s, kind: 'clear'}, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
+        out.push({fx: {side: s, kind: 'clear'}, after: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
           text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : sd === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(ownerOf(id))} sent out <span class="key">${esc(nick(id))}</span>!`});
         break;
       }
@@ -2696,6 +2697,31 @@ const CI_LINES = {
   fear: 'What if it all comes back?',
   relapse: '...',
 };
+// each of the Champion's Mons gets its own dark reveal the first time it enters the battle
+async function championReveal(species) {
+  const f = ctx && ctx.fight;
+  if (!f || f.type !== 'champion') return;
+  f.revealed = f.revealed || {};
+  const id = species.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (f.revealed[id] || !(id in CI_LINES)) return;
+  f.revealed[id] = true;
+  const el = $('champIntro'), stage = $('ciStage'), last = id === 'relapse';
+  let done = false, release = () => {};
+  const col = TYPE_COLORS[E.Dex.species.get(species).types[0]] || '#999';
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
+  $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
+  el.hidden = false; el.classList.remove('out');
+  const fx = gloomFX($('ciCanvas'));
+  stage.innerHTML = `<div class="ciMon" style="--c:${col}"><span class="ciArt${last ? ' dark' : ''}">${artOf(species)}</span><b>${last ? '? ? ?' : esc(species)}</b><small>${last ? 'It is always there.' : esc(CI_LINES[id])}</small></div>`;
+  tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22); tone(220, 0, 1.6, 'sine', .07); tone(330, .05, 1.4, 'triangle', .035);
+  requestAnimationFrame(() => requestAnimationFrame(() => { const a = stage.querySelector('.ciArt'); if (a && !last) a.classList.add('lit'); }));
+  await new Promise(r => {
+    release = r;
+    const tm = setTimeout(r, reducedMotion() ? 600 : 6500);
+    setTimeout(() => el.addEventListener('click', () => { clearTimeout(tm); r(); }, {once: true}), 900);
+  });
+  fx.stop(); el.hidden = true; stage.innerHTML = '';
+}
 async function championIntro(sets, lv, sp) {
   const el = $('champIntro'), stage = $('ciStage');
   let skipped = false, pending = [];
@@ -2711,17 +2737,6 @@ async function championIntro(sets, lv, sp) {
   stage.innerHTML = `<div class="ciTitle"><small>${esc(LEAGUE)}</small><b>THE CHAMPION</b><span>level ${lv}</span></div>`;
   beat(); await sleepOrSkip(1100); beat(); tone(98, 0, 2.5, 'sine', .12); tone(147, .1, 2.5, 'sine', .05);
   await Promise.race([sleepOrSkip(3600), tap()]);
-  // 2. the six it carries, one by one
-  for (let i = 0; i < sets.length && !skipped; i++) {
-    const set = sets[i], last = i === sets.length - 1, sp2 = E.Dex.species.get(set.species), t = sp2.types[0];
-    const col = TYPE_COLORS[t] || '#999';
-    const line = CI_LINES[E.toId ? E.toId(set.species) : set.species.toLowerCase()] || '...';
-    stage.innerHTML = `<div class="ciMon" style="--c:${col}"><span class="ciArt${last ? ' dark' : ''}">${artOf(set.species)}</span><b>${last ? '? ? ?' : esc(set.species)}</b><small>${last ? 'It is always there.' : esc(line)}</small></div>`;
-    beat(); tone(220 - i * 12, 0, 1.6, 'sine', .07); tone(330 - i * 18, .05, 1.4, 'triangle', .035);
-    requestAnimationFrame(() => requestAnimationFrame(() => { const a = stage.querySelector('.ciArt'); if (a && !last) a.classList.add('lit'); }));
-    await Promise.race([sleepOrSkip(900), tap()]);
-    if (!skipped) await Promise.race([sleepOrSkip(5200), tap()]);
-  }
   // 3. the Champion speaks
   stage.innerHTML = `<div class="ciTitle sm"><b>THE CHAMPION</b></div>`;
   tone(98, 0, 1.8, 'sine', .14); await sleepOrSkip(900);
@@ -2840,7 +2855,7 @@ async function finale() {
   const sleep = ms => new Promise(r => setTimeout(r, skipped || reducedMotion() ? 0 : ms));
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   crowd.innerHTML = E4_CHEER.map(([k]) => `<span class="fslot" style="--c:${LEADERS[k].color}">${portraitHTML(k, LEADERS[k].color)}</span>`).join('');
-  team.innerHTML = ''; team.hidden = true; crowd.hidden = false; go.hidden = true;
+  team.innerHTML = ''; team.hidden = true; crowd.hidden = true; go.hidden = true;
   title.className = 'ftitle'; title.innerHTML = `<small>The Champion is beaten</small><b>CHAMPION!</b>`;
   el.hidden = false; $('talk').style.zIndex = 55;
   const fx = finaleFX($('finCanvas'));
@@ -2848,14 +2863,6 @@ async function finale() {
   fx.confetti(170); finaleFanfare();
   $('finSkip').onclick = () => { skipped = true; if (talkQueue) { const r = talkQueue.resolve; talkQueue = null; $('talk').hidden = true; r(); } };
   await sleep(1800);
-  const slots = crowd.children;
-  for (let i = 0; i < E4_CHEER.length && !skipped; i++) {
-    const [k, line] = E4_CHEER[i];
-    slots[i].classList.add('in'); tone(660 + i * 40, 0, .18, 'triangle', .07);
-    if (i % 3 === 0) fx.confetti(30);
-    await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line.replace(/\{n\}/g, who)]);
-  }
-  for (const s of slots) s.classList.add('in');
   // Hall of Fame
   fx.confetti(90); fx.fireworks(true); finaleMusic(true);
   title.className = 'ftitle hof'; title.innerHTML = `<small>${esc(LEAGUE)}</small><b>HALL OF FAME</b>`;
@@ -2871,6 +2878,17 @@ async function finale() {
   await sleep(last * 1000);
   title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
   fx.confetti(60);
+  await sleep(1200);
+  // then the Elite Four come out to cheer
+  crowd.hidden = false;
+  const slots = crowd.children;
+  for (let i = 0; i < E4_CHEER.length && !skipped; i++) {
+    const [k, line] = E4_CHEER[i];
+    slots[i].classList.add('in'); tone(660 + i * 40, 0, .18, 'triangle', .07);
+    if (i % 3 === 0) fx.confetti(30);
+    await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line.replace(/\{n\}/g, who)]);
+  }
+  for (const sl of slots) sl.classList.add('in');
   go.hidden = false;
   await new Promise(r => { go.onclick = r; });
   finaleMusic(false); fx.stop(); el.hidden = true; $('talk').style.zIndex = '';
