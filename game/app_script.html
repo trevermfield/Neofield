@@ -2078,7 +2078,7 @@ function renderAdvNextBarMain() {
   const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `Victory Summit · level ${lv}`;
   const label = st.kind === 'gym' ? `Challenge ${LEADERS[st.key].first}` : '';   // gyms only: the Summit has its own button
   if (st.kind !== 'gym') {   // the Elite Four and the Champion are fought on the Victory Summit map
-    bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(sp.key, sp.color)}</span><div><b>${LEAGUE}</b><small>${st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 is next` : 'The Champion is waiting at the top'} · your team averages level ${avgLevel()}</small></div></div>
+    bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(st.kind === 'e4' ? null : sp.key, sp.color)}</span><div><b>${LEAGUE}</b><small>${st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 is next` : 'The Champion is waiting at the top'} · your team averages level ${avgLevel()}</small></div></div>
       <button class="btn primary" id="aSummit">Enter ${LEAGUE}</button>${actions}`;
     return;
   }
@@ -2142,6 +2142,92 @@ function advTrain() {
   const mon = E.randomMon(lv);
   advFight({type: 'train', sets: [mon], foe: {name: 'Wild', wild: true, key: null, color: '#8fb36a', icon: 'leaf', title: `Wild ${mon.species}`, subtitle: `Training · level ${lv}`}});
 }
+
+// --- fight introduction: a title card, then each trainer speaks in turn with their whole team behind them ---
+// opt: {kicker, title, sub, color, speakers: [{key, first, name, color, line}], sets, owners}
+async function introScene(opt) {
+  const el = $('fightIntro'), stage = $('iStage'), teamEl = $('iTeam'), canvas = $('introCanvas');
+  const reduce = reducedMotion();
+  let skipped = false, pending = [];
+  const release = () => { const p = pending; pending = []; p.forEach(f => f()); };
+  const sleepOrSkip = ms => new Promise(r => { const t = setTimeout(r, skipped ? 0 : ms); pending.push(() => { clearTimeout(t); r(); }); });
+  const tap = () => new Promise(r => { const h = () => { el.removeEventListener('click', h); r(); }; el.addEventListener('click', h); pending.push(() => { el.removeEventListener('click', h); r(); }); });
+  el.style.setProperty('--c1', opt.color);
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
+  $('introSound').textContent = evoSound ? 'Sound on' : 'Sound off';
+  $('introSound').onclick = e => { e.stopPropagation(); evoSound = !evoSound; store.set('evoSound', evoSound); $('introSound').textContent = evoSound ? 'Sound on' : 'Sound off'; };
+  $('introSkip').onclick = e => { e.stopPropagation(); skipped = true; release(); };
+  // the whole team, as glowing tiles behind the speaker
+  teamEl.innerHTML = opt.sets.map((set, i) => {
+    const sp = E.Dex.species.get(set.species), art = artOf(sp.name);
+    return `<div class="itile" data-own="${esc(opt.owners[set.species] || '')}" style="--t:${TYPE_COLORS[sp.types[0]] || '#999'};--d:${(i * 0.7).toFixed(1)}s">
+      <span class="orb2">${art || '#' + sp.num}</span><b>${esc(sp.name)}</b><small>Lv ${set.level}</small></div>`;
+  }).join('');
+  // drifting embers in the speaker's colour
+  const g = canvas.getContext('2d'), d = Math.min(2, devicePixelRatio || 1);
+  const resize = () => { canvas.width = innerWidth * d; canvas.height = innerHeight * d; g.setTransform(d, 0, 0, d, 0, 0); };
+  resize(); addEventListener('resize', resize);
+  let parts = [], raf = 0, cols = [opt.color, '#ffffff'];
+  const spark = (x, y, vx, vy, r, life) => parts.push({x, y, vx, vy, r, life, max: life, c: cols[Math.floor(Math.random() * cols.length)]});
+  const burst = n => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = 2 + Math.random() * 6; spark(innerWidth / 2, innerHeight * .42, Math.cos(a) * v, Math.sin(a) * v, 1.5 + Math.random() * 2.5, 50 + Math.random() * 40); } };
+  const loop = () => {
+    g.clearRect(0, 0, innerWidth, innerHeight);
+    if (parts.length < 70) spark(Math.random() * innerWidth, innerHeight + 8, (Math.random() - .5) * .6, -(.6 + Math.random() * 1.5), 1 + Math.random() * 2.4, 240 + Math.random() * 200);
+    parts = parts.filter(p => p.life > 0);
+    for (const p of parts) {
+      p.x += p.vx + Math.sin((p.max - p.life) / 22) * .25; p.y += p.vy; p.vx *= .985; p.life--;
+      g.globalAlpha = Math.max(0, Math.min(1, p.life / 60)) * .85; g.fillStyle = p.c;
+      g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.283); g.fill();
+    }
+    g.globalAlpha = 1;
+    raf = requestAnimationFrame(loop);
+  };
+  if (!reduce) raf = requestAnimationFrame(loop);
+  const flash = () => { const f = $('introFlash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); };
+  el.hidden = false;
+  // 1. title card
+  flash(); burst(60);
+  [196, 247, 294, 392].forEach((f, i) => tone(f, i * .1, .9, 'triangle', .06)); tone(98, 0, 1.1, 'sine', .22);
+  teamEl.style.opacity = '0';
+  stage.innerHTML = `<div class="ititlecard"><div class="ikick">${esc(opt.kicker)}</div><div class="ititle">${esc(opt.title)}</div><div class="isub">${esc(opt.sub)}</div></div>`;
+  await Promise.race([sleepOrSkip(3200), tap()]);
+  teamEl.style.transition = 'opacity .8s'; teamEl.style.opacity = '1';
+  // 2. each trainer in turn
+  for (const sp of opt.speakers) {
+    if (skipped) break;
+    el.style.setProperty('--c1', sp.color); cols = [sp.color, '#ffffff'];
+    teamEl.querySelectorAll('.itile').forEach(t => t.classList.toggle('on', t.dataset.own === sp.first));
+    burst(36); tone(392, 0, .14, 'square', .04); tone(523, .1, .2, 'square', .04); tone(659, .22, .35, 'triangle', .05);
+    stage.innerHTML = `<div class="iport"><img src="portraits/${sp.key}.jpg" alt=""></div><div class="iname">${esc(sp.name)}</div><div class="ibox"><span class="itxt"></span><span class="hint" hidden>Tap to continue</span></div>`;
+    const txt = stage.querySelector('.itxt'), hint = stage.querySelector('.hint');
+    // typewriter; a tap finishes the line, the next tap moves on
+    let shown = 0, timer = 0;
+    const full = () => { clearTimeout(timer); txt.textContent = sp.line; hint.hidden = false; };
+    const typing = new Promise(res => {
+      const tick = () => {
+        if (skipped || reduce) shown = sp.line.length; else shown++;
+        txt.textContent = sp.line.slice(0, shown);
+        if (shown >= sp.line.length) { hint.hidden = false; res(); return; }
+        if (shown % 3 === 0) tone(780 + Math.random() * 120, 0, .03, 'square', .012);
+        timer = setTimeout(tick, 26);
+      };
+      timer = setTimeout(tick, 380);
+      pending.push(res);
+    });
+    await Promise.race([typing, tap()]);
+    full();
+    if (!skipped) await tap();
+  }
+  // 3. flash into the battle
+  cols = ['#ffffff', opt.color];
+  flash(); burst(90); el.classList.add('quake');
+  tone(130, 0, .7, 'sine', .22); [523, 659, 784].forEach((f, i) => tone(f, i * .07, .3, 'square', .05));
+  await wait(skipped ? 150 : 650);
+  cancelAnimationFrame(raf); removeEventListener('resize', resize);
+  el.hidden = true; el.classList.remove('quake'); $('introFlash').classList.remove('go');
+  teamEl.innerHTML = ''; teamEl.style.opacity = ''; teamEl.style.transition = '';
+}
+
 // A family fight's Mons: each trainer's strongest (by total base stats), plus any Mon they must bring.
 function e4Team(g, lv) {
   const sets = [], owners = {};
@@ -2168,7 +2254,9 @@ async function advChallenge() {
     const g = {...E4_FIGHTS[st.key], key: st.key};
     lv = E4_LV[A.e4pos];
     const t = e4Team(g, lv);
-    await e4Talk(g, 'intro');
+    await introScene({kicker: `Elite Four · ${A.e4pos + 1} of 4`, title: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} battle · ${g.members.length} trainers`, color: g.color,
+      speakers: g.members.map(k => ({key: k, first: LEADERS[k].first, name: LEADERS[k].title, color: LEADERS[k].color, line: E4_TALK[g.key].intro.find(x => x[0] === k)[1]})),
+      sets: t.sets, owners: t.owners});
     advFight({type: 'e4', stage: st, level: lv, sets: t.sets, owners: t.owners, gameType: g.mode, speaker: speakerFor(st),
       foe: {name: g.title, key: g.members[0], color: g.color, icon: g.icon, title: g.title,
         subtitle: `Elite Four ${A.e4pos + 1} of 4 · ${g.mode === 'triples' ? 'triples' : 'doubles'} · level ${lv}`}});
@@ -2682,6 +2770,8 @@ function openSummit(opts = {}) {
   mapMode = 'adventure';
   const steps = summitSteps();
   const cleared = A.done ? 5 : A.e4pos < 4 ? A.e4pos : 4;
+  // fights you can't reach yet stay a mystery until it's your turn
+  steps.forEach((st, i) => { if (i < 4 && i > cleared) { st.label = `Elite Four - ${i + 1}`; st.sub = 'Not yet'; st.icon = 'star'; } });
   const gold = CHAMP.color;
   setAccent(cleared < 4 ? steps[cleared].color : gold);
   $('summitSub').textContent = A.done ? `Hall of Fame · ${money(A.money)}` : `${cleared} of 5 beaten · ${money(A.money)}`;
