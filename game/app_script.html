@@ -2888,7 +2888,7 @@ async function finale() {
   $('finSkip').onclick = () => { skipped = true; if (talkQueue) { const r = talkQueue.resolve; talkQueue = null; $('talk').hidden = true; r(); } };
   await sleep(1800);
   // Hall of Fame
-  fx.confetti(90); fx.fireworks(true); finaleMusic(true);
+  fx.confetti(90); fx.fireworks(true); bgmStart('dawn');
   title.className = 'ftitle hof'; title.innerHTML = `<small>${esc(LEAGUE)}</small><b>HALL OF FAME</b>`;
   await sleep(700);
   crowd.hidden = true; team.hidden = false;
@@ -2915,7 +2915,7 @@ async function finale() {
   for (const sl of slots) sl.classList.add('in');
   go.hidden = false;
   await new Promise(r => { go.onclick = r; });
-  finaleMusic(false); fx.stop(); el.hidden = true; $('talk').style.zIndex = '';
+  bgmStop(); fx.stop(); el.hidden = true; $('talk').style.zIndex = '';
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
