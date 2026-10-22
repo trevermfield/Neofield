@@ -358,6 +358,7 @@ async function refresh() {
   if (!battle.ended && req && req.teamPreview && !battle[ME].isChoiceDone()) { showLeadScreen(); return; }
   if (!$('battle').hidden || !$('lead').hidden) show('battle');
   renderControls();
+  $('devWin').hidden = !(A && A.dev && ctx && ctx.kind === 'adventure' && !battle.ended);
   if (battle.ended && !resultShown) {
     resultShown = true;
     if (mode === 'online' && match && match.data.status !== 'done') {
@@ -850,25 +851,30 @@ function renderControlsMulti(req) {
   const trapped = act && (act.trapped || act.maybeTrapped);
   const usedMega = mc.parts.some(p => /mega$/.test(p));
   let html = `<div class="mpick">`;
-  const who = `<b>${mcName(me || {species: {name: 'a Mon'}})}</b> (${idx + 1} of ${n})`;
   if (forced) {
-    html += `<div class="prompt">Choose a replacement for the fainted Mon (${idx + 1} of ${n}).</div><div class="swaps">${mcBench(req).map(x => swapBtn(x)).join('')}</div>`;
+    html += `<div class="prompt">Choose a replacement for the fainted Mon.</div><div class="swaps">${mcBench(req).map(x => swapBtn(x)).join('')}</div>`;
   } else if (mc.stage === 'target') {
     const m = act.moves[mc.move - 1], mv = E.Dex.moves.get(m.id);
     const locs = E.targetLocs(battle, me, m.target || mv.target);
-    html += `<div class="prompt">${who} uses <b>${esc(m.move)}</b> on…</div><div class="targets">` + locs.map(t => {
+    // two rows laid out like the battle: foes on top, your side below; only the Mons that can be picked get a button
+    const cols = Array.from({length: n}, () => ({foe: null, me: null}));
+    for (const t of locs) { const k = Math.abs(t.loc) - 1; if (t.foe) cols[n - 1 - k].foe = t; else cols[k].me = t; }
+    const cell = t => {
+      if (!t) return '<span class="tgap"></span>';
       const tm = t.mon, pct = Math.round(tm.hp / tm.maxhp * 100);
       let eff = '';
       if (t.foe && mv.category !== 'Status') { const r = E.estimate(battle, me, tm.illusion ? Object.assign(Object.create(tm), {types: tm.illusion.types, species: tm.illusion.species, ability: ''}) : tm, m.id); eff = r.eff === 0 ? 'No effect' : r.eff > 1 ? 'Super effective' : r.eff < 1 ? 'Resisted' : ''; }
-      return `<button class="btn ${t.foe ? '' : 'ghost'}" data-mt="${t.loc}">${esc(tm.illusion ? tm.illusion.species.name : tm.species.name)}${t.foe ? '' : ' (ally)'}<small>${pct}% HP${eff ? ' · ' + eff : ''}</small></button>`;
-    }).join('') + `</div><div class="row"><button class="btn ghost" data-mback="1">Back</button></div>`;
+      return `<button class="btn ${t.foe ? '' : 'ghost'}" data-mt="${t.loc}">${esc(tm.illusion ? tm.illusion.species.name : tm.species.name)}${t.mon === me ? ' (you)' : t.foe ? '' : ' (ally)'}<small>${pct}% HP${eff ? ' · ' + eff : ''}</small></button>`;
+    };
+    const rows = [cols.map(c => c.foe), cols.map(c => c.me)].filter(r => r.some(Boolean));
+    html += `<div class="tgrid" style="--n:${n}">${rows.map(r => r.map(cell).join('')).join('')}</div><div class="row"><button class="btn ghost" data-mback="1">Back</button></div>`;
   } else {
     html += `<div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-fight" aria-selected="${panel === 'fight'}" data-panel="fight">Fight</button>
       <button class="tab" role="tab" id="tab-switch" aria-selected="${panel === 'switch'}" data-panel="switch">Mons</button>
       ${usesBag() ? `<button class="tab" role="tab" id="tab-bag" aria-selected="${panel === 'bag'}" data-panel="bag">Bag</button>` : ''}
       ${act && act.canMegaEvo && !usedMega ? '<label class="mega"><input type="checkbox" id="megaBox"> Mega Evolve</label>' : ''}
-    </div><div class="prompt">${who}</div>`;
+    </div>`;
     if (panel === 'bag' && usesBag()) {
       html += bagButtons(bagNow(), bagSel, true);
       if (!bagSel) html += '<div class="prompt">Pick an item. Using one takes this Mon\'s turn.</div>';
@@ -970,6 +976,11 @@ let forfeitArmed = false;
 $('forfeit').addEventListener('click', async () => {
   if (!battle) return;
   if (battle.ended) { leaveBattle(); return; }
+  if (ctx && ctx.kind === 'adventure' && ctx.fight && (ctx.fight.type === 'e4' || ctx.fight.type === 'champion') && !ctx.forfeitOk) {
+    advResult('star', '#e25b4f', 'Forfeit the Elite Four?', 'If you forfeit this battle you lose all your progress at Victory Summit and must start over at the In-Laws. Are you sure?', null,
+      `<button class="btn primary" id="fYes">Yes, forfeit</button><button class="btn" id="fNo">Keep fighting</button>`);
+    return;
+  }
   if (!forfeitArmed) { forfeitArmed = true; $('forfeit').textContent = 'Tap again to forfeit'; setTimeout(() => { forfeitArmed = false; $('forfeit').textContent = 'Forfeit'; }, 2500); return; }
   forfeitArmed = false; $('forfeit').textContent = 'Forfeit';
   if (mode === 'online') {
@@ -981,6 +992,13 @@ $('forfeit').addEventListener('click', async () => {
     match.data = {...match.data, forfeit: ME, status: 'done'};
   }
   battle.forceWin(FOE);
+  await refresh();
+});
+
+// developer mode: win the fight you're in right now
+$('devWin').addEventListener('click', async () => {
+  if (!battle || battle.ended || !A || !A.dev) return;
+  battle.forceWin(ME);
   await refresh();
 });
 
@@ -2025,7 +2043,7 @@ function questOverlay() {
   return svg;
 }
 // Once the Elite Four challenge has begun, the only way off the Victory Summit is to forfeit it.
-const summitLocked = () => !!(A && A.regional && !A.done && A.pos >= 17 && A.e4pos > 0);
+const summitLocked = () => !!(A && A.dev && A.regional && !A.done && A.pos >= 17 && A.e4pos > 0);
 let summitAsk = false;
 function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
@@ -2644,6 +2662,8 @@ async function advBattleOver(won) {
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
+  if (id === 'fNo') { $('overlay').hidden = true; return; }
+  if (id === 'fYes' && ctx) { $('overlay').hidden = true; ctx.forfeitOk = true; forfeitArmed = true; $('forfeit').click(); return; }
   if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
@@ -2771,6 +2791,10 @@ function summitSteps() {
 }
 function openSummit(opts = {}) {
   if (!A || !A.regional) { openAdvMap({}); return; }
+  if (!A.dev) {   // the League isn't open to players yet
+    advResult('crown', CHAMP.color, 'Victory Hall', 'Sorry, Victory hall is currently under construction', null, `<button class="btn primary" id="aToMap">Return to the map</button>`);
+    return;
+  }
   mapMode = 'adventure';
   const steps = summitSteps();
   if (!opts.keepAsk) summitAsk = false;

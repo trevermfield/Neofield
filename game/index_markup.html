@@ -658,6 +658,9 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .mpick { display: grid; gap: 8px; }
 .mpick .prompt { font-weight: 700; }
 .targets { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.tgrid { display: grid; grid-template-columns: repeat(var(--n, 2), 1fr); gap: 8px; }
+.tgrid .btn { min-width: 0; padding-inline: 6px; }
+.tgrid .btn small { display: block; font-weight: 600; opacity: .8; font-size: 11px; }
 .targets button small { display: block; font-weight: 600; opacity: .8; font-size: 11px; }
 .leadgo { margin-top: 10px; }
 .pick.sel { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
@@ -839,7 +842,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <section class="screen battle" id="battle" hidden>
     <div class="topbar">
       <div class="vs" id="vsLabel"></div>
-      <div class="row"><button class="ghost" id="battleMap" hidden>Map</button><button class="ghost" id="battleGuide">Team</button><button class="ghost" id="forfeit">Forfeit</button></div>
+      <div class="row"><button class="ghost" id="battleMap" hidden>Map</button><button class="ghost" id="battleGuide">Team</button><button class="ghost" id="devWin" hidden>Auto win</button><button class="ghost" id="forfeit">Forfeit</button></div>
     </div>
     <div class="mon foe" id="foeCard"></div>
     <div class="weather" id="weather"></div>
