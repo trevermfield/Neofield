@@ -1,6 +1,7 @@
 // Victory Summit simulator: the four Elite Four fights (doubles / triples) and the Champion, back to back,
 // against the game's real teams. Random 6-Mon teams at one level, HP carried between fights, items between fights only.
-// Usage: node sim/summit.mjs [--trials 150] [--levels 60,64,...] [--items full|none]
+// Usage: node sim/summit.mjs [--trials 150] [--levels 60,64,...] [--items full|none|battle]
+//   full = items between fights; battle = items only in the middle of a battle (each use costs that Mon's turn); none = no items
 import fs from 'node:fs';
 import * as E from '../game/core.js';
 import {G, mulberry32} from './play.mjs';
@@ -29,6 +30,31 @@ function e4Sets(g, lv) {
   return sets;
 }
 
+// In battle, a Mon that is low on HP spends its turn on a heal; a healthy Mon may spend it reviving a fallen one.
+// Returns the full choice string for this turn, or null to just play the AI's choice.
+function itemTurn(b, aiChoice, bag) {
+  const side = b.p1, active = side.active;
+  const heal = () => bag.hyperpotion > 0 ? 'hyperpotion' : bag.fullrestore > 0 ? 'fullrestore' : null;
+  const rev = () => bag.revive > 0 ? 'revive' : bag.maxrevive > 0 ? 'maxrevive' : null;
+  let slot = -1, kind = null, target = null;
+  const low = active.map((m, i) => ({m, i})).filter(x => x.m && !x.m.fainted && x.m.hp / x.m.maxhp < .35 && heal()).sort((x, y) => x.m.hp / x.m.maxhp - y.m.hp / y.m.maxhp)[0];
+  if (low) { slot = low.i; kind = heal(); target = low.m; }
+  else {
+    const down = side.pokemon.find(p => p.fainted);
+    const ok = active.map((m, i) => ({m, i})).find(x => x.m && !x.m.fainted && x.m.hp / x.m.maxhp >= .55);
+    if (down && rev() && ok) { slot = ok.i; kind = rev(); target = down; }
+  }
+  if (!kind) return null;
+  E.applyItem(b, 'p1', kind, target); bag[kind]--;
+  if (b.activePerHalf === 1) {
+    return E.spendTurnOnItem(b, 'p1') ? 'DONE' : null;
+  }
+  const ph = E.spendSlotOnItem(b, 'p1', slot);
+  if (!ph) return null;
+  const parts = aiChoice.split(',').map(x => x.trim()); parts[slot] = ph;
+  return parts.join(', ');
+}
+
 function runTrial(L, rnd) {
   const fams = E.FAMILIES.filter(f => !f.boss).map(f => f.key);
   for (let i = fams.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [fams[i], fams[j]] = [fams[j], fams[i]]; }
@@ -40,8 +66,8 @@ function runTrial(L, rnd) {
   let used = 0;
   for (let fi = 0; fi < fights.length; fi++) {
     // between fights: revive, then heal anything under 60%
-    for (const m of team) if (m.frac <= 0) { if (bag.revive > 0) { bag.revive--; m.frac = .5; used++; } else if (bag.maxrevive > 0) { bag.maxrevive--; m.frac = 1; used++; } }
-    for (let n = 0; n < 8; n++) {
+    if (ITEMS === 'full') for (const m of team) if (m.frac <= 0) { if (bag.revive > 0) { bag.revive--; m.frac = .5; used++; } else if (bag.maxrevive > 0) { bag.maxrevive--; m.frac = 1; used++; } }
+    if (ITEMS === 'full') for (let n = 0; n < 8; n++) {
       const low = team.filter(m => m.frac > 0 && m.frac < .6).sort((a, b) => a.frac - b.frac)[0];
       if (!low) break;
       if (bag.hyperpotion > 0) { bag.hyperpotion--; low.frac = Math.min(1, low.frac + .5); used++; }
@@ -57,12 +83,16 @@ function runTrial(L, rnd) {
     b.p1.pokemon.forEach(p => { const m = team[names.indexOf(p.name)]; state[p.name] = {hp: m.frac <= 0 ? 0 : Math.max(1, Math.round(m.frac * p.maxhp))}; });
     E.applyTeamState(b.p1, state);
     const mem = {p1: {}, p2: {}};
-    let guard = 0;
+    let guard = 0, itemTurns = 0;
     while (!b.ended && guard++ < 600) {
       for (const sid of ['p1', 'p2']) {
         const r = b[sid].activeRequest;
         if (!r || r.wait || b[sid].isChoiceDone()) continue;
         const ch = E.aiChoose(b, sid, mem[sid], 'normal');
+        if (sid === 'p1' && ITEMS === 'battle' && ch && r.active && !r.forceSwitch && !r.teamPreview && itemTurns < 8) {
+          const made = itemTurn(b, ch, bag);
+          if (made) { itemTurns++; used++; if (made === 'DONE' || b.choose('p1', made)) continue; }
+        }
         if (!ch || !b.choose(sid, ch)) b.choose(sid, 'default');
       }
     }
