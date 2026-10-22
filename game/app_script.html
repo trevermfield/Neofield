@@ -2392,6 +2392,17 @@ $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
 
 // --- Laurel Pass (opens after the 17th badge) ---
+// Laurel Pass is a map like the towns and side quests: a winding road with its 12 trainers on it, and the six legendary sites beside it.
+const TRAIL_H = 840;
+function trailPts() {
+  const road = TRAIL_TRAINERS.map((_, i) => ({x: 180 + 78 * Math.sin(i * 0.95 + 0.4), y: TRAIL_H - 70 - i * 58}));
+  // each legendary site sits off the road after trainers 2, 4, 6, 8, 10 and 12
+  const sites = AREAS.slice(17).map((_, k) => {
+    const r = road[k * 2 + 1], left = r.x > 180;
+    return {x: left ? 52 : 308, y: r.y - 22, rx: r.x, ry: r.y};
+  });
+  return {road, sites};
+}
 function openTrail() {
   if (!trailOpen()) { openAdvMap({}); return; }
   mapMode = 'adventure';
@@ -2399,28 +2410,61 @@ function openTrail() {
   const T = A.trail, doneT = TRAIL_TRAINERS.filter((_, i) => T.t[i]).length;
   const doneL = AREAS.slice(17).filter((a, k) => (A.quests[17 + k] || {}).done).length;
   $('trailSub').textContent = `${doneT} of ${TRAIL_TRAINERS.length} trainers · ${doneL} of 6 legendary Mons · ${money(A.money)}`;
-  const legend = AREAS.slice(17).map((ar, k) => {
-    const i = 17 + k, q = A.quests[i] || {}, open = legendUnlocked(i);
-    const sub = q.done ? `Cleared. You caught ${esc(ar.trainer)}.` : !open ? `Locked. Clear ${esc(AREAS[i - 1].name)} first.` : `Level ${ar.lv} · 2 wild Mons, then a legendary Mon`;
-    return `<button class="trailrow" style="--c:${ar.color}" data-tq="${i}" ${open ? '' : 'disabled'}><span class="face">${emblem(ar.icon, ar.color)}</span><span><b>${esc(ar.name)}</b><small>${sub}</small></span></button>`;
-  }).join('');
-  const trainers = TRAIL_TRAINERS.map((n, i) => {
-    const lv = trailLv(i), done = T.t[i];
-    return `<button class="trailrow" style="--c:#e8c76a" data-tt="${i}" ${done ? 'disabled' : ''}><span class="face">${emblem('crown', '#e8c76a')}</span><span><b>${esc(n)}</b><small>${done ? 'Defeated' : `Three Mons around level ${lv} · prize ${money(trainerPrize(lv))}`}</small></span></button>`;
-  }).join('');
-  $('trailBody').innerHTML = `<p class="note">A road of champions beyond ${esc(LEAGUE)}. Beat its trainers for prize money, and track down the six legendary Mons one at a time.</p>
-    <div class="row"><button class="btn" id="trailHeal">Heal team</button></div>
-    <div class="lbl">Legendary quests</div><div class="trailrows">${legend}</div>
-    <div class="lbl">Trainers</div><div class="trailrows">${trainers}</div>`;
+  const {road, sites} = trailPts();
+  const gold = '#e8c76a';
+  const nextT = TRAIL_TRAINERS.findIndex((_, i) => !T.t[i]);
+  const nextL = AREAS.slice(17).findIndex((_, k) => legendUnlocked(17 + k) && !(A.quests[17 + k] || {}).done);
+  const r = rng(77);
+  let svg = `<rect width="360" height="${TRAIL_H}" fill="color-mix(in srgb, ${gold} 9%, #121820)"/>`;
+  for (let k = 0; k < 70; k++) {
+    const x = 8 + r() * 344, y = 8 + r() * (TRAIL_H - 16);
+    if (road.some(p => Math.hypot(p.x - x, p.y - y) < 46) || sites.some(p => Math.hypot(p.x - x, p.y - y) < 46)) continue;
+    svg += `<path d="M${(x - 9).toFixed(0)} ${y.toFixed(0)} L${x.toFixed(0)} ${(y - 14).toFixed(0)} L${(x + 9).toFixed(0)} ${y.toFixed(0)}Z" fill="${gold}" opacity=".12"/>`;
+  }
+  // the road: entrance at the bottom, the way on to the Elite Four at the top
+  const pts = [{x: 180, y: TRAIL_H - 20}, ...road];
+  const roadD = pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(0) + ' ' + p.y.toFixed(0)).join(' ');
+  svg += `<path d="${roadD}" fill="none" stroke="#2a3340" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg += `<path d="${roadD}" fill="none" stroke="#56616f" stroke-width="2.5" stroke-dasharray="6 7" stroke-linecap="round" stroke-linejoin="round"/>`;
+  svg += `<text x="180" y="${TRAIL_H - 4}" text-anchor="middle" font-size="11" fill="#b4bdcb">Entrance</text>`;
+  svg += `<text x="${road[11].x}" y="${road[11].y - 34}" text-anchor="middle" font-size="11" fill="#b4bdcb">On to ${esc(LEAGUE)}</text>`;
+  // legendary sites
+  sites.forEach((p, k) => {
+    const i = 17 + k, ar = AREAS[i], q = A.quests[i] || {}, open = legendUnlocked(i), done = !!q.done, cur = k === nextL;
+    svg += `<path d="M${p.rx.toFixed(0)} ${p.ry.toFixed(0)} L${p.x} ${p.y}" stroke="${open ? ar.color : '#3a4658'}" stroke-width="2" stroke-dasharray="4 5" opacity=".8"/>`;
+    svg += `<g data-tq="${i}" style="cursor:${open ? 'pointer' : 'default'}" ${open ? '' : 'opacity=".55"'}>`;
+    if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="30" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="23" fill="${done ? ar.color : '#1d2633'}" stroke="${open ? ar.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
+    svg += emblemAt(ar.icon, done ? '#10131a' : open ? ar.color : '#56616f', p.x, p.y, 24);
+    svg += `<text x="${p.x}" y="${p.y + 38}" text-anchor="middle" font-size="10.5" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(ar.name)}</text>`;
+    svg += `<text x="${p.x}" y="${p.y + 50}" text-anchor="middle" font-size="9.5" fill="#7e8a9c">${done ? 'Cleared' : open ? 'Legendary · Lv ' + ar.lv : 'Locked'}</text></g>`;
+  });
+  // trainers on the road
+  road.forEach((p, i) => {
+    const done = !!T.t[i], cur = i === nextT, left = p.x > 180;
+    svg += `<g data-tt="${i}" style="cursor:${done ? 'default' : 'pointer'}">`;
+    if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="22" fill="none" stroke="${gold}" stroke-width="2"/>`;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="15" fill="${done ? gold : '#1d2633'}" stroke="${done || cur ? gold : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
+    svg += emblemAt('crown', done ? '#10131a' : cur ? gold : '#56616f', p.x, p.y, 16);
+    svg += `<text x="${p.x + (left ? -24 : 24)}" y="${p.y + 4}" text-anchor="${left ? 'end' : 'start'}" font-size="10.5" font-weight="${cur ? 700 : 500}" fill="${done ? '#7e8a9c' : cur ? '#e9edf3' : '#95a0b2'}">${esc(TRAIL_TRAINERS[i])}${done ? ' ✓' : ''}</text></g>`;
+  });
+  $('trailSvg').innerHTML = svg;
+  const tgt = nextL >= 0 && (nextT < 0 || nextT >= nextL * 2 + 2) ? sites[nextL] : nextT >= 0 ? road[nextT] : road[11];
+  const t = nextT >= 0 ? road[nextT] : tgt;
+  $('trailBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>${nextT >= 0 ? esc(TRAIL_TRAINERS[nextT]) : doneL < 6 ? 'The legendary Mons' : 'Laurel Pass cleared'}</b><small>${nextT >= 0 ? `Tap a trainer on the road to battle · three Mons around level ${trailLv(nextT)} · prize ${money(trainerPrize(trailLv(nextT)))}` : doneL < 6 ? 'Tap a legendary site beside the road. Each one unlocks after the last.' : 'Nothing left here. The Elite Four are waiting.'}</small></div></div>
+    <div class="row"><button class="btn" id="trailHeal">Heal team</button></div>`;
   show('trail');
-  $('trailBody').parentElement.scrollTop = 0;
+  const wrap = $('trailWrap');
+  requestAnimationFrame(() => { const k = wrap.scrollHeight / TRAIL_H; wrap.scrollTop = Math.max(0, t.y * k - wrap.clientHeight / 2); });
 }
-$('trailBody').addEventListener('click', async e => {
-  if (e.target.closest('#trailHeal')) { advHealAll(); saveA(); toast('Your team was fully healed.'); return; }
+$('trailBar').addEventListener('click', e => {
+  if (e.target.closest('#trailHeal')) { advHealAll(); saveA(); toast('Your team was fully healed.'); }
+});
+$('trailSvg').addEventListener('click', e => {
   const q = e.target.closest('[data-tq]');
-  if (q && !q.disabled) { openQuest(+q.dataset.tq); return; }
+  if (q) { const i = +q.dataset.tq; if (legendUnlocked(i)) openQuest(i); else toast(`Clear ${AREAS[i - 1].name} first.`); return; }
   const t = e.target.closest('[data-tt]');
-  if (t && !t.disabled) trailFight(+t.dataset.tt);
+  if (t) { const i = +t.dataset.tt; if (A.trail.t[i]) toast(`${TRAIL_TRAINERS[i]} has already been beaten.`); else trailFight(i); }
 });
 async function trailFight(i) {
   const lv = trailLv(i), name = TRAIL_TRAINERS[i];
