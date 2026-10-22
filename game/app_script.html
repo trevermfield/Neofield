@@ -2024,8 +2024,12 @@ function questOverlay() {
   }
   return svg;
 }
-function openAdvMap({fromBattle, msg} = {}) {
+// Once the Elite Four challenge has begun, the only way off the Victory Summit is to forfeit it.
+const summitLocked = () => !!(A && A.regional && !A.done && A.pos >= 17 && A.e4pos > 0);
+let summitAsk = false;
+function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
+  if (summitLocked() && !force) { openSummit(); return; }
   mapMode = 'adventure';
   mapFromBattle = !!fromBattle;
   const st = aStage();
@@ -2769,6 +2773,8 @@ function openSummit(opts = {}) {
   if (!A || !A.regional) { openAdvMap({}); return; }
   mapMode = 'adventure';
   const steps = summitSteps();
+  if (!opts.keepAsk) summitAsk = false;
+  $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
   const cleared = A.done ? 5 : A.e4pos < 4 ? A.e4pos : 4;
   // fights you can't reach yet stay a mystery until it's your turn
   steps.forEach((st, i) => { if (i < 4 && i > cleared) { st.label = `Elite Four - ${i + 1}`; st.sub = 'Not yet'; st.icon = 'star'; } });
@@ -2806,6 +2812,8 @@ function openSummit(opts = {}) {
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
+  if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at the In-Laws. Are you sure?</small></div></div>
+    <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
   show('summit');
   if (opts.animate && cleared > 0) {
     const go = $('sGoFight'); if (go) go.disabled = true;
@@ -2820,8 +2828,18 @@ function openSummit(opts = {}) {
     requestAnimationFrame(tick);
   }
 }
-$('summitBar').addEventListener('click', e => { if (e.target.id === 'sGoFight') advChallenge(); });
-$('summitLeave').addEventListener('click', () => openAdvMap({}));
+$('summitBar').addEventListener('click', e => {
+  if (e.target.id === 'sGoFight') advChallenge();
+  else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
+  else if (e.target.id === 'sForfeitYes') {
+    summitAsk = false; A.e4pos = 0; A.champTeam = null; saveA();
+    openAdvMap({force: true, msg: 'You forfeited the Elite Four. Your progress at Victory Summit was lost.'});
+  }
+});
+$('summitLeave').addEventListener('click', () => {
+  if (summitLocked()) { summitAsk = true; openSummit({keepAsk: true}); return; }
+  openAdvMap({force: true});
+});
 $('summitTeam').addEventListener('click', () => openTeamView('summit'));
 $('summitBag').addEventListener('click', () => openAdvBag('summit'));
 
