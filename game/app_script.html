@@ -3472,7 +3472,7 @@ function openDev(msg) {
       <label class="note"><input type="checkbox" id="devSetLv" checked> Also set every Mon to that level</label>
       <div class="row"><button class="btn primary" data-dev="jump">Jump there</button></div>
       <p class="note">This sets your badges, unlocked routes, Team Shamburg and Laurel Pass to match, and heals your team.</p></div>
-    <div class="section"><h2>Side quests</h2><div class="row"><button class="btn" data-dev="questsdone">Clear all side quests</button><button class="btn" data-dev="questsreset">Reset side quests</button><button class="btn" data-dev="shamreset">Reset Team Shamburg</button><button class="btn" data-dev="trailreset">Reset Laurel Pass trainers</button></div></div>
+    <div class="section"><h2>Side quests</h2><div class="row"><button class="btn" data-dev="questsdone">Clear all side quests</button><button class="btn" data-dev="questsreset">Reset side quests</button><button class="btn" data-dev="shamreset">Reset Team Shamburg</button><button class="btn" data-dev="trailreset">Reset Laurel Pass trainers</button><button class="btn" data-dev="summitreset">Reset Victory Summit</button></div></div>
     <div class="section"><h2>Money and items</h2><div class="row"><input type="number" min="0" id="devMoney" value="${A.money}" aria-label="Money"><button class="btn" data-dev="setmoney">Set money</button><button class="btn" data-dev="items">99 of every item</button></div>
       <p class="note">Mon Balls never run out on developer saves.</p></div>
     <div class="section"><h2>Your team</h2><div class="devmons">${A.team.map((m, i) => mrow(m, i, 'team')).join('')}</div></div>
@@ -3498,6 +3498,7 @@ $('devBody').addEventListener('click', e => {
   else if (act === 'questsreset') { A.quests = {}; msg = 'Side quests reset.'; }
   else if (act === 'shamreset') { A.shamburg = {step: [0, 0, 0], done: [false, false, false]}; msg = 'Team Shamburg reset.'; }
   else if (act === 'trailreset') { A.trail = {t: []}; msg = 'Laurel Pass trainers reset.'; }
+  else if (act === 'summitreset') { A.e4pos = 0; A.done = false; A.champTeam = null; msg = 'Victory Summit reset: the Elite Four and the Champion are ready to fight again.'; }
   saveA();
   openDev(msg); sc.scrollTop = top;
 });
