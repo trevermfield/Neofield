@@ -384,6 +384,7 @@ async function play() {
     if (ev.text) addLine(ev.text, ev.cls);
     renderCards();
     if (ev.fx) applyFx(ev.fx);
+    if (ev.after) await ev.after();
     if (ev.text && !skip) await sleep(ev.wait || (ev.cls === 'turn' ? 150 : 520));
   }
   playing = false;
@@ -439,7 +440,7 @@ function translate(lines) {
       case 'switch': case 'drag': {
         const species = parts[2].split(',')[0];
         const hp = parseHP(parts[3], s);
-        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
+        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, after: championRevealEnd, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
           text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : sd === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(ownerOf(id))} sent out <span class="key">${esc(nick(id))}</span>!`});
         break;
       }
@@ -2698,6 +2699,11 @@ const CI_LINES = {
   relapse: '...',
 };
 // each of the Champion's Mons gets its own dark reveal the first time it enters the battle
+let ciClose = null;   // fades the reveal away once the new Mon is already out
+async function championRevealEnd() {
+  if (!ciClose) return;
+  const c = ciClose; ciClose = null; await c();
+}
 async function championReveal(species) {
   const f = ctx && ctx.fight;
   if (!f || f.type !== 'champion') return;
@@ -2722,9 +2728,11 @@ async function championReveal(species) {
     const tm = setTimeout(r, reducedMotion() ? 600 : 6500);
     setTimeout(() => el.addEventListener('click', () => { clearTimeout(tm); r(); }, {once: true}), 900);
   });
-  el.style.opacity = '0'; await sleep(reducedMotion() ? 0 : 900);
-  fx.stop(); el.hidden = true; el.style.opacity = ''; stage.innerHTML = '';
-  await sleep(500);
+  ciClose = async () => {
+    el.style.opacity = '0'; await sleep(reducedMotion() ? 0 : 900);
+    fx.stop(); el.hidden = true; el.style.opacity = ''; stage.innerHTML = '';
+    await sleep(400);
+  };
 }
 async function championIntro(sets, lv, sp) {
   const el = $('champIntro'), stage = $('ciStage');
@@ -2809,6 +2817,7 @@ function gloomOn() {
 }
 function gloomOff() {
   bgmStop();
+  if (ciClose) { ciClose = null; $('champIntro').hidden = true; $('champIntro').style.opacity = ''; }
   if (!gloomFx) return;
   gloomFx.stop(); gloomFx = null; clearTimeout(gloomFogT); clearInterval(gloomBeat);
   $('gloom').hidden = true; $('battle').classList.remove('gloomy');
