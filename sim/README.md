@@ -36,3 +36,7 @@ Run `i` uses seed `--seed + i` and a seeded random generator, so the same comman
 * The bot is a decent but not clever player: it plays the AI's best move each turn, uses items between fights, and does not plan type matchups. A thoughtful human will win more often than the bot at the same levels, so read the numbers as *relative* (compare two settings) more than absolute.
 * Times come from the `TIME` model (about 4 seconds a battle turn, 28 seconds of gym dialogue, ...). Adjust it to your testers.
 * If the game's code changes shape, `sim/gamedata.mjs` throws a clear error, or prints a "simulator copy is out of date" warning for the few formulas it copies by hand (`MIRRORED`).
+
+
+## Known gap: the Elite Four
+The real Elite Four are now family fights in doubles and triples (see E4_FIGHTS in game/app_script.html). The simulator still models them as four single battles against random gym leaders, so its Elite Four numbers are only a rough guide.

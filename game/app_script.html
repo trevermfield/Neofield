@@ -115,6 +115,9 @@ const badgesFor = d => badgeBook[d] || (badgeBook[d] = {});
 let ctx = null;             // null = single gym battle, or {kind: 'gauntlet' | 'journey', ...}
 const fxType = {p1: 'Normal', p2: 'Normal'};
 let battle = null, mem = {}, logIdx = 0, view = null, playing = false, skip = false, panel = 'fight';
+let mc = null;   // a doubles/triples turn being chosen, one Mon at a time
+const isMulti = () => !!battle && battle.activePerHalf > 1;
+const slotsOf = side => Array.from({length: battle.activePerHalf}, (_, i) => side + 'abc'[i]);
 let mode = 'cpu';           // 'cpu' or 'online'
 let ME = 'p1', FOE = 'p2';
 let foe = {name: '', key: null, color: CUSTOM_COLOR};  // who you're facing
@@ -174,11 +177,14 @@ function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SC
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
 
 // ---------- shared battle start ----------
-function beginBattle(p1, p2, seed) {
-  battle = E.createBattle(p1, p2, seed);
+function beginBattle(p1, p2, seed, gameType) {
+  battle = E.createBattle(p1, p2, seed, gameType);
   logIdx = battle.log.length;
   view = {p1: blankMon(), p2: blankMon()};
+  if (battle.activePerHalf > 1) for (const sd of ['p1', 'p2']) for (const k of slotsOf(sd)) view[k] = blankMon();
+  for (const k of Object.keys(hpAnim)) delete hpAnim[k];
   hpAnim.p1 = hpAnim.p2 = null;
+  mc = null;
   panel = 'fight'; resultShown = false;
   $('log').innerHTML = '';
   $('overlay').hidden = true;
@@ -187,25 +193,42 @@ function beginBattle(p1, p2, seed) {
   bagSel = null;
 }
 
+let leadSel = [];
+function leadNeed() { return Math.min(battle.activePerHalf, battle[ME].pokemon.filter(p => !p.fainted).length); }
 function showLeadScreen() {
+  leadSel = [];
   const foeLead = battle[FOE].pokemon[0];
   $('leadTitle').textContent = `vs ${foe.title || foe.name}${foe.wild && foeLead ? ` · Lv ${foeLead.level}` : ''}`;
   $('leadSub').textContent = mode === 'cpu'
-    ? `${foe.subtitle || ''}. Pick who goes out first.`
+    ? `${foe.subtitle || ''}. ${battle.activePerHalf > 1 ? `Pick ${leadNeed()} Mon${leadNeed() === 1 ? '' : 's'} to send out first, in order.` : 'Pick who goes out first.'}`
     : `Online battle. Pick who goes out first. ${foe.name} is choosing too.`;
   $('foeRoster').innerHTML = battle[FOE].pokemon.map(p => `${esc(p.species.name)} <span class="lvl">Lv ${p.level}</span> ${typesHTML(p.species.types)}`).join('<br>');
   const carry = ctx && ctx.kind !== undefined;
   $('leadList').innerHTML = battle[ME].pokemon.map((p, i) => {
+    if (p.name === 'Nobody') return '';
     const pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
     const hpBar = carry ? `<span class="hpmini"><i style="width:${pct}%;background:${hpColor(pct)}"></i></span><small>${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`} ${p.status && !p.fainted ? statusPill(p.status, true) : ''}</small>` : '';
-    return `<button class="pick" id="lead-${i}" data-i="${i + 1}" ${p.fainted ? 'disabled' : ''}><div><b>${esc(p.species.name)} <span class="lvl">Lv ${p.level}</span></b><small>${esc(p.item ? E.Dex.items.get(p.item).name : '')} · ${p.moveSlots.map(m => esc(m.move)).join(', ')}</small>${hpBar}</div>${typesHTML(p.species.types)}</button>`;
-  }).join('');
+    return `<button class="pick" id="lead-${i}" data-i="${i + 1}" ${p.fainted ? 'disabled' : ''}><div><b><span class="ord" hidden></span>${esc(p.species.name)} <span class="lvl">Lv ${p.level}</span></b><small>${esc(p.item ? E.Dex.items.get(p.item).name : '')} · ${p.moveSlots.map(m => esc(m.move)).join(', ')}</small>${hpBar}</div>${typesHTML(p.species.types)}</button>`;
+  }).join('') + (battle.activePerHalf > 1 ? `<button class="btn primary leadgo" id="leadGo" disabled>Send out</button>` : '');
   $('leadBack').textContent = mode !== 'cpu' ? 'Back to lobby' : ctx && ctx.kind === 'journey' ? 'Back to map' : 'Back';
   show('lead');
 }
 
 $('leadBack').addEventListener('click', () => leaveBattle());
+function leadOrder(first) { return [...first, ...battle[ME].pokemon.map((_, i) => i + 1).filter(i => !first.includes(i))]; }
 $('leadList').addEventListener('click', e => {
+  if (battle.activePerHalf > 1) {
+    if (e.target.closest('#leadGo')) { if (leadSel.length === leadNeed()) { show('battle'); commit('team ' + leadOrder(leadSel).join('')); } return; }
+    const pb = e.target.closest('.pick'); if (!pb || pb.disabled) return;
+    const n = +pb.dataset.i, at = leadSel.indexOf(n);
+    if (at >= 0) leadSel.splice(at, 1); else if (leadSel.length < leadNeed()) leadSel.push(n);
+    $('leadList').querySelectorAll('.pick').forEach(el => {
+      const k = leadSel.indexOf(+el.dataset.i), o = el.querySelector('.ord');
+      el.classList.toggle('sel', k >= 0); o.hidden = k < 0; o.textContent = k + 1;
+    });
+    $('leadGo').disabled = leadSel.length !== leadNeed();
+    return;
+  }
   const b = e.target.closest('.pick'); if (!b) return;
   const lead = +b.dataset.i;
   if (battle[ME].pokemon[lead - 1].fainted) return;
@@ -228,15 +251,21 @@ function startCpuBattle(k) {
   startVsCpu(foeTeamFor(E.TEAM_TEXT[k], mine.levels), null, mine.sets || mine.text, mine.name);
 }
 
-function startVsCpu(foeTeamText, state, playerText, playerName) {
+function startVsCpu(foeTeamText, state, playerText, playerName, gameType) {
   mode = 'cpu'; ME = 'p1'; FOE = 'p2'; mem = {};
   setAccent(foe.color);
   let p1name = playerName || 'You';
   if (p1name === foe.name) p1name = 'You';
   const asTeam = t => Array.isArray(t) ? t : E.parseTeam(t).team;
-  beginBattle({name: p1name, team: asTeam(playerText)}, {name: foe.name, team: asTeam(foeTeamText)});
+  // doubles and triples need a Mon for every slot: pad a small team with "Nobody" (fainted from the start, never shown)
+  const need = gameType === 'triples' ? 3 : gameType === 'doubles' ? 2 : 1;
+  const mine = asTeam(playerText).slice();
+  while (mine.length < need) mine.push({...mine[0], name: 'Nobody'});
+  beginBattle({name: p1name, team: mine}, {name: foe.name, team: asTeam(foeTeamText)}, undefined, gameType);
   if (state) E.applyTeamState(battle.p1, state);
   if (ctx && ctx.kind === 'adventure') applyAdvHP();
+  battle.p1.pokemon.forEach(p => { if (p.name === 'Nobody') { p.hp = 0; p.fainted = true; } });
+  E.recountLeft(battle.p1);
   $('battleMap').hidden = !(ctx && (ctx.kind === 'journey' || ctx.kind === 'adventure'));
   showLeadScreen();
 }
@@ -382,8 +411,10 @@ function translate(lines) {
   const out = [];
   const foeName = foe.name;
   const sideOf = id => (id || '').slice(0, 2);
+  const slotOf = id => battle.activePerHalf > 1 ? (id || '').slice(0, 3) : (id || '').slice(0, 2);
   const nick = id => (id || '').split(': ').slice(1).join(': ');
-  const Nm = id => sideOf(id) === ME ? `<span class="key">${esc(nick(id))}</span>` : foe.wild ? `Wild <span class="key">${esc(nick(id))}</span>` : `${esc(foeName)}'s <span class="key">${esc(nick(id))}</span>`;
+  const ownerOf = id => (ctx && ctx.fight && ctx.fight.owners && ctx.fight.owners[nick(id)]) || foeName;   // doubles and triples: whose Mon is it
+  const Nm = id => sideOf(id) === ME ? `<span class="key">${esc(nick(id))}</span>` : foe.wild ? `Wild <span class="key">${esc(nick(id))}</span>` : `${esc(ownerOf(id))}'s <span class="key">${esc(nick(id))}</span>`;
   const nm = Nm;
   const fromTag = parts => { const f = parts.find(x => x && x.startsWith('[from]')); return f ? f.slice(7).replace(/^(item|ability|move): /, '').trim() : ''; };
   const teamOf = s => s.startsWith(ME) ? 'your team' : `${esc(foeName)}'s team`;
@@ -399,18 +430,19 @@ function translate(lines) {
     const parts = line.slice(1).split('|');
     const cmd = parts[0];
     const id = parts[1];
-    const s = sideOf(id);
+    const sd = sideOf(id), s = slotOf(id);
+    if (id && id.endsWith(': Nobody')) continue;
     switch (cmd) {
       case 'switch': case 'drag': {
         const species = parts[2].split(',')[0];
         const hp = parseHP(parts[3], s);
         out.push({fx: {side: s, kind: 'clear'}, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
-          text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : s === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(foeName)} sent out <span class="key">${esc(nick(id))}</span>!`});
+          text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : sd === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(ownerOf(id))} sent out <span class="key">${esc(nick(id))}</span>!`});
         break;
       }
       case 'replace': {
         const species = parts[2].split(',')[0];
-        out.push({apply() { view[s].species = species; view[s].ident = id; }, text: `The Illusion broke! It was ${s === ME ? '' : esc(foeName) + "'s "}<span class="key">${esc(species)}</span>!`});
+        out.push({apply() { view[s].species = species; view[s].ident = id; }, text: `The Illusion broke! It was ${sd === ME ? '' : esc(ownerOf(id)) + "'s "}<span class="key">${esc(species)}</span>!`});
         break;
       }
       case 'detailschange': {
@@ -421,14 +453,14 @@ function translate(lines) {
       case 'move': {
         const extra = parts.slice(4).join(' ');
         if (extra.includes('[still]') && extra.includes('[from]')) break;
-        fxType[s] = E.Dex.moves.get(parts[2]).type || 'Normal';
+        fxType[sd] = E.Dex.moves.get(parts[2]).type || 'Normal';
         out.push({text: `${Nm(id)} used <b>${esc(parts[2])}</b>!`, fx: {side: s, kind: 'act'}});
         break;
       }
       case '-damage': {
         const hp = parseHP(parts[2], s);
         const from = fromTag(parts);
-        out.push({fx: from ? null : {side: s, kind: 'hit', color: TYPE_COLORS[fxType[s === 'p1' ? 'p2' : 'p1']] || '#ffffff'}, apply() {
+        out.push({fx: from ? null : {side: s, kind: 'hit', color: TYPE_COLORS[fxType[sd === 'p1' ? 'p2' : 'p1']] || '#ffffff'}, apply() {
             const before = pctOf(s);
             view[s].hp = hp.hp; view[s].maxhp = hp.maxhp;
             if (hp.status && hp.status !== 'fnt') view[s].status = hp.status;
@@ -436,7 +468,7 @@ function translate(lines) {
             this.lost = drop > 0 ? Math.max(1, Math.round(drop)) : 0;
           },
           get text() { return this.lost === undefined || this.lost === 0 ? '' : `${Nm(id)} lost ${this.lost}% of its health${from ? ` <span class="info">(${esc(from === 'psn' || from === 'tox' ? 'poison' : from === 'brn' ? 'burn' : from)})</span>` : ''}.`; },
-          cls: s === ME ? 'bad' : '', wait: 1000});
+          cls: sd === ME ? 'bad' : '', wait: 1000});
         break;
       }
       case '-heal': {
@@ -444,11 +476,11 @@ function translate(lines) {
         const from = fromTag(parts);
         out.push({apply() { const before = pctOf(s); view[s].hp = hp.hp; view[s].maxhp = hp.maxhp; const up = pctOf(s) - before; this.gain = up > 0 ? Math.max(1, Math.round(up)) : 0; },
           get text() { return this.gain === undefined ? '' : (this.gain ? `${Nm(id)} restored ${this.gain}% HP${from ? ` <span class="info">(${esc(from)})</span>` : ''}.` : ''); },
-          cls: s === ME ? 'good' : '', wait: 1000});
+          cls: sd === ME ? 'good' : '', wait: 1000});
         break;
       }
       case 'faint':
-        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: s === ME ? 'bad' : 'good'});
+        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: sd === ME ? 'bad' : 'good'});
         break;
       case '-supereffective': out.push({text: `It's super effective!`, fx: {side: s, kind: 'shake'}}); break;
       case '-resisted': out.push({text: `It's not very effective…`, cls: 'info'}); break;
@@ -601,18 +633,19 @@ function hpTrack(side, ident, target) {
 }
 function hpLabel(side, pct) {
   const v = view[side], a = hpAnim[side], done = !a || hpShown(side) === a.to;
-  if (side === ME) return `${done ? Math.max(0, v.hp) : Math.max(0, Math.round(pct * v.maxhp / 100))}/${v.maxhp}`;
+  if (side.slice(0, 2) === ME) return `${done ? Math.max(0, v.hp) : Math.max(0, Math.round(pct * v.maxhp / 100))}/${v.maxhp}`;
   return `${pct > 0 ? Math.max(1, Math.round(pct)) : 0}%`;
 }
 let hpRaf = 0;
 function hpTick() {
   hpRaf = 0;
   let busy = false;
-  for (const side of ['p1', 'p2']) {
+  for (const side of Object.keys(hpAnim)) {
     const a = hpAnim[side];
     if (!a || !view || !view[side]) continue;
     const pct = hpShown(side);
-    const el = $(side === ME ? 'myCard' : 'foeCard');
+    const el = side.length > 2 ? document.querySelector(`[data-slot="${side}"]`) : $(side === ME ? 'myCard' : 'foeCard');
+    if (!el) continue;
     const bar = el.querySelector('.hp i'), txt = el.querySelector('.hptext');
     if (bar) { bar.style.width = pct + '%'; bar.style.backgroundColor = hpColor(pct); }
     if (txt) txt.textContent = hpLabel(side, pct);
@@ -621,7 +654,41 @@ function hpTick() {
   if (busy) hpRaf = requestAnimationFrame(hpTick);
 }
 
+// One small card per active Mon in doubles and triples. The foe row is mirrored so Mons face each other.
+function cellHTML(slot) {
+  const v = view[slot];
+  if (!v.species) return `<div class="mcell empty" data-slot="${slot}"></div>`;
+  const sp = E.Dex.species.get(v.species), mine = slot.slice(0, 2) === ME;
+  const pct = hpTrack(slot, v.ident, Math.max(0, pctOf(slot)));
+  const name = sp.isMega ? 'Mega ' + sp.baseSpecies : sp.name;
+  const art = artOf(sp.name);
+  const real = battle[slot.slice(0, 2)].active['abc'.indexOf(slot[2])];
+  const boosts = Object.entries(v.boosts).filter(([, n]) => n).map(([k, n]) => `<span class="boost ${n > 0 ? 'up' : 'down'}">${STAT_SHORT[k] || k} ${n > 0 ? '+' : ''}${n}</span>`).join('');
+  return `<div class="mcell${v.hp <= 0 ? ' down' : ''}${STATUS[v.status] && v.hp > 0 ? ' st-' + v.status : ''}${mc && mc.slot === slot ? ' picking' : ''}" data-slot="${slot}">
+    ${art ? `<span class="mart">${art}</span>` : ''}
+    <b class="mn${name.length > 10 ? ' long' : ''}">${esc(name)}</b>${!mine && ctx && ctx.fight && ctx.fight.owners && ctx.fight.owners[sp.name] ? `<small class="own">${esc(ctx.fight.owners[sp.name])}</small>` : ''}${real && real.level !== 100 ? `<small class="lvl">Lv ${real.level}</small>` : ''}
+    <div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><span class="hptext">${hpLabel(slot, pct)}</span>
+    <div class="tags">${statusPill(v.status)}${boosts}</div></div>`;
+}
+function renderMultiCards() {
+  const hazards = sd => Object.keys(battle[sd].sideConditions).filter(k => k !== 'catchguard').map(k => `<span class="hazard">${esc(E.Dex.conditions.get(k).name || k)}</span>`).join('');
+  for (const [sd, id] of [[FOE, 'foeCard'], [ME, 'myCard']]) {
+    const slots = slotsOf(sd);
+    const balls = battle[sd].pokemon.map(p => `<i class="${p.fainted || p.hp <= 0 ? 'out' : p.hp < p.maxhp / 2 ? 'hurt' : ''} ${p.isActive ? 'active' : ''}"></i>`).join('');
+    $(id).innerHTML = `<div class="mhead"><span class="owner">${sd === ME ? 'You' : esc(foe.name)}</span><span class="balls">${balls}</span></div>
+      <div class="mgrid" style="--n:${slots.length}">${(sd === FOE ? slots.slice().reverse() : slots).map(cellHTML).join('')}</div>
+      ${hazards(sd) ? `<div class="tags">${hazards(sd)}</div>` : ''}`;
+    $(id).classList.add('multi'); $(id).classList.remove('hasart');
+  }
+}
 function renderCards() {
+  if (isMulti()) {
+    renderMultiCards();
+    const w = battle.field.weather, wname = w ? (E.Dex.conditions.get(w).name || w) : '';
+    $('weather').textContent = wname ? `${wname === 'Snowscape' ? 'Snow' : wname} · ${battle.field.weatherState.duration || ''} turns left` : '';
+    return;
+  }
+  $('foeCard').classList.remove('multi'); $('myCard').classList.remove('multi');
   $('foeCard').innerHTML = cardHTML(FOE);
   $('myCard').innerHTML = cardHTML(ME);
   for (const [side, id] of [[FOE, 'foeCard'], [ME, 'myCard']]) {
@@ -637,7 +704,7 @@ function renderCards() {
 }
 
 function applyFx(fx) {
-  const el = $(fx.side === ME ? 'myCard' : 'foeCard');
+  const el = fx.side.length > 2 ? document.querySelector(`[data-slot="${fx.side}"]`) : $(fx.side === ME ? 'myCard' : 'foeCard');
   if (!el) return;
   const pulse = cls => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 520); };
   if (fx.kind === 'hit') { el.style.setProperty('--fx', fx.color); pulse('fx-hit'); }
@@ -649,6 +716,20 @@ function applyFx(fx) {
 
 // After playback, correct the view from the true battle state
 function syncFromState() {
+  if (isMulti()) {
+    for (const sd of ['p1', 'p2']) slotsOf(sd).forEach((slot, i) => {
+      const p = battle[sd].active[i];
+      if (!p || p.name === 'Nobody') return;
+      const v = view[slot];
+      v.species = sd === FOE && p.illusion ? p.illusion.species.name : p.species.name;
+      v.ident = slot + ': ' + p.name;
+      if (sd === ME) { v.hp = p.hp; v.maxhp = p.maxhp; } else { v.hp = p.hp ? Math.max(1, Math.round(p.hp / p.maxhp * 100)) : 0; v.maxhp = 100; }
+      v.status = p.fainted ? '' : (p.status || '');
+      v.boosts = {...p.boosts};
+    });
+    renderCards();
+    return;
+  }
   for (const side of ['p1', 'p2']) {
     const real = battle[side].active[0];
     if (!real) continue;
@@ -672,6 +753,7 @@ function renderControls() {
     return;
   }
   if (req.teamPreview) { c.innerHTML = ''; return; }
+  if (isMulti()) { renderControlsMulti(req); return; }
   if (!req.forceSwitch && catchPending()) { c.innerHTML = catchHTML(); return; }
   const forced = !!req.forceSwitch;
   if (forced) panel = 'switch';
@@ -737,8 +819,139 @@ function renderControls() {
   c.innerHTML = html;
 }
 
+
+// ---------- doubles and triples: choose for each Mon in turn ----------
+function mcKey(req) { return `${battle.turn}|${req.forceSwitch ? 'f' : 'm'}|${battle.log.length}`; }
+function mcUsedSwitches() { return mc.parts.filter(p => p.startsWith('switch ')).map(p => +p.slice(7)); }
+function mcBench(req) {
+  const used = mcUsedSwitches();
+  return req.side.pokemon.map((p, i) => ({p, i: i + 1})).filter(x => !x.p.active && !/ fnt$/.test(x.p.condition) && x.p.condition !== '0 fnt' && !used.includes(x.i));
+}
+// Slots that cannot act (fainted, or no replacement needed) pass automatically
+function mcAdvance(req) {
+  const n = battle.activePerHalf;
+  while (mc.parts.length < n) {
+    const i = mc.parts.length, mon = battle[ME].active[i];
+    const skip = req.forceSwitch ? !req.forceSwitch[i] || !mcBench(req).length : (!mon || mon.fainted || !req.active[i]);
+    if (!skip) break;
+    mc.parts.push('pass');
+  }
+  return mc.parts.length >= n;
+}
+function mcName(mon) { return esc(mon.species.name); }
+function renderControlsMulti(req) {
+  const c = $('controls'), n = battle.activePerHalf;
+  if (!mc || mc.key !== mcKey(req)) mc = {key: mcKey(req), parts: [], stage: 'move', move: null, items: [], slot: null};
+  if (mcAdvance(req)) { c.innerHTML = `<div class="waiting">Waiting for ${esc(foe.name)}…</div>`; commitMulti(); return; }
+  const idx = mc.parts.length, me = battle[ME].active[idx], act = req.active && req.active[idx];
+  const forced = !!req.forceSwitch;
+  mc.slot = ME + 'abc'[idx];
+  if (forced) panel = 'switch';
+  const trapped = act && (act.trapped || act.maybeTrapped);
+  const usedMega = mc.parts.some(p => /mega$/.test(p));
+  let html = `<div class="mpick">`;
+  const who = `<b>${mcName(me || {species: {name: 'a Mon'}})}</b> (${idx + 1} of ${n})`;
+  if (forced) {
+    html += `<div class="prompt">Choose a replacement for the fainted Mon (${idx + 1} of ${n}).</div><div class="swaps">${mcBench(req).map(x => swapBtn(x)).join('')}</div>`;
+  } else if (mc.stage === 'target') {
+    const m = act.moves[mc.move - 1], mv = E.Dex.moves.get(m.id);
+    const locs = E.targetLocs(battle, me, m.target || mv.target);
+    html += `<div class="prompt">${who} uses <b>${esc(m.move)}</b> on…</div><div class="targets">` + locs.map(t => {
+      const tm = t.mon, pct = Math.round(tm.hp / tm.maxhp * 100);
+      let eff = '';
+      if (t.foe && mv.category !== 'Status') { const r = E.estimate(battle, me, tm.illusion ? Object.assign(Object.create(tm), {types: tm.illusion.types, species: tm.illusion.species, ability: ''}) : tm, m.id); eff = r.eff === 0 ? 'No effect' : r.eff > 1 ? 'Super effective' : r.eff < 1 ? 'Resisted' : ''; }
+      return `<button class="btn ${t.foe ? '' : 'ghost'}" data-mt="${t.loc}">${esc(tm.illusion ? tm.illusion.species.name : tm.species.name)}${t.foe ? '' : ' (ally)'}<small>${pct}% HP${eff ? ' · ' + eff : ''}</small></button>`;
+    }).join('') + `</div><div class="row"><button class="btn ghost" data-mback="1">Back</button></div>`;
+  } else {
+    html += `<div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-fight" aria-selected="${panel === 'fight'}" data-panel="fight">Fight</button>
+      <button class="tab" role="tab" id="tab-switch" aria-selected="${panel === 'switch'}" data-panel="switch">Mons</button>
+      ${usesBag() ? `<button class="tab" role="tab" id="tab-bag" aria-selected="${panel === 'bag'}" data-panel="bag">Bag</button>` : ''}
+      ${act && act.canMegaEvo && !usedMega ? '<label class="mega"><input type="checkbox" id="megaBox"> Mega Evolve</label>' : ''}
+    </div><div class="prompt">${who}</div>`;
+    if (panel === 'bag' && usesBag()) {
+      html += bagButtons(bagNow(), bagSel, true);
+      if (!bagSel) html += '<div class="prompt">Pick an item. Using one takes this Mon\'s turn.</div>';
+      else html += `<div class="prompt">${esc(E.ITEMS[bagSel].desc)} Use it on which Mon?</div><div class="swaps">` + battle.p1.pokemon.map((p, i) => {
+        const prob = E.itemProblem(bagSel, p), pct = p.maxhp ? p.hp / p.maxhp * 100 : 0;
+        return `<button class="swap" data-muse="${i}" ${prob || E.ITEMS[bagSel].ball ? 'disabled' : ''} title="${esc(prob)}"><b>${esc(p.name)}${p.isActive ? ' · in battle' : ''}</b>
+          <div class="hp"><i style="width:${p.fainted ? 0 : pct}%;background-color:${hpColor(pct)}"></i></div>
+          <small class="note">${p.fainted ? 'Fainted' : `${p.hp}/${p.maxhp} HP`}</small></button>`;
+      }).join('') + '</div>';
+    } else if (panel === 'switch') {
+      html += '<div class="swaps">' + mcBench(req).map(x => swapBtn(x, trapped)).join('') + '</div>';
+      if (trapped) html += '<div class="prompt">This Mon is trapped and cannot switch out.</div>';
+    } else if (act) {
+      const fs = battle[FOE].active.filter(p => p && !p.fainted);
+      html += '<div class="moves">' + act.moves.map((m, i) => {
+        const mv = E.Dex.moves.get(m.id), type = m.target || mv.target;
+        const reach = !E.needsTarget(type) || E.targetLocs(battle, me, type).length > 0;
+        const pow = mv.category === 'Status' ? 'Status' : (mv.basePower ? `${mv.basePower} power` : mv.category);
+        const aim = type === 'allAdjacentFoes' ? 'All foes' : type === 'allAdjacent' ? 'Everyone' : '';
+        return `<button class="move" data-mm="${i + 1}" style="--t:${TYPE_COLORS[mv.type] || '#999'}" ${m.disabled || !reach ? 'disabled' : ''} title="${esc(mv.shortDesc || '')}">
+          <b>${esc(m.move)}</b><small><span>${esc(mv.type)} · ${esc(pow)}</span></small><small>${aim ? `<span>${aim}</span>` : (reach ? '<span></span>' : '<span>Out of reach</span>')}<span>${m.maxpp ? `${m.pp}/${m.maxpp} PP` : ''}</span></small></button>`;
+      }).join('') + '</div>';
+      if (act.moves.every(m => m.disabled || (E.needsTarget(m.target || E.Dex.moves.get(m.id).target) && !E.targetLocs(battle, me, m.target || E.Dex.moves.get(m.id).target).length)))
+        html += '<div class="row"><button class="btn" data-mauto="1">Let the game pick</button></div>';
+    }
+    if (mc.parts.some(p => p !== 'pass')) html += '<div class="row"><button class="btn ghost" data-mreset="1">Start this turn over</button></div>';
+  }
+  html += '</div>';
+  c.innerHTML = html;
+  renderCards();
+}
+function swapBtn(x, disabled) {
+  const [hpStr, st] = x.p.condition.split(' '), [a, b] = hpStr.split('/').map(Number), pct = b ? a / b * 100 : 0;
+  return `<button class="swap" data-msw="${x.i}" ${disabled ? 'disabled' : ''}><b>${esc(x.p.details.split(',')[0])}</b>
+    <div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div>
+    <small class="note">${Math.max(0, a)}/${b} HP ${st && st !== 'fnt' ? statusPill(st, true) : ''}</small></button>`;
+}
+function mcPush(part) { mc.parts.push(part); mc.stage = 'move'; mc.move = null; bagSel = null; panel = 'fight'; renderControls(); }
+function multiClick(t) {
+  const req = battle[ME].activeRequest;
+  if (!req || req.wait || !mc) return;
+  const idx = mc.parts.length, me = battle[ME].active[idx], act = req.active && req.active[idx];
+  if (t.dataset.panel) { panel = t.dataset.panel; bagSel = null; renderControls(); return; }
+  if (t.dataset.item) { bagSel = bagSel === t.dataset.item ? null : t.dataset.item; renderControls(); return; }
+  if (t.dataset.mreset) { mc = null; bagSel = null; panel = 'fight'; renderControls(); return; }
+  if (t.dataset.mback) { mc.stage = 'move'; renderControls(); return; }
+  if (t.dataset.mauto) { commit('default'); mc = null; return; }
+  if (t.dataset.msw) { mcPush(`switch ${t.dataset.msw}`); return; }
+  if (t.dataset.muse) { mc.items.push({slot: idx, item: bagSel, i: +t.dataset.muse}); mcPush('item'); return; }
+  const mega = $('megaBox') && $('megaBox').checked ? ' mega' : '';
+  if (t.dataset.mm) {
+    const m = act.moves[+t.dataset.mm - 1], type = m.target || E.Dex.moves.get(m.id).target;
+    if (E.needsTarget(type)) {
+      const locs = E.targetLocs(battle, me, type);
+      if (locs.length === 1) { mcPush(`move ${t.dataset.mm} ${locs[0].loc}${mega}`); return; }
+      mc.stage = 'target'; mc.move = +t.dataset.mm; mc.mega = mega; renderControls(); return;
+    }
+    mcPush(`move ${t.dataset.mm}${mega}`);
+    return;
+  }
+  if (t.dataset.mt) { mcPush(`move ${mc.move} ${t.dataset.mt}${mc.mega || ''}`); return; }
+}
+function commitMulti() {
+  const parts = mc.parts.slice(), items = mc.items.slice();
+  let choice;
+  if (items.length) {
+    for (const it of items) {
+      E.applyItem(battle, 'p1', it.item, battle.p1.pokemon[it.i]);
+      bagNow()[it.item]--;
+    }
+    saveBagOwner();
+    let ok = true;
+    items.forEach(it => { const ph = E.spendSlotOnItem(battle, 'p1', it.slot); if (!ph) ok = false; else parts[it.slot] = ph; });
+    choice = ok ? parts.join(', ') : 'default';
+    syncFromState();
+  } else choice = parts.join(', ');
+  mc = null;
+  commit(choice);
+}
+
 $('controls').addEventListener('click', e => {
   const t = e.target.closest('button'); if (!t || t.disabled || playing) return;
+  if (isMulti()) { multiClick(t); return; }
   if (t.id === 'catchThrow' || t.id === 'bagThrow') { throwBall(); return; }
   if (t.id === 'catchNo') { finishWild(); return; }
   if (t.dataset.panel) { panel = t.dataset.panel; bagSel = null; renderControls(); return; }
@@ -1237,6 +1450,30 @@ const LINES = {
     e4: "I rebuilt my team from the ground up. Let's stress-test yours."},
 };
 const E4_WIN = ['Well fought. Go on, the next member of the Elite Four is waiting.', 'You earned your way past me. Keep climbing.'];
+// The Elite Four are family fights: several gym leaders battle together (triples or doubles).
+// Each trainer brings their strongest Mons (by total base stats); 'must' forces a favourite into the team.
+const E4_KEYS = ['inlaws', 'brothers', 'parents', 'family'];
+const E4_FIGHTS = {
+  inlaws:   {title: 'The In-Laws', members: ['kaley', 'rachel', 'oksana'], picks: [2, 2, 2], mode: 'triples', must: {oksana: 'Herdier'}},
+  brothers: {title: 'The Brothers', members: ['tucker', 'tanner', 'trever'], picks: [2, 2, 2], mode: 'triples', must: {}},
+  parents:  {title: 'The Parents', members: ['kent', 'lynne'], picks: [3, 3], mode: 'doubles', must: {}},
+  family:   {title: 'The Family', members: ['anna', 'makenna', 'charlotte', 'lillian'], picks: [2, 2, 1, 1], mode: 'triples', must: {makenna: 'Umbreon'}},
+};
+for (const g of Object.values(E4_FIGHTS)) { g.color = LEADERS[g.members[0]].color; g.icon = LEADERS[g.members[0]].icon; g.label = `${g.mode === 'triples' ? 'Triples' : 'Doubles'} · ${g.members.length} trainers`; }
+const E4_TALK = {
+  inlaws: {
+    intro: [['kaley', "Welcome to Victory Summit! The first test is the In-Laws, and we fight together."], ['rachel', "Three of us against you. I have notes on every move you make."], ['oksana', "Kiev and I are ready. Try to keep up with three trainers at once!"]],
+    win: [['kaley', "Okay, okay. You've earned the family's respect."], ['rachel', "I'll have to rewrite my notes."], ['oksana', "Kiev says well done. Go on up."]]},
+  brothers: {
+    intro: [['tucker', "Now you get the brothers. We've trained side by side our whole lives."], ['tanner', "Three trainers, three Mons out each. Hope you brought a plan."], ['trever', "I've run the numbers on this one. The odds are not in your favor."]],
+    win: [['tucker', "Not bad. Not bad at all."], ['tanner', "That's the first time all three of us lost at once."], ['trever', "Recalculating. Keep climbing."]]},
+  parents: {
+    intro: [['kent', "You've made it to the parents. Lynne and I will take you on together."], ['lynne', "A double battle. Don't make us go easy on you, now."]],
+    win: [['kent', "Proud of you. Now go finish it."], ['lynne', "You're almost there. One more battle after this."]]},
+  family: {
+    intro: [['anna', "This is the last stop before the Champion. The whole family is here!"], ['makenna', "Four of us this time. Don't blink."], ['charlotte', "I've been waiting for this one all day!"], ['lillian', "Let's show them everything we have."]],
+    win: [['anna', "Wow. You beat all four of us."], ['makenna', "Alright, that was impressive."], ['charlotte', "That was so much fun!"], ['lillian', "The Champion is waiting at the top. Good luck."]]},
+};
 const E4_LAST = ["That's the whole Elite Four. The Champion is waiting at the top of Victory Summit."];
 const CHAMP_LINES = {
   intro: ["So you're the one who beat every gym in the region, then the whole Elite Four.", "I've borrowed a little power from every leader you faced. This is the final battle."],
@@ -1265,8 +1502,11 @@ function jStage() {
   if (J.e4pos < 4) return {kind: 'e4', key: J.e4[J.e4pos]};
   return {kind: 'champion'};
 }
+// Accent colour of a stage: a gym leader, an Elite Four family fight, or the Champion
+function stColor(st) { return st && st.kind === 'e4' && E4_FIGHTS[st.key] ? E4_FIGHTS[st.key].color : st && st.key ? LEADERS[st.key].color : CHAMP.color; }
 function speakerFor(st) {
   if (st.kind === 'champion' || st.kind === 'done') return {name: CHAMP.name, key: null, color: CHAMP.color};
+  if (st.kind === 'e4' && E4_FIGHTS[st.key]) { const g = E4_FIGHTS[st.key]; return {name: g.title, key: g.members[0], color: g.color}; }
   const L = LEADERS[st.key];
   return {name: st.kind === 'e4' ? `Elite Four ${L.title}` : L.title, key: st.key, color: L.color};
 }
@@ -1460,7 +1700,7 @@ function renderWorldMap(markerIdx, S, overlay = '') {
   svg += overlay; overlay = '';
   // you
   const m = pts[markerIdx];
-  svg += `<g id="marker" transform="translate(${m.x} ${m.y})"><path d="M0 -20 c-7 0 -11 -5 -11 -10 a11 11 0 0 1 22 0 c0 5 -4 10 -11 10Z" fill="#ffffff" stroke="#10131a" stroke-width="1.5"/><circle cx="0" cy="-30" r="4" fill="${st && st.key ? LEADERS[st.key].color : CHAMP.color}"/></g>`;
+  svg += `<g id="marker" transform="translate(${m.x} ${m.y})"><path d="M0 -20 c-7 0 -11 -5 -11 -10 a11 11 0 0 1 22 0 c0 5 -4 10 -11 10Z" fill="#ffffff" stroke="#10131a" stroke-width="1.5"/><circle cx="0" cy="-30" r="4" fill="${stColor(st)}"/></g>`;
   svg += overlay;
   $('mapSvg').innerHTML = svg;
 }
@@ -1789,7 +2029,7 @@ function openAdvMap({fromBattle, msg} = {}) {
   mapMode = 'adventure';
   mapFromBattle = !!fromBattle;
   const st = aStage();
-  setAccent(st && st.key ? LEADERS[st.key].color : CHAMP.color);
+  setAccent(stColor(st));
   const dest = A.done ? 18 : Math.min(A.pos, 17) + 1;
   // Neofield: every new town is reached by winning one wild battle on the route that leads to it
   const gated = !!A.regional && A.travelled < dest;
@@ -1836,7 +2076,7 @@ function renderAdvNextBarMain() {
   const sp = speakerFor(st);
   const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? E4_LV[A.e4pos] : CHAMP_LV;
   const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `Victory Summit · level ${lv}`;
-  const label = st.kind === 'champion' ? 'Face the Champion' : `Challenge ${LEADERS[st.key].first}`;
+  const label = st.kind === 'gym' ? `Challenge ${LEADERS[st.key].first}` : '';   // gyms only: the Summit has its own button
   if (st.kind !== 'gym') {   // the Elite Four and the Champion are fought on the Victory Summit map
     bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(sp.key, sp.color)}</span><div><b>${LEAGUE}</b><small>${st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 is next` : 'The Champion is waiting at the top'} · your team averages level ${avgLevel()}</small></div></div>
       <button class="btn primary" id="aSummit">Enter ${LEAGUE}</button>${actions}`;
@@ -1879,7 +2119,7 @@ function advFight(fight) {
   // unique names so HP can be matched back to each team slot
   const seen = {};
   ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
-  startVsCpu(fight.sets, null, sets, A.playerName);
+  startVsCpu(fight.sets, null, sets, A.playerName, fight.gameType);
   if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
 }
 function applyAdvHP() {
@@ -1902,12 +2142,38 @@ function advTrain() {
   const mon = E.randomMon(lv);
   advFight({type: 'train', sets: [mon], foe: {name: 'Wild', wild: true, key: null, color: '#8fb36a', icon: 'leaf', title: `Wild ${mon.species}`, subtitle: `Training · level ${lv}`}});
 }
+// A family fight's Mons: each trainer's strongest (by total base stats), plus any Mon they must bring.
+function e4Team(g, lv) {
+  const sets = [], owners = {};
+  g.members.forEach((k, i) => {
+    const text = E.TEAM_TEXT[k], base = E.parseTeam(text).team, lvl = E.leaderSets(text, lv);
+    const total = j => Object.values(E.Dex.species.get(base[j].species).baseStats).reduce((a, b) => a + b, 0);
+    const order = base.map((_, j) => j).sort((a, b) => total(b) - total(a) || a - b);
+    const must = g.must[k] ? base.findIndex(b => b.species === g.must[k]) : -1;
+    const pick = (must >= 0 ? [must] : []).concat(order.filter(j => j !== must)).slice(0, g.picks[i]);
+    pick.sort((a, b) => a - b);
+    for (const j of pick) { sets.push(lvl[j]); owners[lvl[j].species] = LEADERS[k].first; }
+  });
+  return {sets, owners};
+}
+async function e4Talk(g, which) {
+  for (const [k, line] of E4_TALK[g.key][which]) await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line]);
+}
 async function advChallenge() {
   const st = aStage();
   if (!st || st.kind === 'done') return;
   let sets, lv;
   if (st.kind === 'gym') { lv = GYM_LV[A.pos]; sets = E.leaderSets(E.TEAM_TEXT[st.key], lv); }
-  else if (st.kind === 'e4') { lv = E4_LV[A.e4pos]; sets = E.leaderSets(E.TEAM_TEXT[st.key], lv); }
+  else if (st.kind === 'e4') {
+    const g = {...E4_FIGHTS[st.key], key: st.key};
+    lv = E4_LV[A.e4pos];
+    const t = e4Team(g, lv);
+    await e4Talk(g, 'intro');
+    advFight({type: 'e4', stage: st, level: lv, sets: t.sets, owners: t.owners, gameType: g.mode, speaker: speakerFor(st),
+      foe: {name: g.title, key: g.members[0], color: g.color, icon: g.icon, title: g.title,
+        subtitle: `Elite Four ${A.e4pos + 1} of 4 · ${g.mode === 'triples' ? 'triples' : 'doubles'} · level ${lv}`}});
+    return;
+  }
   else {
     lv = CHAMP_LV;
     if (!A.champTeam) { A.champTeam = E.buildChampionTeam(ORDER.map(k => E.TEAM_TEXT[k])); saveA(); }
@@ -2257,7 +2523,8 @@ async function advBattleOver(won) {
     return;
   }
   // gym, Elite Four, Champion
-  await talk(fight.speaker, fight.type === 'gym' ? LINES[fight.stage.key].win : fight.type === 'e4' ? (A.e4pos === 3 ? E4_LAST : [E4_WIN[A.e4pos % 2]]) : CHAMP_LINES.win);
+  if (fight.type === 'e4') { await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); if (A.e4pos === 3) await talk(fight.speaker, E4_LAST); }
+  else await talk(fight.speaker, fight.type === 'gym' ? LINES[fight.stage.key].win : CHAMP_LINES.win);
   endBattleQuietly(); ctx = null;
   if (fight.type === 'gym') {
     const L = LEADERS[fight.stage.key];
@@ -2275,7 +2542,7 @@ async function advBattleOver(won) {
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 2, revive: 1});
     saveA();
     const lines = await showGrowth(xpEvents);
-    advResult(LEADERS[fight.stage.key].icon, LEADERS[fight.stage.key].color, `${LEADERS[fight.stage.key].first} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button><button class="btn" id="aToMap">Back to map</button>`);
+    advResult(E4_FIGHTS[fight.stage.key].icon, E4_FIGHTS[fight.stage.key].color, `${E4_FIGHTS[fight.stage.key].title} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button><button class="btn" id="aToMap">Back to map</button>`);
   } else {
     A.money += CHAMP_PRIZE; A.done = true;
     champions[A.difficulty] = true; store.set('champions', champions);
@@ -2406,7 +2673,7 @@ function questIdx() { return AREAS.findIndex(a => a.name === $('questName').text
 
 // --- Victory Summit: the Elite Four and the Champion on one straight path, like a side quest map ---
 function summitSteps() {
-  const steps = A.e4.map((k, i) => ({key: k, L: LEADERS[k], label: LEADERS[k].first, sub: `Elite Four · level ${E4_LV[i]}`, icon: LEADERS[k].icon, color: LEADERS[k].color}));
+  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} · level ${E4_LV[i]}`, icon: g.icon, color: g.color}; });
   steps.push({key: null, label: 'The Champion', sub: `Champion · level ${CHAMP_LV}`, icon: 'crown', color: CHAMP.color});
   return steps;
 }
@@ -2447,8 +2714,8 @@ function openSummit(opts = {}) {
   $('summitSvg').innerHTML = svg;
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>`;
-  else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.key, nowSt.color)}</span><div><b>${esc(nowSt.key ? LEADERS[nowSt.key].title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
-    <button class="btn primary" id="sGoFight">${nowSt.key ? `Challenge ${esc(LEADERS[nowSt.key].first)}` : 'Face the Champion'}</button>`;
+  else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
+    <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   show('summit');
   if (opts.animate && cleared > 0) {
     const go = $('sGoFight'); if (go) go.disabled = true;
@@ -2763,7 +3030,7 @@ function startRegionalAdventure(name, famKey) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
-    order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
+    order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null,
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 5}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
   touchProfile({name});
@@ -2776,6 +3043,7 @@ function migrateA() {
   if (A.loc === undefined) A.loc = null;
   A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
   A.trail = A.trail || {t: []};
+  if (!Array.isArray(A.e4) || A.e4.length !== 4 || A.e4.some(k => !E4_FIGHTS[k])) A.e4 = E4_KEYS.slice();   // the Elite Four became the family fights
   if (!A.questsV3) {   // the Victory Road side quest was replaced by the Laurel Pass; legendary quests moved from 17..22 to 16..21
     const nq = {};
     for (const [k, v] of Object.entries(A.quests || {})) { const n = +k; if (n < 16) nq[n] = v; else if (n >= 17) nq[n - 1] = v; }

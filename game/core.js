@@ -13,8 +13,15 @@ export function parseTeam(text) {
   return {team, problems: problems || []};
 }
 
-export function createBattle(p1, p2, seed) {
-  const battle = new Battle({formatid: FORMAT, seed: seed || randSeed()});
+// gameType: 'singles' (default), 'doubles' (2 out per side) or 'triples' (3 out per side)
+export function createBattle(p1, p2, seed, gameType = 'singles') {
+  let battle;
+  if (gameType === 'singles') battle = new Battle({formatid: FORMAT, seed: seed || randSeed()});
+  else {
+    const base = Dex.formats.get(FORMAT);
+    const format = Object.assign(Object.create(Object.getPrototypeOf(base)), base, {gameType});
+    battle = new Battle({format, formatid: base.id, seed: seed || randSeed()});
+  }
   battle.setPlayer('p1', {name: p1.name, team: p1.team});
   battle.setPlayer('p2', {name: p2.name, team: p2.team});
   return battle;
@@ -221,6 +228,7 @@ export function aiChoose(battle, sideId, memory = {}, level = 'normal') {
   const side = battle[sideId];
   const req = side.activeRequest;
   if (!req || req.wait) return null;
+  if (battle.activePerHalf > 1) return aiChooseMulti(battle, sideId, memory, L);
   if (req.teamPreview) return L.sloppy ? randomPreview(side) : teamPreviewChoice(battle, side);
   if (req.forceSwitch) {
     if (L.sloppy) {
@@ -263,6 +271,82 @@ export function aiChoose(battle, sideId, memory = {}, level = 'normal') {
   let choice = `move ${best.m.slot}`;
   if (act.canMegaEvo && Math.random() < L.megaChance) choice += ' mega';
   return choice;
+}
+
+
+// ---------- doubles and triples ----------
+const TARGETED = ['normal', 'any', 'adjacentFoe', 'adjacentAlly', 'adjacentAllyOrSelf'];
+export const needsTarget = type => TARGETED.includes(type);
+// Valid target locations for a move: foes are positive (1..n), allies negative
+export function targetLocs(battle, mon, moveTarget) {
+  const out = [];
+  for (const other of [...mon.side.foe.active, ...mon.side.active]) {
+    if (!other || other.fainted) continue;
+    const loc = mon.getLocOf(other);
+    if (battle.validTargetLoc(loc, mon, moveTarget)) out.push({loc, mon: other, foe: other.side !== mon.side});
+  }
+  return out;
+}
+
+function aiChooseMulti(battle, sideId, memory, L) {
+  const side = battle[sideId], req = side.activeRequest, n = battle.activePerHalf;
+  const foes = () => side.foe.active.filter(p => p && !p.fainted);
+  if (req.teamPreview) {
+    const total = p => Object.values(p.baseStats).reduce((a, b) => a + b, 0);
+    const order = side.pokemon.map((p, i) => ({i: i + 1, t: L.sloppy ? Math.random() : total(p.species)})).sort((a, b) => b.t - a.t);
+    return 'team ' + order.map(x => x.i).join('');
+  }
+  if (req.forceSwitch) {
+    const bench = side.pokemon.map((p, i) => ({p, i})).filter(x => !x.p.fainted && !x.p.isActive);
+    const parts = [], f0 = foes()[0];
+    for (let slot = 0; slot < n; slot++) {
+      if (!req.forceSwitch[slot] || !bench.length) { parts.push('pass'); continue; }
+      let bi = 0, bs = -1e9;
+      bench.forEach((x, k) => { const sc = (f0 ? matchup(battle, x.p, f0, true) : 0) + Math.random() * 6; if (sc > bs) { bs = sc; bi = k; } });
+      parts.push(`switch ${bench[bi].i + 1}`);
+      bench.splice(bi, 1);
+    }
+    return parts.join(', ');
+  }
+  const parts = [];
+  let mega = false;
+  for (let slot = 0; slot < n; slot++) {
+    const me = side.active[slot], act = req.active[slot];
+    if (!me || me.fainted || !act) { parts.push('pass'); continue; }
+    const usable = act.moves.map((m, i) => ({...m, slot: i + 1})).filter(m => !m.disabled);
+    if (!usable.length) { parts.push('move 1'); continue; }
+    const fs = foes();
+    let best = null;
+    const consider = (m, score, loc) => { if (!best || score > best.score) best = {m, score, loc}; };
+    for (const m of usable) {
+      const mv = battle.dex.moves.get(m.id), type = m.target || mv.target;
+      const jitter = Math.random() * L.jitter;
+      if (L.randomMove && Math.random() < L.randomMove) { consider(m, Math.random() * 100, undefined); continue; }
+      if (needsTarget(type)) {
+        const locs = targetLocs(battle, me, type);
+        for (const t of locs) {
+          if (t.foe) consider(m, scoreMove(battle, me, t.mon, m.id, side) + jitter, t.loc);
+          else if (mv.category === 'Status') consider(m, 12 + jitter, t.loc);   // helping an ally
+        }
+      } else if (type === 'allAdjacentFoes' || type === 'allAdjacent') {
+        const hit = targetLocs(battle, me, type);
+        let sc = 0, allyHit = 0;
+        for (const t of hit) {
+          if (t.foe) sc += scoreMove(battle, me, t.mon, m.id, side) * 0.8;
+          else if (mv.category !== 'Status') allyHit += est(battle, me, t.mon, m.id).frac * 100;
+        }
+        consider(m, sc - allyHit + jitter);
+      } else {
+        consider(m, (fs[0] ? scoreMove(battle, me, fs[0], m.id, side) : 5) + jitter);
+      }
+    }
+    if (!best) return 'default';   // nothing in reach (a far-away foe in triples): let the engine pick
+    let c = `move ${best.m.slot}`;
+    if (best.loc !== undefined) c += ` ${best.loc}`;
+    if (act.canMegaEvo && !mega && Math.random() < L.megaChance) { c += ' mega'; mega = true; }
+    parts.push(c);
+  }
+  return parts.join(', ');
 }
 
 function randomPreview(side) {
@@ -339,6 +423,26 @@ export function spendTurnOnItem(battle, sideId) {
   let slot = 1;
   if (act) { const i = act.moves.findIndex(m => !m.disabled); slot = i >= 0 ? i + 1 : 1; }
   return battle.choose(sideId, `move ${slot}`);
+}
+
+// Doubles/triples: the active Mon in a slot spends its turn on a bag item. Returns a placeholder
+// choice for that slot (a move it will not get to use), or null if the Mon has nothing it could pick.
+export function spendSlotOnItem(battle, sideId, slot) {
+  const side = battle[sideId], mon = side.active[slot], act = side.activeRequest && side.activeRequest.active && side.activeRequest.active[slot];
+  if (!mon || mon.fainted || !act) return null;
+  const cache = battle.dex.conditions.conditionCache;
+  if (!cache.has('bagturn')) cache.set('bagturn', BAG_TURN);
+  let pick = null;
+  for (let i = 0; i < act.moves.length && !pick; i++) {
+    const m = act.moves[i];
+    if (m.disabled) continue;
+    const type = m.target || battle.dex.moves.get(m.id).target;
+    if (!needsTarget(type)) { pick = `move ${i + 1}`; break; }
+    const t = targetLocs(battle, mon, type).find(x => x.foe);
+    if (t) pick = `move ${i + 1} ${t.loc}`;
+  }
+  if (pick) mon.addVolatile('bagturn');
+  return pick;
 }
 
 // ---------- catching wild Mons ----------
