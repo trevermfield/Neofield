@@ -342,7 +342,7 @@ export const FAMILIES = [
 ];
 
 // Routes: index i joins map point i and i+1 (0 = home town, 18 = Victory Summit).
-// Rare (legendary) families only turn up now and then; see regionalWild in adventure.js.
+// Rare (legendary) families live only on the Laurel Pass (and its side quests); see regionalWild in adventure.js.
 export const ROUTES = [
   ['Route 1', ['wild1', 'wild2', 'wild4']],
   ['Route 2', ['wild3', 'campyre', 'wild1']],
@@ -356,11 +356,11 @@ export const ROUTES = [
   ['Route 10', ['wyrmie', 'banchief', 'yucrane']],
   ['Route 11', ['cryodon', 'nidomonk', 'mugnbud']],
   ['Route 12', ['weldonrust', 'marooner', 'wild4']],
-  ['Route 13', ['banchief', 'cryodon', 'wild3', 'nivalux']],
-  ['Route 14', ['nidomonk', 'chetswatch', 'wyrmie', 'storment']],
-  ['Route 15', ['wild6', 'pinedale', 'cryodon', 'rensylk']],
-  ['Route 16', ['maraudur', 'banchief', 'noterish', 'hexabeake']],
-  ['Route 17', ['wyrmie', 'weldonrust', 'bizon', 'okloyama']],
+  ['Route 13', ['banchief', 'cryodon', 'wild3']],
+  ['Route 14', ['nidomonk', 'chetswatch', 'wyrmie']],
+  ['Route 15', ['wild6', 'pinedale', 'cryodon']],
+  ['Route 16', ['maraudur', 'banchief', 'noterish']],
+  ['Route 17', ['wyrmie', 'weldonrust', 'bizon']],
   ['Laurel Pass', ['chetswatch', 'nidomonk', 'wild5', 'wild2', 'nivalux', 'storment', 'rensylk', 'okloyama', 'hexabeake', 'aerialyn']],
 ].map(([name, fams], i) => ({name, families: fams, idx: i}));
 
