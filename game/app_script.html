@@ -2432,11 +2432,11 @@ function openTrail() {
     const i = LEG0 + k, ar = AREAS[i], q = A.quests[i] || {}, open = legendUnlocked(i), done = !!q.done, cur = k === nextL;
     svg += `<path d="M${p.rx.toFixed(0)} ${p.ry.toFixed(0)} L${p.x} ${p.y}" stroke="${open ? ar.color : '#3a4658'}" stroke-width="2" stroke-dasharray="4 5" opacity=".8"/>`;
     svg += `<g data-tq="${i}" style="cursor:${open ? 'pointer' : 'default'}" ${open ? '' : 'opacity=".55"'}>`;
-    if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="30" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
-    svg += `<circle cx="${p.x}" cy="${p.y}" r="23" fill="${done ? ar.color : '#1d2633'}" stroke="${open ? ar.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
-    svg += emblemAt(ar.icon, done ? '#10131a' : open ? ar.color : '#56616f', p.x, p.y, 24);
-    svg += `<text x="${p.x}" y="${p.y + 38}" text-anchor="middle" font-size="10.5" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(ar.name)}</text>`;
-    svg += `<text x="${p.x}" y="${p.y + 50}" text-anchor="middle" font-size="9.5" fill="#7e8a9c">${done ? 'Cleared' : open ? 'Legendary · Lv ' + ar.lv : 'Locked'}</text></g>`;
+    if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="28" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/><rect x="${p.x - 13}" y="${p.y - 13}" width="26" height="26" rx="4" transform="rotate(45 ${p.x} ${p.y})" fill="${done || !open ? '#1d2633' : ar.color}" stroke="${open ? ar.color : '#3a4658'}" stroke-width="2.5"/>`;
+    svg += done ? `<path d="M${p.x - 5} ${p.y} l4 4 l7 -8" stroke="${ar.color}" stroke-width="2.5" fill="none"/>` : `<text x="${p.x}" y="${p.y + 5}" text-anchor="middle" font-size="14" font-weight="800" fill="${open ? '#10131a' : '#56616f'}">${open ? '!' : '?'}</text>`;
+    svg += `<text x="${p.x}" y="${p.y + 36}" text-anchor="middle" font-size="10.5" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(ar.name)}</text>`;
+    svg += `<text x="${p.x}" y="${p.y + 48}" text-anchor="middle" font-size="9.5" fill="#7e8a9c">${done ? 'Cleared' : open ? 'Legendary · Lv ' + ar.lv : 'Locked'}</text></g>`;
   });
   // trainers on the road
   road.forEach((p, i) => {
@@ -2752,6 +2752,14 @@ function routeOverlay() {
     const mx = .25 * a.x + .5 * c.x + .25 * b.x, my = .25 * a.y + .5 * c.y + .25 * b.y;
     const here = A.loc === r;
     const label = r === 17 ? 'LP' : 'R' + (r + 1);
+    if (r === 17) {   // the Laurel Pass is drawn like a side quest marker: a gold diamond on the road to Victory Summit
+      const all = TRAIL_TRAINERS.every((_, i) => A.trail.t[i]) && AREAS.slice(LEG0).every((a, k) => (A.quests[LEG0 + k] || {}).done);
+      svg += `<g data-route="17" role="button" aria-label="${TRAIL}"><path d="${segPath(a, b, 18)}" stroke="transparent" stroke-width="22" fill="none"/><circle cx="${mx}" cy="${my}" r="19" fill="transparent"/>
+        <rect x="${mx - 11}" y="${my - 11}" width="22" height="22" rx="3" transform="rotate(45 ${mx} ${my})" fill="${all ? '#1d2633' : '#e8c76a'}" stroke="#e8c76a" stroke-width="2"/>
+        ${all ? `<path d="M${mx - 4} ${my} l3 3 l5 -6" stroke="#e8c76a" stroke-width="2" fill="none"/>` : `<text x="${mx}" y="${my + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#10131a">★</text>`}
+        <text x="${mx}" y="${my + 30}" text-anchor="middle" font-size="10" font-weight="700" fill="#e8c76a">${TRAIL}</text></g>`;
+      continue;
+    }
     svg += `<g data-route="${r}" role="button" aria-label="${esc(E.ROUTES[r].name)}"><path d="${segPath(a, b, r + 1)}" stroke="transparent" stroke-width="22" fill="none"/>
       <rect x="${mx - 14}" y="${my - 9}" width="28" height="18" rx="9" fill="${here ? '#8fb36a' : '#1d2633'}" stroke="${shamOpen(r) ? SHAM_COLOR : '#8fb36a'}" stroke-width="${shamOpen(r) ? 2.5 : 1.5}"/>
       <text x="${mx}" y="${my + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${here ? '#10131a' : '#cfe6b8'}">${label}</text></g>`;
