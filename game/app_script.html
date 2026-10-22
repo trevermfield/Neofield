@@ -2413,17 +2413,21 @@ function openSummit(opts = {}) {
   $('summitSub').textContent = A.done ? `Hall of Fame · ${money(A.money)}` : `${cleared} of 5 beaten · ${money(A.money)}`;
   const pts = [{x: 180, y: 392}, ...steps.map((_, i) => ({x: 180, y: 330 - i * 70}))];
   const r = rng(555);
-  let svg = `<rect width="360" height="420" fill="color-mix(in srgb, ${gold} 12%, #121820)"/>`;
-  for (let k = 0; k < 40; k++) {
-    const x = 10 + r() * 340, y = 10 + r() * 400;
-    if (Math.abs(x - 180) < 50) continue;
-    svg += `<path d="M${(x - 9).toFixed(0)} ${y.toFixed(0)} L${x.toFixed(0)} ${(y - 14).toFixed(0)} L${(x + 9).toFixed(0)} ${y.toFixed(0)}Z" fill="${gold}" opacity=".16"/>`;
+  // indoors: a long hall with a tiled floor, a carpet down the middle, pillars and torches along both walls
+  let svg = `<rect width="360" height="420" fill="#141824"/>`;
+  for (let x = 0; x <= 360; x += 40) svg += `<path d="M${x} 0V420" stroke="#fff" stroke-width="1" opacity=".05"/>`;
+  for (let y = 0; y <= 420; y += 40) svg += `<path d="M0 ${y}H360" stroke="#fff" stroke-width="1" opacity=".05"/>`;
+  svg += `<rect x="146" y="0" width="68" height="420" fill="#4a1f2a"/><rect x="146" y="0" width="68" height="420" fill="none" stroke="${gold}" stroke-width="2" opacity=".7"/><rect x="152" y="0" width="56" height="420" fill="none" stroke="${gold}" stroke-width="1" opacity=".35" stroke-dasharray="3 5"/>`;
+  svg += `<rect x="0" y="0" width="34" height="420" fill="#0d1019"/><rect x="326" y="0" width="34" height="420" fill="#0d1019"/><path d="M34 0V420M326 0V420" stroke="${gold}" stroke-width="2" opacity=".5"/>`;
+  for (let y = 40; y < 420; y += 90) for (const x of [17, 343]) {
+    svg += `<rect x="${x - 11}" y="${y - 14}" width="22" height="28" rx="3" fill="#1b2030" stroke="#3a4152" stroke-width="1.5"/>`;
+    svg += `<path d="M${x} ${y - 30} c4 6 7 8 7 13 a7 7 0 0 1 -14 0 c0 -4 3 -6 4 -9 c1 2 2 3 3 4 c0 -3 -1 -5 0 -8Z" fill="#f0a24b" opacity=".9"/><circle cx="${x}" cy="${y - 18}" r="16" fill="#f0a24b" opacity=".08"/>`;
   }
   for (let k = 1; k < pts.length; k++) {
     const done = cleared >= k;
     svg += `<path d="M${pts[k - 1].x} ${pts[k - 1].y} L${pts[k].x} ${pts[k].y}" fill="none" stroke="${done ? '#e9edf3' : '#56616f'}" stroke-width="3" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
   }
-  svg += `<text x="${pts[0].x + 20}" y="${pts[0].y + 4}" font-size="11" fill="#b4bdcb">Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
+  svg += `<text x="${pts[0].x + 24}" y="${pts[0].y + 4}" font-size="11" fill="#b4bdcb">Great doors</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
   steps.forEach((st, i) => {
     const p = pts[i + 1], isDone = cleared > i, cur = !A.done && cleared === i, champ = i === 4;
     if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="${champ ? 30 : 26}" fill="none" stroke="${st.color}" stroke-width="2"/>`;
