@@ -364,6 +364,9 @@ export const ROUTES = [
   ['Laurel Pass', ['chetswatch', 'nidomonk', 'wild5', 'wild2']],
 ].map(([name, fams], i) => ({name, families: fams, idx: i}));
 
+// Dex category line under each name in the MonDex ("The Bulb Mon").
+const CATEGORY = {Bulbazoid: 'Bulb', Ivyzoid: 'Spotlight', Venuzoid: 'Satellite', Shardmander: 'Gem', Shardmeleon: 'Crystal', Shardizar: 'Amethyst', Grrtle: 'Turtle', Roartortle: 'Angry', Bellowtoise: 'Tank', Eggyhen: 'Chick', Leggyhen: 'Rooster', Sycasqeek: 'Critter', Sycamage: 'Mage', Zapybara: 'Capybara', Bloogilp: 'Sunfish', Poseigunk: 'Swamp', Yucrane: 'Heron', Bizon: 'Bison', Werebizon: 'Beast', Riptome: 'Tombstone', Ripblok: 'Graveyard', Ripgool: 'Moai', Campyre: 'Campfire', Bonpyre: 'Bonfire', Maraudur: 'Viking', Maraudoom: 'Marauder', Icerpent: 'Snow Snake', Coldbra: 'Ice Cobra', Marooner: 'Hermes', Weldonrust: 'Colossal', Noterish: 'Shamrock', Damerish: 'Irish', Pinedale: 'Wrangler', Broncho: 'Mustang', Coltmare: 'Stallion', Mugnbud: 'Dung Beetle', Nidomonk: 'Mystical', Chetswatch: 'Bigfoot', Banchief: 'Phantom', Cryodon: 'Glyptodon', Rimeocerus: 'Woolly Rhino', Wyrmie: 'Larva', Wyrmpod: 'Chrysalis', Wyrmega: 'Wyrm', Nivalux: 'Ice Storm', Storment: 'Thunderstorm', Rensylk: 'Sunset', Okloyama: 'Conservation', Hexabeake: 'Industry', Aerialyn: 'Flycatcher'};
+
 // ---------- inject into the simulator ----------
 let num = 1;
 export const SPECIES = []; // flat list in dex order
@@ -371,6 +374,7 @@ for (const fam of FAMILIES) {
   fam.stages.forEach((st, i) => {
     const id = toID(st.name);
     st.id = id; st.num = num++; st.family = fam.key; st.stage = i;
+    st.cat = CATEGORY[st.name] ? `The ${CATEGORY[st.name]} Mon` : '';
     const abil = {0: st.abilities[0]}; if (st.abilities[1]) abil.H = st.abilities[1];
     dex.data.Pokedex[id] = {
       num: -3000 - st.num, name: st.name, types: st.types, baseStats: st.stats, abilities: abil,

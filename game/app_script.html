@@ -3065,7 +3065,7 @@ function showDexEntry(name) {
   $('dexEntryView').innerHTML = `<div class="dexentry">
     ${dexNav}
     <div class="dexhero" style="--c:${color}"><div class="pic">${reg ? E.monArt(reg.id) : '#' + sp.num}</div><div>
-      <div class="num">${reg ? `Neofield #${pad3(reg.num)}` : `National #${pad3(sp.num)}`}${status ? ' · ' + status : ''}</div><h2>${esc(sp.name)}</h2>${typesHTML(sp.types)}</div></div>
+      <div class="num">${reg ? `Neofield #${pad3(reg.num)}` : `National #${pad3(sp.num)}`}${status ? ' · ' + status : ''}</div><h2>${esc(sp.name)}</h2>${reg && reg.cat ? `<div class="dexcat">${esc(reg.cat)}</div>` : ''}${typesHTML(sp.types)}</div></div>
     ${reg ? `<p class="flavor">${esc(reg.entry)}</p>` : ''}
     <div class="kv"><div class="lbl">Facts</div><p>Height <b>${sp.heightm} m</b> · Weight <b>${sp.weightkg} kg</b>${reg ? ` · Catch rate <b>${reg.catchRate}</b>` : ''}</p><p>Abilities: ${abil}</p></div>
     ${where ? `<div class="kv"><div class="lbl">Where to find it</div><p>${where}</p></div>` : ''}
