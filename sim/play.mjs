@@ -42,8 +42,8 @@ export const POLICIES = {
   required: {desc: 'Only what the game forces (no side quests). One wild fight per route, trains with wild fights only when clearly too weak.', wildPerRoute: 1, catchTo: 3, questChance: 0, prepQuests: false, readyGap: 3, maxPrep: 40, trail: false, grindFights: 3, healBelow: 0.4},
   // a typical player: a couple of fights per route, fills the team, does about half the side quests, trains until nearly even
   normal: {desc: 'A typical player. Two wild fights per route, fills the team to 6, about half the side quests, trains until close to the leader level.', wildPerRoute: 2, catchTo: 6, questChance: 0.5, prepQuests: true, readyGap: 1, maxPrep: 40, trail: false, grindFights: 4, healBelow: 0.4},
-  // a completionist: lots of fights, every side quest, all of Laurel Pass before the Elite Four, trains until even
-  thorough: {desc: 'A completionist. Four wild fights per route, every side quest, all of Laurel Pass before the Elite Four, trains until level with the leader.', wildPerRoute: 4, catchTo: 6, questChance: 1, prepQuests: true, readyGap: 1, maxPrep: 60, trail: true, grindFights: 6, healBelow: 0.45},
+  // a completionist: lots of fights, every side quest, all six legendary quests on Laurel Pass, trains until even
+  thorough: {desc: 'A completionist. Four wild fights per route, every side quest, all six legendary quests on Laurel Pass, trains until level with the leader.', wildPerRoute: 4, catchTo: 6, questChance: 1, prepQuests: true, readyGap: 1, maxPrep: 60, trail: true, grindFights: 6, healBelow: 0.45},
 };
 
 export const DEFAULTS = {
@@ -308,7 +308,7 @@ export function playRun(seed, opts = {}) {
       }
       if (i % 4 === 3) { townHeal(); shop(); }
     }
-    for (let i = 17; i < G.AREAS.length; i++) { townHeal(); shop(); quest(i); }
+    if (pol.trail) for (let i = G.AREAS.length - 6; i < G.AREAS.length; i++) { townHeal(); shop(); quest(i); }
     S.trailDone = true;
   }
 
@@ -325,7 +325,7 @@ export function playRun(seed, opts = {}) {
     let n = 0;
     while (topAvg() < target - pol.readyGap && n < pol.maxPrep) {
       if (pol.prepQuests) {
-        const i = [...Array(Math.min(pos, 17)).keys()].find(q => !S.questsDone.has(q));
+        const i = [...Array(Math.min(pos, G.AREAS.length - 6)).keys()].find(q => !S.questsDone.has(q));
         if (i !== undefined) { quest(i); n += 4; continue; }
         if (pos >= 17 && !S.trailDone) { trail(); n += 20; continue; }
       }
@@ -413,8 +413,7 @@ export function playRun(seed, opts = {}) {
   }
   if (aborted) return finish();
   mark('allBadges');
-  S.t += T.walk; routeWild(17);
-  if (pol.trail) trail();
+  S.t += T.walk; trail();   // the Laurel Pass is the road to Victory Summit: its 12 trainers are mandatory, the six legendary quests are optional
   mark('beforeE4');
   const e4 = eliteFour();
   mark('e4', {attempts: e4.attempts});

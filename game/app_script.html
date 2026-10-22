@@ -1708,7 +1708,6 @@ const AREAS = [
   {name: 'Old Iron Works', kind: 'Factory', types: ['Steel', 'Electric'], trainer: 'Mechanic', color: '#9fb3d4', icon: 'nut'},
   {name: 'Fairy Meadow', kind: 'Meadow', types: ['Fairy', 'Grass'], trainer: 'Picnicker', color: '#ee9ad0', icon: 'fairy'},
   {name: "Dragon's Den", kind: 'Den', types: ['Dragon', 'Water'], trainer: 'Dragon Tamer', color: '#6f86e8', icon: 'dragon'},
-  {name: 'Victory Road', kind: 'Road', types: null, trainer: 'Ace Trainer', color: '#e8c76a', icon: 'crown'},
 ];
 // Legendary side quests on the Laurel Pass (they open one after another once the last gym leader is beaten)
 AREAS.push(
@@ -1719,12 +1718,13 @@ AREAS.push(
   {name: 'Tarwing Crater', kind: 'Crater', types: ['Fire', 'Poison'], trainer: 'Hexabeake', color: '#8e7cc3', icon: 'flame', legend: 'hexabeake', lv: 66},
   {name: 'Whisperwind Perch', kind: 'Perch', types: ['Psychic', 'Flying'], trainer: 'Aerialyn', color: '#f4a58a', icon: 'wing', legend: 'aerialyn', lv: 67},
 );
+const LEG0 = AREAS.length - 6;   // index of the first legendary quest (the ordinary side quests come before it)
 const TRAIL = 'Laurel Pass';
 const TRAIL_TRAINERS = ['Ace Trainer Mira', 'Veteran Boone', 'Cooltrainer Juno', 'Black Belt Ryo', 'Psychic Elsie', 'Dragon Tamer Kell',
   'Beauty Sable', 'Ranger Tobin', 'Scientist Quill', 'Sailor Marlow', 'Biker Dash', 'Expert Hana'];
 const trailLv = i => 58 + Math.round(i * 8 / 11);
 const trailOpen = () => !!(A && A.regional && A.pos >= 17);
-const legendUnlocked = i => i === 17 || !!(A.quests[i - 1] && A.quests[i - 1].done);
+const legendUnlocked = i => i === LEG0 || !!(A.quests[i - 1] && A.quests[i - 1].done);
 // Team Shamburg: three must-win fights on routes 4, 9 and 14. Trainers come one after another and HP carries over.
 const SHAM_COLOR = '#c9514d';
 const SHAMBURG = [
@@ -1767,19 +1767,13 @@ function renderAdvCard() { /* the adventure now lives on the title screen */ }
 function questOverlay() {
   const pts = mapPoints();
   let svg = '';
-  for (let i = 0; i < Math.min(A.pos, 17); i++) {
+  for (let i = 0; i < Math.min(A.pos, LEG0); i++) {
     const p = pts[i + 1], ar = AREAS[i], q = A.quests[i] || {};
     const x = Math.min(340, p.x + 27), y = p.y - 22;
     const done = q.done;
     svg += `<g data-quest="${i}" role="button" aria-label="${esc(ar.name)}"><circle cx="${x}" cy="${y}" r="15" fill="transparent"/>
       <rect x="${x - 8}" y="${y - 8}" width="16" height="16" rx="3" transform="rotate(45 ${x} ${y})" fill="${done ? '#1d2633' : ar.color}" stroke="${ar.color}" stroke-width="2"/>
       ${done ? `<path d="M${x - 4} ${y} l3 3 l5 -6" stroke="${ar.color}" stroke-width="2" fill="none"/>` : `<text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="10" font-weight="800" fill="#10131a">!</text>`}</g>`;
-  }
-  if (trailOpen()) {
-    const p = pts[18], x = Math.min(340, p.x + 30), y = p.y - 24, all = AREAS.slice(17).every((a, k) => (A.quests[17 + k] || {}).done);
-    svg += `<g data-trail="1" role="button" aria-label="${TRAIL}"><circle cx="${x}" cy="${y}" r="17" fill="transparent"/>
-      <rect x="${x - 10}" y="${y - 10}" width="20" height="20" rx="3" transform="rotate(45 ${x} ${y})" fill="${all ? '#1d2633' : '#e8c76a'}" stroke="#e8c76a" stroke-width="2"/>
-      ${all ? `<path d="M${x - 4} ${y} l3 3 l5 -6" stroke="#e8c76a" stroke-width="2" fill="none"/>` : `<text x="${x}" y="${y + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#10131a">★</text>`}</g>`;
   }
   return svg;
 }
@@ -1847,6 +1841,7 @@ function advNextBarClick(id) {
   else if (id === 'aFarm') openFarm();
   else if (id === 'aDev') openDev();
   else if (id === 'rGrass') routeBattle(A.loc);
+  else if (id === 'tGo') openTrail();
   else if (id === 'sGo') shamFight(shamAt(A.loc));
     else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
 }
@@ -2203,9 +2198,13 @@ async function advBattleOver(won) {
   }
   if (fight.type === 'trailTrainer') {
     const prize = trainerPrize(fight.lv);
-    A.money += prize; A.trail.t[fight.idx] = true; saveA();
+    A.money += prize; A.trail.t[fight.idx] = true;
+    const through = A.trail.t.filter(Boolean).length >= TRAIL_TRAINERS.length && A.travelled < advDest();
+    if (through) A.travelled = advDest();
+    saveA();
     const lines = await showGrowth(xpEvents);
-    advResult('crown', '#e8c76a', `${TRAIL_TRAINERS[fight.idx]} defeated`, `You won ${money(prize)}.`, lines, `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
+    advResult('crown', '#e8c76a', `${TRAIL_TRAINERS[fight.idx]} defeated`, `You won ${money(prize)}.${through ? ` That was the last trainer. You can now go to ${esc(LEAGUE)}.` : ''}`, lines,
+      `${through ? `<button class="btn primary" id="aToMapTown">Go to ${esc(LEAGUE)}</button>` : ''}<button class="btn ${through ? '' : 'primary'}" id="aToTrail">Back to the ${TRAIL}</button>`);
     return;
   }
   if (fight.type === 'questLegend') {
@@ -2214,7 +2213,7 @@ async function advBattleOver(won) {
       const caughtMsg = addCaught(fight.caught);
       q.step = 3; q.done = true; saveA();
       const lines = await showGrowth(xpEvents);
-      advResult('star', ar.color, `${fight.caught.species} caught!`, `${esc(caughtMsg)} ${esc(ar.name)} is cleared.${fight.quest < 22 ? ` A new quest opened: ${esc(AREAS[fight.quest + 1].name)}.` : ' That was the last legendary Mon on the trail!'}`, lines,
+      advResult('star', ar.color, `${fight.caught.species} caught!`, `${esc(caughtMsg)} ${esc(ar.name)} is cleared.${fight.quest < AREAS.length - 1 ? ` A new quest opened: ${esc(AREAS[fight.quest + 1].name)}.` : ' That was the last legendary Mon on the trail!'}`, lines,
         `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
     } else {
       saveA();
@@ -2256,7 +2255,7 @@ async function advBattleOver(won) {
     advHealAll();
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
     saveA();
-    advResult(L.icon, L.color, `${L.badge} earned`, `You won ${money(prize)} and your team was fully healed. ${esc(got)}. A new side quest opened: ${esc(AREAS[A.pos - 1].name)}.${A.pos >= 17 ? ` The ${TRAIL} has also opened near ${esc(LEAGUE)}.` : ''}`, lines,
+    advResult(L.icon, L.color, `${L.badge} earned`, `You won ${money(prize)} and your team was fully healed. ${esc(got)}. ${A.pos < 17 ? `A new side quest opened: ${esc(AREAS[A.pos - 1].name)}.` : `The way to ${esc(LEAGUE)} is the ${TRAIL}. Beat all of its trainers to get through.`}`, lines,
       `<button class="btn primary" id="aToMapTravel">Back to map</button>`);
   } else if (fight.type === 'e4') {
     A.e4pos++; A.money += E4_PRIZE;
@@ -2397,7 +2396,7 @@ const TRAIL_H = 840;
 function trailPts() {
   const road = TRAIL_TRAINERS.map((_, i) => ({x: 180 + 78 * Math.sin(i * 0.95 + 0.4), y: TRAIL_H - 70 - i * 58}));
   // each legendary site sits off the road after trainers 2, 4, 6, 8, 10 and 12
-  const sites = AREAS.slice(17).map((_, k) => {
+  const sites = AREAS.slice(LEG0).map((_, k) => {
     const r = road[k * 2 + 1], left = r.x > 180;
     return {x: left ? 52 : 308, y: r.y - 22, rx: r.x, ry: r.y};
   });
@@ -2408,12 +2407,12 @@ function openTrail() {
   mapMode = 'adventure';
   setAccent('#e8c76a');
   const T = A.trail, doneT = TRAIL_TRAINERS.filter((_, i) => T.t[i]).length;
-  const doneL = AREAS.slice(17).filter((a, k) => (A.quests[17 + k] || {}).done).length;
+  const doneL = AREAS.slice(LEG0).filter((a, k) => (A.quests[LEG0 + k] || {}).done).length;
   $('trailSub').textContent = `${doneT} of ${TRAIL_TRAINERS.length} trainers · ${doneL} of 6 legendary Mons · ${money(A.money)}`;
   const {road, sites} = trailPts();
   const gold = '#e8c76a';
   const nextT = TRAIL_TRAINERS.findIndex((_, i) => !T.t[i]);
-  const nextL = AREAS.slice(17).findIndex((_, k) => legendUnlocked(17 + k) && !(A.quests[17 + k] || {}).done);
+  const nextL = AREAS.slice(LEG0).findIndex((_, k) => legendUnlocked(LEG0 + k) && !(A.quests[LEG0 + k] || {}).done);
   const r = rng(77);
   let svg = `<rect width="360" height="${TRAIL_H}" fill="color-mix(in srgb, ${gold} 9%, #121820)"/>`;
   for (let k = 0; k < 70; k++) {
@@ -2430,7 +2429,7 @@ function openTrail() {
   svg += `<text x="${road[11].x}" y="${road[11].y - 34}" text-anchor="middle" font-size="11" fill="#b4bdcb">On to ${esc(LEAGUE)}</text>`;
   // legendary sites
   sites.forEach((p, k) => {
-    const i = 17 + k, ar = AREAS[i], q = A.quests[i] || {}, open = legendUnlocked(i), done = !!q.done, cur = k === nextL;
+    const i = LEG0 + k, ar = AREAS[i], q = A.quests[i] || {}, open = legendUnlocked(i), done = !!q.done, cur = k === nextL;
     svg += `<path d="M${p.rx.toFixed(0)} ${p.ry.toFixed(0)} L${p.x} ${p.y}" stroke="${open ? ar.color : '#3a4658'}" stroke-width="2" stroke-dasharray="4 5" opacity=".8"/>`;
     svg += `<g data-tq="${i}" style="cursor:${open ? 'pointer' : 'default'}" ${open ? '' : 'opacity=".55"'}>`;
     if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="30" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
@@ -2451,7 +2450,7 @@ function openTrail() {
   $('trailSvg').innerHTML = svg;
   const tgt = nextL >= 0 && (nextT < 0 || nextT >= nextL * 2 + 2) ? sites[nextL] : nextT >= 0 ? road[nextT] : road[11];
   const t = nextT >= 0 ? road[nextT] : tgt;
-  $('trailBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>${nextT >= 0 ? esc(TRAIL_TRAINERS[nextT]) : doneL < 6 ? 'The legendary Mons' : 'Laurel Pass cleared'}</b><small>${nextT >= 0 ? `Tap a trainer on the road to battle · three Mons around level ${trailLv(nextT)} · prize ${money(trainerPrize(trailLv(nextT)))}` : doneL < 6 ? 'Tap a legendary site beside the road. Each one unlocks after the last.' : 'Nothing left here. The Elite Four are waiting.'}</small></div></div>
+  $('trailBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>${nextT >= 0 ? esc(TRAIL_TRAINERS[nextT]) : doneL < 6 ? 'The legendary Mons' : 'Laurel Pass cleared'}</b><small>${nextT >= 0 ? `Beat all ${TRAIL_TRAINERS.length} trainers to reach ${esc(LEAGUE)} · three Mons around level ${trailLv(nextT)} · prize ${money(trainerPrize(trailLv(nextT)))}` : doneL < 6 ? 'The road is clear. The legendary sites beside it are optional; each one unlocks after the last.' : 'Nothing left here. The Elite Four are waiting.'}</small></div></div>
     <div class="row"><button class="btn" id="trailHeal">Heal team</button></div>`;
   show('trail');
   const wrap = $('trailWrap');
@@ -2686,7 +2685,7 @@ function startRegionalAdventure(name, famKey) {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: shuffle(ORDER.slice()).slice(0, 4), e4pos: 0, champTeam: null,
-    money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 5}, quests: {}, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
+    money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 5}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
   touchProfile({name});
   saveA();
@@ -2698,6 +2697,12 @@ function migrateA() {
   if (A.loc === undefined) A.loc = null;
   A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
   A.trail = A.trail || {t: []};
+  if (!A.questsV3) {   // the Victory Road side quest was replaced by the Laurel Pass; legendary quests moved from 17..22 to 16..21
+    const nq = {};
+    for (const [k, v] of Object.entries(A.quests || {})) { const n = +k; if (n < 16) nq[n] = v; else if (n >= 17) nq[n - 1] = v; }
+    A.quests = nq; A.questsV3 = true;
+    if (A.pos >= 17 && A.trail.t.length >= TRAIL_TRAINERS.length && A.trail.t.filter(Boolean).length >= TRAIL_TRAINERS.length) A.travelled = Math.max(A.travelled || 0, 18);
+  }
   // MonDex ids of Neofield Mons that were renamed (old id -> current id)
   const RENAMED = {brightwatercharmander: 'shardmander', neofieldcharmander: 'shardmander', opalisk: 'shardmander',
     starter1: 'bulbazoid', bulbazilla: 'bulbazoid', starter1stage2: 'ivyzoid', starter1stage3: 'venuzoid',
@@ -2746,7 +2751,7 @@ function routeOverlay() {
     const a = pts[r], b = pts[r + 1], c = segCtrl(a, b, r + 1);
     const mx = .25 * a.x + .5 * c.x + .25 * b.x, my = .25 * a.y + .5 * c.y + .25 * b.y;
     const here = A.loc === r;
-    const label = r === 17 ? 'VR' : 'R' + (r + 1);
+    const label = r === 17 ? 'LP' : 'R' + (r + 1);
     svg += `<g data-route="${r}" role="button" aria-label="${esc(E.ROUTES[r].name)}"><path d="${segPath(a, b, r + 1)}" stroke="transparent" stroke-width="22" fill="none"/>
       <rect x="${mx - 14}" y="${my - 9}" width="28" height="18" rx="9" fill="${here ? '#8fb36a' : '#1d2633'}" stroke="${shamOpen(r) ? SHAM_COLOR : '#8fb36a'}" stroke-width="${shamOpen(r) ? 2.5 : 1.5}"/>
       <text x="${mx}" y="${my + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${here ? '#10131a' : '#cfe6b8'}">${label}</text></g>`;
@@ -2766,6 +2771,7 @@ function placeMarkerOnRoute(r) {
 }
 function openRoute(r) {
   if (!routeOpen(r)) return;
+  if (r === 17) { openTrail(); return; }   // the road to the Victory Summit is the Laurel Pass
   A.loc = r;
   saveA();
   openAdvMap({});
@@ -2777,10 +2783,15 @@ function openTown(idx) {
   if (!A || !A.regional) return;
   const d = advDest();
   if (idx == null) idx = d;
-  if (idx > A.travelled) { toast(`${shamOpen(d - 1) ? 'Beat Team Shamburg' : `Beat one wild Mon on ${E.ROUTES[d - 1].name}`} to reach ${placeName(d)}.`); return; }
+  if (idx > A.travelled) { toast(`${d - 1 === 17 ? `Beat every trainer on the ${TRAIL}` : shamOpen(d - 1) ? 'Beat Team Shamburg' : `Beat one wild Mon on ${E.ROUTES[d - 1].name}`} to reach ${placeName(d)}.`); return; }
   A.loc = null; A.townAt = idx < d ? idx : null; saveA(); openAdvMap({});
 }
 function routeCardHTML(r) {
+  if (r === 17) {
+    const left = TRAIL_TRAINERS.filter((_, i) => !A.trail.t[i]).length;
+    return `<div class="nextcard" style="--c:#e8c76a"><span class="face">${emblem('crown', '#e8c76a')}</span><div><b>${TRAIL}</b><small>${esc(placeName(17))} to ${esc(LEAGUE)} · ${left ? `${left} of ${TRAIL_TRAINERS.length} trainers still stand in your way` : 'the way is clear'} · six legendary Mons live beside the road</small></div></div>
+      <div class="row"><button class="btn primary" id="tGo">Enter the ${TRAIL}</button></div>`;
+  }
   const R = E.ROUTES[r], lv = routeLevel(r);
   const sg = shamAt(r), sgOpen = shamOpen(r), gatedHere = A.travelled < advDest() && r === advDest() - 1;
   const mons = R.families.map(k => {

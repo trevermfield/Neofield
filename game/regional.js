@@ -361,7 +361,7 @@ export const ROUTES = [
   ['Route 15', ['wild6', 'pinedale', 'cryodon', 'rensylk']],
   ['Route 16', ['maraudur', 'banchief', 'noterish', 'hexabeake']],
   ['Route 17', ['wyrmie', 'weldonrust', 'bizon', 'okloyama']],
-  ['Victory Road', ['chetswatch', 'nidomonk', 'wild5', 'wild2', 'nivalux', 'storment', 'rensylk', 'okloyama', 'hexabeake', 'aerialyn']],
+  ['Laurel Pass', ['chetswatch', 'nidomonk', 'wild5', 'wild2', 'nivalux', 'storment', 'rensylk', 'okloyama', 'hexabeake', 'aerialyn']],
 ].map(([name, fams], i) => ({name, families: fams, idx: i}));
 
 // ---------- inject into the simulator ----------
