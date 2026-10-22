@@ -1499,6 +1499,21 @@ const CHAMP_LINES = {
   intro: ["So you're the one who beat every gym in the region, then the whole Elite Four.", "I've borrowed a little power from every leader you faced. This is the final battle."],
   win: ['...Incredible. The title is yours.', 'From today, you are the Champion of the Neofield Region.'],
 };
+// after the Champion falls, the whole Elite Four has a word ({n} is the player's name)
+const E4_CHEER = [
+  ['kaley', "{n}! You beat every one of us and then the Champion. Welcome to the family hall of fame!"],
+  ['rachel', "I'm putting this whole run in my notes. Chapter one: {n} wins."],
+  ['oksana', "Kiev is howling with joy, {n}. That means he's proud of you."],
+  ['tucker', "Proud of you, {n}. Seriously. Best battle I've ever lost."],
+  ['tanner', "{n}, you made all three of us look like rookies. Champion suits you."],
+  ['trever', "The odds said no. You said yes, {n}. I'm rerunning my numbers."],
+  ['kent', "That's my kid up there. Well done, {n}."],
+  ['lynne', "I knew you could do it, {n}. I'm so proud of you."],
+  ['anna', "Champion {n}! I'm going to be telling people about this one for years."],
+  ['makenna', "Okay, {n}, that was unreal. Umbreon says congratulations."],
+  ['charlotte', "That was the best day ever! You did it, {n}!"],
+  ['lillian', "We all believed in you, {n}. Now go enjoy it. You earned every bit."],
+];
 const START_BAG = {hyperpotion: 10, fullrestore: 4, fullheal: 5, revive: 4, maxrevive: 1};
 const GYM_REWARD = {hyperpotion: 2, fullrestore: 1, revive: 1};
 const E4_REWARD = {hyperpotion: 2, fullrestore: 2, revive: 1};
@@ -2637,6 +2652,10 @@ async function advBattleOver(won) {
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); if (A.e4pos === 3) await talk(fight.speaker, E4_LAST); }
   else await talk(fight.speaker, fight.type === 'gym' ? LINES[fight.stage.key].win : CHAMP_LINES.win);
+  if (fight.type === 'champion') {
+    const who = A.playerName || 'Tyler';
+    for (const [k, line] of E4_CHEER) await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line.replace(/\{n\}/g, who)]);
+  }
   endBattleQuietly(); ctx = null;
   if (fight.type === 'gym') {
     const L = LEADERS[fight.stage.key];
