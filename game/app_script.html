@@ -1728,10 +1728,17 @@ const legendUnlocked = i => i === LEG0 || !!(A.quests[i - 1] && A.quests[i - 1].
 // Team Shamburg: three must-win fights on routes 4, 9 and 14. Trainers come one after another and HP carries over.
 const SHAM_COLOR = '#c9514d';
 const SHAMBURG = [
-  {route: 3, levels: 2, trainers: [['Shamburg Grunt Pike', 2, 1], ['Shamburg Grunt Mara', 2, 1]]},
-  {route: 8, levels: 3, trainers: [['Shamburg Grunt Dex', 2, 1], ['Shamburg Grunt Voss', 3, 1], ['Shamburg Lieutenant Rook', 3, 2]]},
-  {route: 13, levels: 4, trainers: [['Shamburg Grunt Skye', 3, 1], ['Shamburg Grunt Brix', 3, 1], ['Shamburg Lieutenant Vale', 3, 2], ['Boss Shamburg', 4, 3]]},
+  {route: 3, levels: 2, trainers: [['Shamburg Grunt Foster', 2, 1], ['Shamburg Grunt Miranda', 2, 1]]},
+  {route: 8, levels: 3, trainers: [['Shamburg Grunt Ivori', 2, 1], ['Shamburg Grunt Harbor', 3, 1], ['Shamburg Lieutenant Addi', 3, 2]]},
+  {route: 13, levels: 4, trainers: [['Shamburg Grunt Savannah', 3, 1], ['Shamburg Grunt Merrit', 3, 1], ['Shamburg Lieutenant Kathi', 3, 2], ['Boss Greg', 4, 3]]},
 ];
+// Tyler's trainer art (www/portraits/). Groups are shown when a Team Shamburg stage begins.
+const SHAM_ART = {'Shamburg Grunt Foster': 's-foster', 'Shamburg Grunt Miranda': 's-miranda', 'Shamburg Grunt Ivori': 's-ivori', 'Shamburg Grunt Harbor': 's-harbor',
+  'Shamburg Lieutenant Addi': 's-addi', 'Shamburg Grunt Savannah': 's-savannah', 'Shamburg Grunt Merrit': 's-merrit', 'Shamburg Lieutenant Kathi': 's-kathi', 'Boss Greg': 's-greg'};
+const SHAM_GROUP = ['s-group1', 's-group2', null];
+const TRAINER_ART = {'Bug Catcher': 't-bugcatcher', 'Spelunker': 't-spelunker', 'Hiker': 't-hiker', 'Fisher': 't-fisher', 'Desert Nomad': 't-desertnomad', 'Fire Breather': 't-firebreather',
+  'Swamp Guide': 't-swampguide', 'Skier': 't-skier', 'Ruin Maniac': 't-ruinmaniac', 'Swimmer': 't-swimmer', 'Storm Chaser': 't-stormchaser', 'Night Watcher': 't-nightwatcher',
+  'Bird Keeper': 't-birdkeeper', 'Mechanic': 't-mechanic', 'Picnicker': 't-picnicker', 'Dragon Tamer': 't-dragontamer', 'Ace Trainer Mira': 't-acetrainer'};
 const shamAt = r => SHAMBURG.findIndex(x => x.route === r);
 const shamOpen = r => { const k = shamAt(r); return k >= 0 && !(A.shamburg && A.shamburg.done[k]); };
 const questLevel = i => AREAS[i].lv ? AREAS[i].lv - 3 : Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
@@ -2243,7 +2250,7 @@ async function advBattleOver(won) {
     A.money += prize;
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
     saveA();
-    await talk({name: q.trainer, key: null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, [`You're the real deal. Take these, you've earned them.`]);
+    await talk({name: q.trainer, key: TRAINER_ART[q.trainer] || null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, [`You're the real deal. Take these, you've earned them.`]);
     const lines = await showGrowth(xpEvents);
     advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, `${AREAS[fight.quest].name} cleared`, `You won ${money(prize)}. ${esc(got)}.`, lines,
       `<button class="btn primary" id="aToMap">Back to map</button>`);
@@ -2387,8 +2394,8 @@ function questContinue(i) {
     const mon = q.wild[q.step];
     advFight({type: 'questWild', quest: i, catchable: !!mon.family, sets: [JSON.parse(JSON.stringify(mon))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · ${q.step + 1} of ${nWild}`}});
   } else {
-    talk({name: q.trainer, key: null, color: ar.color, icon: ar.icon}, [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
-      advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: q.trainer, key: null, color: ar.color, icon: 'star', title: q.trainer, subtitle: `${ar.name} · level ${q.level + 1}`}});
+    talk({name: q.trainer, key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: ar.icon}, [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
+      advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: q.trainer, key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: 'star', title: q.trainer, subtitle: `${ar.name} · level ${q.level + 1}`}});
     });
   }
 }
@@ -2540,7 +2547,7 @@ async function trailFight(i) {
   const lv = trailLv(i), name = TRAIL_TRAINERS[i];
   const keys = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
   const sets = [0, 1, 2].map(() => E.regionalWild(17, lv, keys[Math.floor(Math.random() * keys.length)]));
-  await talk({name, key: null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Laurel Pass for a worthy challenger. Show me what you have got!']);
+  await talk({name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Laurel Pass for a worthy challenger. Show me what you have got!']);
   advFight({type: 'trailTrainer', idx: i, lv, sets, foe: {name, key: null, color: '#e8c76a', icon: 'crown', title: name, subtitle: `${TRAIL} · level ${lv}`}});
 }
 $('trailLeave').addEventListener('click', () => openAdvMap({}));
@@ -2890,14 +2897,14 @@ async function shamFight(k) {
   if (k < 0 || A.shamburg.done[k]) return;
   const S = SHAMBURG[k], n = A.shamburg.step[k], t = S.trainers[n];
   const lv = Math.max(5, routeLevel(S.route) + t[2] - 1);
-  const speaker = {name: t[0], key: null, color: SHAM_COLOR, icon: 'star'};
+  const speaker = {name: t[0], key: (n === 0 && SHAM_GROUP[k]) || SHAM_ART[t[0]] || null, color: SHAM_COLOR, icon: 'star'};
   const boss = n === S.trainers.length - 1 && k === 2;
   await talk(speaker, n === 0
     ? [`Hold it right there! We are Team Shamburg, and we take Mons from trainers who are not strong enough to keep them.`, `Your Mons look strong. Hand them over, or beat all ${S.trainers.length} of us!`]
     : boss ? [`So you got past my team. I am the boss of Team Shamburg. No trainer has ever kept their Mons after facing me!`]
     : [`You beat my partner? Then you still have to get past me. No healing, no breaks!`]);
   const sets = Array.from({length: t[1]}, () => E.regionalWild(S.route, lv));
-  advFight({type: 'shamburg', sham: k, k: n, lv, sets, foe: {name: t[0], key: null, color: SHAM_COLOR, icon: 'star', title: t[0], subtitle: `Team Shamburg · ${n + 1} of ${S.trainers.length} · level ${lv}`}});
+  advFight({type: 'shamburg', sham: k, k: n, lv, sets, foe: {name: t[0], key: SHAM_ART[t[0]] || null, color: SHAM_COLOR, icon: 'star', title: t[0], subtitle: `Team Shamburg · ${n + 1} of ${S.trainers.length} · level ${lv}`}});
 }
 function routeBattle(r) {
   const lv = Math.max(2, routeLevel(r) - 2 + Math.floor(Math.random() * 4));
