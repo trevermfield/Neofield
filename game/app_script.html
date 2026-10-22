@@ -168,7 +168,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'farm', 'dev', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'farm', 'dev', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -1074,6 +1074,7 @@ $('infoChips').addEventListener('click', e => { const b = e.target.closest('.chi
 $('infoBack').addEventListener('click', () => {
   if (infoReturn === 'map') { if (mapMode === 'adventure') openAdvMap({}); else openMap({}); return; }
   if (infoReturn === 'trail') { openTrail(); return; }
+  if (infoReturn === 'summit') { openSummit(); return; }
   if (typeof infoReturn === 'number') { openQuest(infoReturn); return; }
   if (infoReturn === 'battle' && battle) { setAccent(foe.color); show('battle'); }
   else openHall();
@@ -1673,7 +1674,7 @@ $('jbagTeam').addEventListener('click', e => {
   $('jbagNote').dataset.msg = '1'; $('jbagNote').textContent = msg;
   renderBag();
 });
-$('jbagBack').addEventListener('click', () => { if (mapMode !== 'adventure') openMap({}); else if (advBagFrom === 'trail') openTrail(); else if (advBagFrom != null && advBagFrom !== 'map') openQuest(advBagFrom); else openAdvMap({}); });
+$('jbagBack').addEventListener('click', () => { if (mapMode !== 'adventure') openMap({}); else if (advBagFrom === 'trail') openTrail(); else if (advBagFrom === 'summit') openSummit(); else if (advBagFrom != null && advBagFrom !== 'map') openQuest(advBagFrom); else openAdvMap({}); });
 
 
 // ---------- Adventure mode ----------
@@ -1829,12 +1830,18 @@ function renderAdvNextBarMain() {
   const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? E4_LV[A.e4pos] : CHAMP_LV;
   const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `Victory Summit · level ${lv}`;
   const label = st.kind === 'champion' ? 'Face the Champion' : `Challenge ${LEADERS[st.key].first}`;
+  if (st.kind !== 'gym') {   // the Elite Four and the Champion are fought on the Victory Summit map
+    bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(sp.key, sp.color)}</span><div><b>${LEAGUE}</b><small>${st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 is next` : 'The Champion is waiting at the top'} · your team averages level ${avgLevel()}</small></div></div>
+      <button class="btn primary" id="aSummit">Enter ${LEAGUE}</button>${actions}`;
+    return;
+  }
   bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(sp.key, sp.color)}</span><div><b>${esc(sp.name)}</b><small>${esc(sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="aChallenge">${esc(label)}</button>${actions}`;
 }
 function advNextBarClick(id) {
   if (id === 'mapBackBattle') { mapFromBattle = false; setAccent(foe.color); show('battle'); }
   else if (id === 'aChallenge') advChallenge();
+  else if (id === 'aSummit') openSummit();
   else if (id === 'aTrain') advTrain();
   else if (id === 'aShop') openShop();
   else if (id === 'aFarm') openFarm();
@@ -2261,7 +2268,7 @@ async function advBattleOver(won) {
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 2, revive: 1});
     saveA();
     const lines = await showGrowth(xpEvents);
-    advResult(LEADERS[fight.stage.key].icon, LEADERS[fight.stage.key].color, `${LEADERS[fight.stage.key].first} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToMap">Back to map</button>`);
+    advResult(LEADERS[fight.stage.key].icon, LEADERS[fight.stage.key].color, `${LEADERS[fight.stage.key].first} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button><button class="btn" id="aToMap">Back to map</button>`);
   } else {
     A.money += CHAMP_PRIZE; A.done = true;
     champions[A.difficulty] = true; store.set('champions', champions);
@@ -2271,7 +2278,7 @@ async function advBattleOver(won) {
 }
 $('result').addEventListener('click', e => {
   const id = e.target.id;
-  if (!['aToMap', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
+  if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
   endBattleQuietly(); ctx = null;
@@ -2279,6 +2286,7 @@ $('result').addEventListener('click', e => {
   else if (id === 'aRouteAgain') routeBattle(fight.route);
   else if (id === 'aShamNext') shamFight(fight.sham);
   else if (id === 'aToTrail') openTrail();
+  else if (id === 'aToSummit') openSummit({animate: true});
   else if (id === 'aToMapTown') { A.loc = null; A.townAt = null; saveA(); openAdvMap({}); }
   else if (id === 'aQuestNext') questContinue(fight.quest);
   else if (id === 'aQuestMap') openQuest(fight.quest, {animate: true});
@@ -2388,6 +2396,66 @@ $('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questC
 $('questLeave').addEventListener('click', () => { if (AREAS[questIdx()] && AREAS[questIdx()].legend) openTrail(); else openAdvMap({}); });
 $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
+
+// --- Victory Summit: the Elite Four and the Champion on one straight path, like a side quest map ---
+function summitSteps() {
+  const steps = A.e4.map((k, i) => ({key: k, L: LEADERS[k], label: LEADERS[k].first, sub: `Elite Four · level ${E4_LV[i]}`, icon: LEADERS[k].icon, color: LEADERS[k].color}));
+  steps.push({key: null, label: 'The Champion', sub: `Champion · level ${CHAMP_LV}`, icon: 'crown', color: CHAMP.color});
+  return steps;
+}
+function openSummit(opts = {}) {
+  if (!A || !A.regional) { openAdvMap({}); return; }
+  mapMode = 'adventure';
+  const steps = summitSteps();
+  const cleared = A.done ? 5 : A.e4pos < 4 ? A.e4pos : 4;
+  const gold = CHAMP.color;
+  setAccent(cleared < 4 ? steps[cleared].color : gold);
+  $('summitSub').textContent = A.done ? `Hall of Fame · ${money(A.money)}` : `${cleared} of 5 beaten · ${money(A.money)}`;
+  const pts = [{x: 180, y: 392}, ...steps.map((_, i) => ({x: 180, y: 330 - i * 70}))];
+  const r = rng(555);
+  let svg = `<rect width="360" height="420" fill="color-mix(in srgb, ${gold} 12%, #121820)"/>`;
+  for (let k = 0; k < 40; k++) {
+    const x = 10 + r() * 340, y = 10 + r() * 400;
+    if (Math.abs(x - 180) < 50) continue;
+    svg += `<path d="M${(x - 9).toFixed(0)} ${y.toFixed(0)} L${x.toFixed(0)} ${(y - 14).toFixed(0)} L${(x + 9).toFixed(0)} ${y.toFixed(0)}Z" fill="${gold}" opacity=".16"/>`;
+  }
+  for (let k = 1; k < pts.length; k++) {
+    const done = cleared >= k;
+    svg += `<path d="M${pts[k - 1].x} ${pts[k - 1].y} L${pts[k].x} ${pts[k].y}" fill="none" stroke="${done ? '#e9edf3' : '#56616f'}" stroke-width="3" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
+  }
+  svg += `<text x="${pts[0].x + 20}" y="${pts[0].y + 4}" font-size="11" fill="#b4bdcb">Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
+  steps.forEach((st, i) => {
+    const p = pts[i + 1], isDone = cleared > i, cur = !A.done && cleared === i, champ = i === 4;
+    if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="${champ ? 30 : 26}" fill="none" stroke="${st.color}" stroke-width="2"/>`;
+    svg += `<circle cx="${p.x}" cy="${p.y}" r="${champ ? 23 : 19}" fill="${isDone ? st.color : '#1d2633'}" stroke="${isDone || cur ? st.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
+    svg += emblemAt(st.icon, isDone ? '#10131a' : cur ? st.color : '#56616f', p.x, p.y, champ ? 26 : 20);
+    svg += `<text x="${p.x + (champ ? 36 : 30)}" y="${p.y - 2}" font-size="12" font-weight="${cur ? 700 : 600}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(st.label)}</text><text x="${p.x + (champ ? 36 : 30)}" y="${p.y + 12}" font-size="10" fill="#7e8a9c">${isDone ? 'Beaten' : esc(st.sub)}</text>`;
+  });
+  const mk0 = opts.animate && cleared > 0 ? pts[cleared - 1] : pts[cleared];
+  svg += `<g id="smarker" transform="translate(${mk0.x} ${mk0.y})"><circle r="12" fill="${gold}" opacity=".3"/><circle r="6.5" fill="#fff" stroke="#10131a" stroke-width="2"/></g>`;
+  $('summitSvg').innerHTML = svg;
+  const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
+  if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>`;
+  else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.key, nowSt.color)}</span><div><b>${esc(nowSt.key ? LEADERS[nowSt.key].title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
+    <button class="btn primary" id="sGoFight">${nowSt.key ? `Challenge ${esc(LEADERS[nowSt.key].first)}` : 'Face the Champion'}</button>`;
+  show('summit');
+  if (opts.animate && cleared > 0) {
+    const go = $('sGoFight'); if (go) go.disabled = true;
+    const a = pts[cleared - 1], b = pts[cleared], t0 = performance.now();
+    const tick = now => {
+      const mk = $('summitSvg').querySelector('#smarker');
+      if (!mk || curScreen !== 'summit') return;
+      const t = Math.min(1, (now - t0) / 2000), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      mk.setAttribute('transform', `translate(${a.x} ${(a.y + (b.y - a.y) * e).toFixed(1)})`);
+      if (t < 1) requestAnimationFrame(tick); else { const g = $('sGoFight'); if (g) g.disabled = false; }
+    };
+    requestAnimationFrame(tick);
+  }
+}
+$('summitBar').addEventListener('click', e => { if (e.target.id === 'sGoFight') advChallenge(); });
+$('summitLeave').addEventListener('click', () => openAdvMap({}));
+$('summitTeam').addEventListener('click', () => openTeamView('summit'));
+$('summitBag').addEventListener('click', () => openAdvBag('summit'));
 
 // --- Laurel Pass (opens after the 17th badge) ---
 // Laurel Pass is a map like the towns and side quests: a winding road with its 5 trainers on it, and the six legendary sites beside it.
@@ -2791,6 +2859,7 @@ function openTown(idx) {
   const d = advDest();
   if (idx == null) idx = d;
   if (idx > A.travelled) { toast(`${d - 1 === 17 ? `Beat every trainer on the ${TRAIL}` : shamOpen(d - 1) ? 'Beat Team Shamburg' : `Beat one wild Mon on ${E.ROUTES[d - 1].name}`} to reach ${placeName(d)}.`); return; }
+  if (idx === 18) { A.loc = null; A.townAt = null; saveA(); openSummit(); return; }
   A.loc = null; A.townAt = idx < d ? idx : null; saveA(); openAdvMap({});
 }
 function routeCardHTML(r) {

@@ -295,7 +295,7 @@ textarea { width: 100%; box-sizing: border-box; min-height: 160px; background: v
 .summary .new { color: var(--hp-good); }
 #mapSvg [data-quest] { cursor: pointer; }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
-#quest .mapwrap { flex: 0 1 auto; }
+#quest .mapwrap, #summit .mapwrap { flex: 0 1 auto; }
 .teamtop { display: flex; flex-direction: column; gap: 6px; }
 .teamtop .hp { height: 8px; }
 .evopath { font-size: 13px; color: var(--muted); }
@@ -844,6 +844,16 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
     </div>
     <div class="mapwrap" id="trailWrap"><svg id="trailSvg" viewBox="0 0 360 840" role="img" aria-label="Laurel Pass map"></svg></div>
     <div class="nextbar" id="trailBar"></div>
+  </section>
+
+  <!-- ADVENTURE: VICTORY SUMMIT -->
+  <section class="screen" id="summit" hidden>
+    <div class="maphead">
+      <div class="mapttl"><small id="summitSub"></small><span>Victory Summit</span></div>
+      <div class="row"><button class="ghost" id="summitTeam">Team</button><button class="ghost" id="summitBag">Bag</button><button class="ghost" id="summitLeave">Leave</button></div>
+    </div>
+    <div class="mapwrap"><svg id="summitSvg" viewBox="0 0 360 420" role="img" aria-label="Victory Summit map"></svg></div>
+    <div class="nextbar" id="summitBar"></div>
   </section>
 
   <!-- ADVENTURE: DEVELOPER TOOLS -->
