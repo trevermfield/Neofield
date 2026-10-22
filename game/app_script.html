@@ -1720,9 +1720,8 @@ AREAS.push(
 );
 const LEG0 = AREAS.length - 6;   // index of the first legendary quest (the ordinary side quests come before it)
 const TRAIL = 'Laurel Pass';
-const TRAIL_TRAINERS = ['Ace Trainer Mira', 'Veteran Boone', 'Cooltrainer Juno', 'Black Belt Ryo', 'Psychic Elsie', 'Dragon Tamer Kell',
-  'Beauty Sable', 'Ranger Tobin', 'Scientist Quill', 'Sailor Marlow', 'Biker Dash', 'Expert Hana'];
-const trailLv = i => 58 + Math.round(i * 8 / 11);
+const TRAIL_TRAINERS = ['Ace Trainer Mira', 'Veteran Boone', 'Cooltrainer Juno', 'Black Belt Ryo', 'Expert Hana'];
+const trailLv = i => 58 + Math.round(i * 8 / (TRAIL_TRAINERS.length - 1));
 const trailOpen = () => !!(A && A.regional && A.pos >= 17);
 const legendUnlocked = i => i === LEG0 || !!(A.quests[i - 1] && A.quests[i - 1].done);
 // Team Shamburg: three must-win fights on routes 4, 9 and 14. Trainers come one after another and HP carries over.
@@ -2199,7 +2198,7 @@ async function advBattleOver(won) {
   if (fight.type === 'trailTrainer') {
     const prize = trainerPrize(fight.lv);
     A.money += prize; A.trail.t[fight.idx] = true;
-    const through = A.trail.t.filter(Boolean).length >= TRAIL_TRAINERS.length && A.travelled < advDest();
+    const through = TRAIL_TRAINERS.every((_, i) => A.trail.t[i]) && A.travelled < advDest();
     if (through) A.travelled = advDest();
     saveA();
     const lines = await showGrowth(xpEvents);
@@ -2391,16 +2390,17 @@ $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
 
 // --- Laurel Pass (opens after the 17th badge) ---
-// Laurel Pass is a map like the towns and side quests: a winding road with its 12 trainers on it, and the six legendary sites beside it.
+// Laurel Pass is a map like the towns and side quests: a winding road with its 5 trainers on it, and the six legendary sites beside it.
+// The road has 11 stops from the entrance up: the sites sit at the even stops, the trainers at the odd ones.
 const TRAIL_H = 840;
 function trailPts() {
-  const road = TRAIL_TRAINERS.map((_, i) => ({x: 180 + 78 * Math.sin(i * 0.95 + 0.4), y: TRAIL_H - 70 - i * 58}));
-  // each legendary site sits off the road after trainers 2, 4, 6, 8, 10 and 12
+  const slots = Array.from({length: 11}, (_, i) => ({x: 180 + 78 * Math.sin(i * 0.95 + 0.4), y: TRAIL_H - 70 - i * 66}));
+  const road = TRAIL_TRAINERS.map((_, i) => slots[i * 2 + 1]);
   const sites = AREAS.slice(LEG0).map((_, k) => {
-    const r = road[k * 2 + 1], left = r.x > 180;
-    return {x: left ? 52 : 308, y: r.y - 22, rx: r.x, ry: r.y};
+    const r = slots[k * 2], left = r.x > 180;
+    return {x: left ? 52 : 308, y: r.y - 14, rx: r.x, ry: r.y};
   });
-  return {road, sites};
+  return {slots, road, sites};
 }
 function openTrail() {
   if (!trailOpen()) { openAdvMap({}); return; }
@@ -2409,7 +2409,7 @@ function openTrail() {
   const T = A.trail, doneT = TRAIL_TRAINERS.filter((_, i) => T.t[i]).length;
   const doneL = AREAS.slice(LEG0).filter((a, k) => (A.quests[LEG0 + k] || {}).done).length;
   $('trailSub').textContent = `${doneT} of ${TRAIL_TRAINERS.length} trainers · ${doneL} of 6 legendary Mons · ${money(A.money)}`;
-  const {road, sites} = trailPts();
+  const {slots, road, sites} = trailPts();
   const gold = '#e8c76a';
   const nextT = TRAIL_TRAINERS.findIndex((_, i) => !T.t[i]);
   const nextL = AREAS.slice(LEG0).findIndex((_, k) => legendUnlocked(LEG0 + k) && !(A.quests[LEG0 + k] || {}).done);
@@ -2421,12 +2421,12 @@ function openTrail() {
     svg += `<path d="M${(x - 9).toFixed(0)} ${y.toFixed(0)} L${x.toFixed(0)} ${(y - 14).toFixed(0)} L${(x + 9).toFixed(0)} ${y.toFixed(0)}Z" fill="${gold}" opacity=".12"/>`;
   }
   // the road: entrance at the bottom, the way on to the Elite Four at the top
-  const pts = [{x: 180, y: TRAIL_H - 20}, ...road];
+  const pts = [{x: 180, y: TRAIL_H - 20}, ...slots];
   const roadD = pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(0) + ' ' + p.y.toFixed(0)).join(' ');
   svg += `<path d="${roadD}" fill="none" stroke="#2a3340" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>`;
   svg += `<path d="${roadD}" fill="none" stroke="#56616f" stroke-width="2.5" stroke-dasharray="6 7" stroke-linecap="round" stroke-linejoin="round"/>`;
   svg += `<text x="180" y="${TRAIL_H - 4}" text-anchor="middle" font-size="11" fill="#b4bdcb">Entrance</text>`;
-  svg += `<text x="${road[11].x}" y="${road[11].y - 34}" text-anchor="middle" font-size="11" fill="#b4bdcb">On to ${esc(LEAGUE)}</text>`;
+  svg += `<text x="${slots[10].x}" y="${slots[10].y - 34}" text-anchor="middle" font-size="11" fill="#b4bdcb">On to ${esc(LEAGUE)}</text>`;
   // legendary sites
   sites.forEach((p, k) => {
     const i = LEG0 + k, ar = AREAS[i], q = A.quests[i] || {}, open = legendUnlocked(i), done = !!q.done, cur = k === nextL;
@@ -2448,8 +2448,7 @@ function openTrail() {
     svg += `<text x="${p.x + (left ? -24 : 24)}" y="${p.y + 4}" text-anchor="${left ? 'end' : 'start'}" font-size="10.5" font-weight="${cur ? 700 : 500}" fill="${done ? '#7e8a9c' : cur ? '#e9edf3' : '#95a0b2'}">${esc(TRAIL_TRAINERS[i])}${done ? ' ✓' : ''}</text></g>`;
   });
   $('trailSvg').innerHTML = svg;
-  const tgt = nextL >= 0 && (nextT < 0 || nextT >= nextL * 2 + 2) ? sites[nextL] : nextT >= 0 ? road[nextT] : road[11];
-  const t = nextT >= 0 ? road[nextT] : tgt;
+  const t = nextT >= 0 ? road[nextT] : nextL >= 0 ? sites[nextL] : slots[10];
   $('trailBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>${nextT >= 0 ? esc(TRAIL_TRAINERS[nextT]) : doneL < 6 ? 'The legendary Mons' : 'Laurel Pass cleared'}</b><small>${nextT >= 0 ? `Beat all ${TRAIL_TRAINERS.length} trainers to reach ${esc(LEAGUE)} · three Mons around level ${trailLv(nextT)} · prize ${money(trainerPrize(trailLv(nextT)))}` : doneL < 6 ? 'The road is clear. The legendary sites beside it are optional; each one unlocks after the last.' : 'Nothing left here. The Elite Four are waiting.'}</small></div></div>
     <div class="row"><button class="btn" id="trailHeal">Heal team</button></div>`;
   show('trail');
@@ -2701,7 +2700,7 @@ function migrateA() {
     const nq = {};
     for (const [k, v] of Object.entries(A.quests || {})) { const n = +k; if (n < 16) nq[n] = v; else if (n >= 17) nq[n - 1] = v; }
     A.quests = nq; A.questsV3 = true;
-    if (A.pos >= 17 && A.trail.t.length >= TRAIL_TRAINERS.length && A.trail.t.filter(Boolean).length >= TRAIL_TRAINERS.length) A.travelled = Math.max(A.travelled || 0, 18);
+    if (A.pos >= 17 && TRAIL_TRAINERS.every((_, i) => A.trail.t[i])) A.travelled = Math.max(A.travelled || 0, 18);
   }
   // MonDex ids of Neofield Mons that were renamed (old id -> current id)
   const RENAMED = {brightwatercharmander: 'shardmander', neofieldcharmander: 'shardmander', opalisk: 'shardmander',
