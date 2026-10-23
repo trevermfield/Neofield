@@ -2026,7 +2026,8 @@ const SHAM_ART = {'Shamburg Grunt Foster': 's-foster', 'Shamburg Grunt Miranda':
 const SHAM_GROUP = ['s-group1', 's-group2', null];
 const TRAINER_ART = {'Bug Catcher': 't-bugcatcher', 'Spelunker': 't-spelunker', 'Hiker': 't-hiker', 'Fisher': 't-fisher', 'Desert Nomad': 't-desertnomad', 'Fire Breather': 't-firebreather',
   'Swamp Guide': 't-swampguide', 'Skier': 't-skier', 'Ruin Maniac': 't-ruinmaniac', 'Swimmer': 't-swimmer', 'Storm Chaser': 't-stormchaser', 'Night Watcher': 't-nightwatcher',
-  'Bird Keeper': 't-birdkeeper', 'Mechanic': 't-mechanic', 'Picnicker': 't-picnicker', 'Dragon Tamer': 't-dragontamer', 'Ace Trainer Mira': 't-acetrainer'};
+  'Bird Keeper': 't-birdkeeper', 'Mechanic': 't-mechanic', 'Picnicker': 't-picnicker', 'Dragon Tamer': 't-dragontamer', 'Ace Trainer Mira': 't-acetrainer',
+  'Veteran Boone': 't-veteran', 'Cooltrainer Juno': 't-cooltrainer', 'Black Belt Ryo': 't-blackbelt', 'Expert Hana': 't-experthana'};
 const shamAt = r => SHAMBURG.findIndex(x => x.route === r);
 const shamOpen = r => { const k = shamAt(r); return k >= 0 && !(A.shamburg && A.shamburg.done[k]); };
 const questLevel = i => AREAS[i].lv ? AREAS[i].lv - 3 : Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
@@ -2806,6 +2807,7 @@ let duskBusy = false;
 async function duskIn() {
   const d = $('dusk');
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
+  const gb = $('sGoFight'); if (gb) { gb.style.transition = 'opacity .8s ease'; gb.style.opacity = '0'; gb.style.pointerEvents = 'none'; }   // the button never lingers under the fog
   d.hidden = false; void d.offsetWidth;
   if (reducedMotion()) { d.classList.add('on'); return; }
   requestAnimationFrame(() => d.classList.add('on'));
@@ -2828,7 +2830,7 @@ async function championIntro(sets, lv, sp) {
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   $('ciSkip').onclick = e => { e.stopPropagation(); skipped = true; release(); };
   $('ciHint').hidden = true; el.classList.add('pre'); el.hidden = false; el.classList.remove('out');
-  requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transitionDuration = '2.6s'; el.classList.remove('pre'); setTimeout(duskOut, 1400); }));   // fades in over the dusk
+  requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transitionDuration = '2.6s'; el.classList.remove('pre'); setTimeout(() => duskOut(true), 2800); }));   // fades in over the dusk
   bgmStart('fog');
   const fx = gloomFX($('ciCanvas'));
   // 1. just the words, "THE CHAMPION", in the middle of the dark
@@ -3468,7 +3470,7 @@ async function trailFight(i) {
   const keys = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
   const sets = [0, 1, 2].map(() => E.regionalWild(17, lv, keys[Math.floor(Math.random() * keys.length)]));
   await talk({name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Laurel Pass for a worthy challenger. Show me what you have got!']);
-  advFight({type: 'trailTrainer', idx: i, lv, sets, foe: {name, key: null, color: '#e8c76a', icon: 'crown', title: name, subtitle: `${TRAIL} · level ${lv}`}});
+  advFight({type: 'trailTrainer', idx: i, lv, sets, foe: {name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown', title: name, subtitle: `${TRAIL} · level ${lv}`}});
 }
 $('trailLeave').addEventListener('click', () => openAdvMap({}));
 $('trailTeam').addEventListener('click', () => openTeamView('trail'));
