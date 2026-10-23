@@ -3188,7 +3188,7 @@ function entranceTeam(root, later, finish) {
 function entranceRoad(root, later, finish) {
   const SRC = ['summit/road1.jpg', 'summit/road2.jpg', 'summit/road3.jpg', 'summit/road4.jpg'];
   const POS = ['50% 50%', '50% 50%', '58% 50%', '58% 50%'];
-  const imgs = SRC.map((src, i) => { const im = document.createElement('img'); im.className = 'rimg'; im.src = src; im.alt = ''; im.style.objectPosition = POS[i]; root.appendChild(im); return im; });
+  const imgs = SRC.map((src, i) => { const im = document.createElement('img'); im.className = 'rimg'; im.src = src; im.alt = ''; im.style.objectPosition = POS[i]; if (i === 0) im.style.webkitMaskImage = im.style.maskImage = 'linear-gradient(to bottom, #000 82%, transparent 100%)'; root.appendChild(im); return im; });
   const vig = document.createElement('div'); vig.className = 'rvig'; root.appendChild(vig);
   const flash = document.createElement('div'); flash.className = 'rflash'; root.appendChild(flash);
   const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x)), lerp = (a, b, k) => a + (b - a) * k;
@@ -3199,26 +3199,26 @@ function entranceRoad(root, later, finish) {
   const SL = 1.5;   // slowed down: every time below is multiplied
   const T = {lift: 5200 * SL, stairsIn: 4600 * SL, stairsEnd: 9800 * SL, gateIn: 9000 * SL, open: 12800 * SL, flashAt: 15600 * SL, end: 17600 * SL};
   const t0 = performance.now(); let raf = 0, dead = false, lastStep = -1;
-  const bobAmp = t => 3 + 6 * seg(t, T.stairsIn, T.open);                       // steps get heavier as you near the gate
+  const bobAmp = t => 1.1 + 2.4 * seg(t, T.stairsIn, T.open);                       // steps get heavier as you near the gate
   function frame() {
     if (dead) return;
     const t = performance.now() - t0, H = root.clientHeight || innerHeight;
     const walking = t > T.stairsIn && t < T.open;
     const bobK = walking ? 1 : (t >= T.open ? Math.max(0, 1 - seg(t, T.open, T.open + 750)) : 0);
-    const ph = t / 760, bob = Math.sin(ph * Math.PI * 2) * bobAmp(t) * bobK, roll = Math.sin(ph * Math.PI) * .28 * bobK;
+    const ph = t / 760, bob = Math.sin(ph * Math.PI * 2) * bobAmp(t) * bobK, roll = Math.sin(ph * Math.PI) * .1 * bobK;
     // shot 1: the head lifts. The tall image slides from the stairs up to the spire
     { const k = ease(seg(t, 450, 7050)), s = lerp(1.5, 1.32, k), lim = (s - 1) * H / 2 * .98;
-      const ty = lerp(-lim, lim, k);
+      const ty = lerp(-lim - H * .22, lim, k);   // starts below the picture, looking at the dark ground, then the head lifts
       imgs[0].style.transform = `translateY(${ty}px) scale(${s})`;
       imgs[0].style.opacity = String(1 - seg(t, T.stairsIn, T.stairsIn + 1350)); }
     // shot 2: walking up the stairs, zooming toward the gate
-    { const k = seg(t, T.stairsIn, T.stairsEnd + 900), s = lerp(1.0, 1.42, ease(k));
+    { const k = seg(t, T.stairsIn, T.stairsEnd + 900), s = lerp(1.0, 1.2, ease(k));
       imgs[1].style.transformOrigin = '50% 52%';
       imgs[1].style.transform = `translateY(${bob}px) rotate(${roll}deg) scale(${s})`;
       imgs[1].style.opacity = String(Math.min(seg(t, T.stairsIn, T.stairsIn + 1350), 1 - seg(t, T.stairsEnd - 300, T.stairsEnd + 1050))); }
     // shots 3 and 4 share one camera, so fading the closed gate into the open one looks like the doors swinging open
     { const k1 = seg(t, T.gateIn, T.open), k2 = seg(t, T.open, T.flashAt + 600);
-      const s = k2 > 0 ? lerp(1.22, 1.85, easeIn(k2)) : lerp(1.0, 1.22, ease(k1));
+      const s = k2 > 0 ? lerp(1.12, 1.5, easeIn(k2)) : lerp(1.0, 1.12, ease(k1));
       const tf = `translateY(${bob}px) rotate(${roll}deg) scale(${s})`;
       for (const i of [2, 3]) { imgs[i].style.transformOrigin = '57% 62%'; imgs[i].style.transform = tf; }
       imgs[2].style.opacity = String(seg(t, T.gateIn, T.gateIn + 1350));
