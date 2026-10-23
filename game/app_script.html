@@ -2072,6 +2072,7 @@ let summitAsk = false;
 function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
   if (summitLocked() && !force) { openSummit(); return; }
+  hallOff();
   mapMode = 'adventure';
   mapFromBattle = !!fromBattle;
   const st = aStage();
@@ -2306,6 +2307,7 @@ function gymSets(key, pos, lv) {
 async function advChallenge() {
   const st = aStage();
   if (!st || st.kind === 'done') return;
+  hallOff();   // the hall music fades out as the battle begins
   let sets, lv;
   if (st.kind === 'gym') { lv = GYM_LV[A.pos]; sets = gymSets(st.key, A.pos, lv); }
   else if (st.kind === 'e4') {
@@ -2849,7 +2851,7 @@ function gloomFX(canvas, ash) {
 let bgm = null; const bgmBuf = {};
 async function bgmStart(name, o = {}) {
   if (!evoSound || bgm) return;
-  const token = bgm = {};
+  const token = bgm = {name};
   try {
     audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume();
     if (!bgmBuf[name]) bgmBuf[name] = await fetch(`music/${name}.mp3`).then(r => r.arrayBuffer()).then(a => audio.decodeAudioData(a));
@@ -2861,6 +2863,8 @@ async function bgmStart(name, o = {}) {
     token.src = src; token.gain = g;
   } catch (e) { if (bgm === token) bgm = null; }
 }
+// the hall music (Victory Summit between fights) only ever stops itself, never another track
+function hallOff() { if (bgm && bgm.name === 'hall') bgmStop(); }
 function bgmStop() {
   if (!bgm) return;
   const b = bgm; bgm = null;
@@ -2962,7 +2966,7 @@ async function finale() {
   el.hidden = false; $('talk').style.zIndex = 55;
   const fx = finaleFX($('finCanvas'));
   const fl = $('finFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
-  toneMuted = true; bgmStart('dawn');   // after the Champion falls, the only music is Piano Dawn
+  hallOff(); toneMuted = true; bgmStart('dawn');   // after the Champion falls, the only music is Piano Dawn
   $('champIntro').hidden = true; $('champIntro').style.opacity = '';
   fx.confetti(170);
   $('finSkip').onclick = () => { skipped = true; if (talkQueue) { const r = talkQueue.resolve; talkQueue = null; $('talk').hidden = true; r(); } };
@@ -3240,6 +3244,7 @@ function openSummit(opts = {}) {
   steps.forEach((st, i) => { if (i < 4 && i > cleared) { st.label = `Elite Four - ${i + 1}`; st.sub = 'Not yet'; st.icon = 'star'; } });
   const gold = CHAMP.color;
   setAccent(cleared < 4 ? steps[cleared].color : gold);
+  if (cleared >= 1 && !A.done && !introNext) bgmStart('hall', {fade: 3.5, vol: .45}); else hallOff();   // fades in once an Elite Four has fallen
   $('summitSub').textContent = A.done ? `Hall of Fame · ${money(A.money)}` : `${cleared} of 5 beaten · ${money(A.money)}`;
   const pts = [{x: 180, y: 392}, ...steps.map((_, i) => ({x: 180, y: 330 - i * 70}))];
   const r = rng(555);
