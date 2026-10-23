@@ -5001,7 +5001,7 @@ $('saveCopy').addEventListener('click', async () => {
 $('saveLoadOpen').addEventListener('click', () => {
   $('saveBox').hidden = false; $('saveLoadRow').hidden = false;
   $('saveText').readOnly = false; $('saveText').value = ''; $('saveText').placeholder = 'Paste a save code that starts with GLB1:';
-  $('saveNote').textContent = 'Loading a code replaces every save slot and built team on this device.';
+  $('saveNote').textContent = 'Loading a code replaces only the save slots that are inside the code. Other slots are not touched.';
   $('saveText').focus();
 });
 $('saveLoad').addEventListener('click', () => {
@@ -5010,12 +5010,17 @@ $('saveLoad').addEventListener('click', () => {
   try { if (raw.startsWith('GLB1:')) data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(5))))); } catch (e) { data = null; }
   if (!data || typeof data !== 'object') { $('saveNote').textContent = "That doesn't look like a save code. Copy the whole thing, starting with GLB1:"; return; }
   try {
+    // only the slots (and shared items) that are in the code are replaced; every other slot is left alone
+    const inCode = Object.keys(data), slots = new Set(inCode.map(k => (/^slot([1-4])\./.exec(k) || [])[1]).filter(Boolean));
     const drop = [];
-    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isSaveKey(k) || OLD_SAVE_KEYS.includes(k)) drop.push(k); }
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i), m = /^slot([1-4])\./.exec(k);
+      if (m ? slots.has(m[1]) : (isSaveKey(k) || OLD_SAVE_KEYS.includes(k)) && inCode.includes(k)) drop.push(k);
+    }
     drop.forEach(k => localStorage.removeItem(k));
     for (const [k, v] of Object.entries(data)) if (isSaveKey(k) || OLD_SAVE_KEYS.includes(k)) localStorage.setItem(k, v);
     // a code from before save slots: let the move into Slot 1 run again
-    if (!('saveVersion' in data)) localStorage.removeItem('saveVersion');
+    if (!slots.size && !('saveVersion' in data)) localStorage.removeItem('saveVersion');
   } catch (e) { $('saveNote').textContent = "This device won't let the game save. Check that private browsing is off."; return; }
   $('saveNote').textContent = 'Save loaded. Restarting the game…';
   setTimeout(() => location.reload(), 600);
