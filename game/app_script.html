@@ -3196,43 +3196,44 @@ function entranceRoad(root, later, finish) {
   const easeIn = k => k * k, easeOut = k => 1 - (1 - k) * (1 - k);
   const seg = (t, a, b) => clamp((t - a) / (b - a));
   // timeline (ms): 0-5200 the lift, 4600-9800 the stairs, 9000-13200 the gate, 12800-13700 the doors open, 13700-17200 into the light
-  const T = {lift: 5200, stairsIn: 4600, stairsEnd: 9800, gateIn: 9000, open: 12800, flashAt: 15600, end: 17600};
+  const SL = 1.5;   // slowed down: every time below is multiplied
+  const T = {lift: 5200 * SL, stairsIn: 4600 * SL, stairsEnd: 9800 * SL, gateIn: 9000 * SL, open: 12800 * SL, flashAt: 15600 * SL, end: 17600 * SL};
   const t0 = performance.now(); let raf = 0, dead = false, lastStep = -1;
   const bobAmp = t => 3 + 6 * seg(t, T.stairsIn, T.open);                       // steps get heavier as you near the gate
   function frame() {
     if (dead) return;
     const t = performance.now() - t0, H = root.clientHeight || innerHeight;
     const walking = t > T.stairsIn && t < T.open;
-    const bobK = walking ? 1 : (t >= T.open ? Math.max(0, 1 - seg(t, T.open, T.open + 500)) : 0);
-    const ph = t / 520, bob = Math.sin(ph * Math.PI * 2) * bobAmp(t) * bobK, roll = Math.sin(ph * Math.PI) * .28 * bobK;
+    const bobK = walking ? 1 : (t >= T.open ? Math.max(0, 1 - seg(t, T.open, T.open + 750)) : 0);
+    const ph = t / 760, bob = Math.sin(ph * Math.PI * 2) * bobAmp(t) * bobK, roll = Math.sin(ph * Math.PI) * .28 * bobK;
     // shot 1: the head lifts. The tall image slides from the stairs up to the spire
-    { const k = ease(seg(t, 300, 4700)), s = lerp(1.5, 1.32, k), lim = (s - 1) * H / 2 * .98;
+    { const k = ease(seg(t, 450, 7050)), s = lerp(1.5, 1.32, k), lim = (s - 1) * H / 2 * .98;
       const ty = lerp(-lim, lim, k);
       imgs[0].style.transform = `translateY(${ty}px) scale(${s})`;
-      imgs[0].style.opacity = String(1 - seg(t, T.stairsIn, T.stairsIn + 900)); }
+      imgs[0].style.opacity = String(1 - seg(t, T.stairsIn, T.stairsIn + 1350)); }
     // shot 2: walking up the stairs, zooming toward the gate
-    { const k = seg(t, T.stairsIn, T.stairsEnd + 600), s = lerp(1.0, 1.42, ease(k));
+    { const k = seg(t, T.stairsIn, T.stairsEnd + 900), s = lerp(1.0, 1.42, ease(k));
       imgs[1].style.transformOrigin = '50% 52%';
       imgs[1].style.transform = `translateY(${bob}px) rotate(${roll}deg) scale(${s})`;
-      imgs[1].style.opacity = String(Math.min(seg(t, T.stairsIn, T.stairsIn + 900), 1 - seg(t, T.stairsEnd - 200, T.stairsEnd + 700))); }
+      imgs[1].style.opacity = String(Math.min(seg(t, T.stairsIn, T.stairsIn + 1350), 1 - seg(t, T.stairsEnd - 300, T.stairsEnd + 1050))); }
     // shots 3 and 4 share one camera, so fading the closed gate into the open one looks like the doors swinging open
-    { const k1 = seg(t, T.gateIn, T.open), k2 = seg(t, T.open, T.flashAt + 400);
+    { const k1 = seg(t, T.gateIn, T.open), k2 = seg(t, T.open, T.flashAt + 600);
       const s = k2 > 0 ? lerp(1.22, 1.85, easeIn(k2)) : lerp(1.0, 1.22, ease(k1));
       const tf = `translateY(${bob}px) rotate(${roll}deg) scale(${s})`;
       for (const i of [2, 3]) { imgs[i].style.transformOrigin = '57% 62%'; imgs[i].style.transform = tf; }
-      imgs[2].style.opacity = String(seg(t, T.gateIn, T.gateIn + 900));
-      imgs[3].style.opacity = String(seg(t, T.open, T.open + 1000)); }
-    flash.style.opacity = String(easeIn(seg(t, T.flashAt, T.end - 600)));
+      imgs[2].style.opacity = String(seg(t, T.gateIn, T.gateIn + 1350));
+      imgs[3].style.opacity = String(seg(t, T.open, T.open + 1500)); }
+    flash.style.opacity = String(easeIn(seg(t, T.flashAt, T.end - 900)));
     // a footstep on every bob
     const step = Math.floor(ph + .5);
-    if (walking && step !== lastStep) { lastStep = step; tone(78 - Math.min(20, (t - T.stairsIn) / 300), 0, .11, 'sine', .15 * (1 - .4 * seg(t, T.stairsIn, T.open))); }
+    if (walking && step !== lastStep) { lastStep = step; tone(78 - Math.min(20, (t - T.stairsIn) / 450), 0, .11, 'sine', .15 * (1 - .4 * seg(t, T.stairsIn, T.open))); }
     raf = requestAnimationFrame(frame);
   }
   imgs[3].decode && Promise.all(imgs.map(i => i.decode ? i.decode().catch(() => {}) : 0));
   raf = requestAnimationFrame(frame);
   // sound: a rising line while the head lifts, a warm pad for the walk, a rumble as the doors open, a bright chord in the light
-  later(300, () => [261.6, 329.6, 392, 523.3].forEach((f, i) => tone(f, i * .9, 2.4, 'sine', .06)));
-  later(T.stairsIn, () => [130.8, 196].forEach(f => tone(f, 0, 7.5, 'triangle', .05)));
+  later(450, () => [261.6, 329.6, 392, 523.3].forEach((f, i) => tone(f, i * 1.35, 3.4, 'sine', .06)));
+  later(T.stairsIn, () => [130.8, 196].forEach(f => tone(f, 0, 11.5, 'triangle', .05)));
   later(T.open - 100, () => { tone(55, 0, 3.2, 'sine', .28); tone(82.4, 0, 3, 'sine', .12); });
   later(T.open + 300, () => [392, 523.3, 659.3, 784, 1046.5].forEach((f, i) => tone(f, i * .12, 3.4, 'sine', .07)));
   later(T.flashAt, () => [523.3, 659.3, 784, 1046.5, 1318.5].forEach((f, i) => tone(f, i * .05, 2.6, 'triangle', .07)));
