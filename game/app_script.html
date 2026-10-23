@@ -2708,7 +2708,7 @@ async function advBattleOver(won) {
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 2, revive: 1});
     saveA();
     const lines = await showGrowth(xpEvents);
-    advResult(E4_FIGHTS[fight.stage.key].icon, E4_FIGHTS[fight.stage.key].color, `${E4_FIGHTS[fight.stage.key].title} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button><button class="btn" id="aToMap">Back to map</button>`);
+    advResult(E4_FIGHTS[fight.stage.key].icon, E4_FIGHTS[fight.stage.key].color, `${E4_FIGHTS[fight.stage.key].title} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button>`);
   } else {
     A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
     champions[A.difficulty] = true; store.set('champions', champions);
@@ -2896,7 +2896,7 @@ function gloomOn() {
   gloomBeat = setInterval(() => { if (bgm) return; tone(50, 0, .3, 'sine', .14); tone(46, .25, .35, 'sine', .1); }, 3200);
 }
 function gloomOff() {
-  bgmStop();
+  if (!(bgm && bgm.name === 'hall')) bgmStop();   // the hall music plays on through the result screen
   if (ciClose) { ciClose = null; $('champIntro').hidden = true; $('champIntro').style.opacity = ''; }
   if (!gloomFx) return;
   gloomFx.stop(); gloomFx = null; clearTimeout(gloomFogT); clearInterval(gloomBeat);
@@ -3291,7 +3291,7 @@ function openSummit(opts = {}) {
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
     <button class="btn primary" id="sRematch">Rematch the Summit</button>
     <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>`;
-  else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
+  else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, items only in battle' : ''}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button><button class="btn" id="sDevNote">Replay the note</button></div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at the In-Laws. Are you sure?</small></div></div>
@@ -3327,7 +3327,6 @@ $('summitLeave').addEventListener('click', () => {
   openAdvMap({force: true});
 });
 $('summitTeam').addEventListener('click', () => openTeamView('summit'));
-$('summitBag').addEventListener('click', () => openAdvBag('summit'));
 
 // --- Laurel Pass (opens after the 17th badge) ---
 // Laurel Pass is a map like the towns and side quests: a winding road with its 5 trainers on it, and the six legendary sites beside it.
