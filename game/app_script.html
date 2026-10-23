@@ -2326,7 +2326,7 @@ async function advChallenge() {
     sets = E.leaderSets(A.champTeam, lv);
   }
   const sp = speakerFor(st);
-  if (st.kind === 'champion') await championIntro(sets, lv, sp);
+  if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp); } finally { duskBusy = false; } }
   else await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
   const f = st.kind === 'champion'
     ? {...CHAMP, name: 'Cancer', title: 'Cancer', key: null, subtitle: `Victory Summit · level ${lv}`}
@@ -2780,6 +2780,19 @@ async function championDefeat() {
   await ciSay($('ciLine'), 'You have defeated me.', 7000, tapP);
   fx.stop();   // the overlay stays up until the finale covers it
 }
+// "Face the Champion": the hall dims, fog rolls in across it and the music slips into the fog theme, then the intro fades in over it
+let duskBusy = false;
+async function duskIn() {
+  const d = $('dusk');
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
+  d.hidden = false; void d.offsetWidth;
+  if (reducedMotion()) { d.classList.add('on'); return; }
+  requestAnimationFrame(() => d.classList.add('on'));
+  bgmStop(); setTimeout(() => bgmStart('fog', {fade: 5}), 300);
+  tone(49, 0, 3.4, 'sine', .16); tone(73.4, .4, 3, 'sine', .07); tone(55, 1.6, 2.6, 'sine', .1);
+  await new Promise(r => setTimeout(r, 3600));
+}
+function duskOut() { const d = $('dusk'); d.classList.remove('on'); d.hidden = true; }
 async function championIntro(sets, lv, sp) {
   const el = $('champIntro'), stage = $('ciStage');
   let skipped = false, pending = [];
@@ -2789,7 +2802,8 @@ async function championIntro(sets, lv, sp) {
   const beat = () => { tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22); };
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   $('ciSkip').onclick = e => { e.stopPropagation(); skipped = true; release(); };
-  el.hidden = false; el.classList.remove('out');
+  el.classList.add('pre'); el.hidden = false; el.classList.remove('out');
+  requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transitionDuration = '1.8s'; el.classList.remove('pre'); setTimeout(duskOut, 2000); }));   // fades in over the dusk
   bgmStart('fog');
   const fx = gloomFX($('ciCanvas'));
   // 1. just the words, "THE CHAMPION", in the middle of the dark
@@ -2809,7 +2823,7 @@ async function championIntro(sets, lv, sp) {
   const fl = $('ciFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
   el.classList.add('quake'); tone(60, 0, 1.2, 'sine', .35); tone(90, .05, .9, 'sawtooth', .05);
   await new Promise(r => setTimeout(r, skipped ? 100 : 700));
-  fx.stop(); el.hidden = true; el.classList.remove('quake'); stage.innerHTML = ''; fl.classList.remove('go');
+  fx.stop(); el.hidden = true; el.classList.remove('quake', 'pre'); el.style.transitionDuration = ''; stage.innerHTML = ''; fl.classList.remove('go'); duskOut();
 }
 // slow rain / drifting ash on a canvas
 function gloomFX(canvas, ash) {
