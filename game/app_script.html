@@ -2003,13 +2003,21 @@ AREAS.push(
   {name: 'Whiteout Summit', kind: 'Peak', types: ['Ice'], trainer: 'Nivalux', color: '#bfe0f5', icon: 'flake', legend: 'nivalux', lv: 62},
   {name: 'Stormcall Ridge', kind: 'Ridge', types: ['Electric'], trainer: 'Storment', color: '#e8c040', icon: 'bolt', legend: 'storment', lv: 63},
   {name: 'Embersong Glade', kind: 'Glade', types: ['Fire'], trainer: 'Rensylk', color: '#f08a4b', icon: 'flame', legend: 'rensylk', lv: 64},
-  {name: 'Rosequartz Hollow', kind: 'Hollow', types: ['Rock', 'Fairy'], trainer: 'Okloyama', color: '#e88a9a', icon: 'fairy', legend: 'okloyama', lv: 65},
+  {name: 'Rose Rock Canyon', kind: 'Canyon', types: ['Rock', 'Fairy'], trainer: 'Okloyama', color: '#e88a9a', icon: 'fairy', legend: 'okloyama', lv: 65},
   {name: 'Tarwing Crater', kind: 'Crater', types: ['Fire', 'Poison'], trainer: 'Hexabeake', color: '#8e7cc3', icon: 'flame', legend: 'hexabeake', lv: 66},
   {name: 'Whisperwind Perch', kind: 'Perch', types: ['Psychic', 'Flying'], trainer: 'Aerialyn', color: '#f4a58a', icon: 'wing', legend: 'aerialyn', lv: 67},
 );
 const LEG0 = AREAS.length - 6;   // index of the first legendary quest (the ordinary side quests come before it)
 const TRAIL = 'Laurel Pass';
 const TRAIL_TRAINERS = ['Ace Trainer Mira', 'Veteran Boone', 'Cooltrainer Juno', 'Black Belt Ryo', 'Expert Hana'];
+// each Laurel Pass trainer has a fixed team (family keys)
+const TRAIL_TEAMS = [
+  ['wild5', 'weldonrust', 'starter1'],    // Mira: Coldbra, Weldonrust, Venuzoid
+  ['campyre', 'marooner', 'starter3'],    // Boone: Bonpyre, Marooner, Bellowtoise
+  ['wild6', 'bizon', 'starter2'],         // Juno: Ripgool, Werebizon, Shardizar
+  ['noterish', 'banchief', 'maraudur'],   // Ryo: Damerish, Banchief, Maraudoom
+  ['chetswatch', 'nidomonk', 'pinedale'], // Hana: Chetswatch, Nidomonk, Coltmare
+];
 const trailLv = i => 58 + Math.round(i * 8 / (TRAIL_TRAINERS.length - 1));
 const trailOpen = () => !!(A && A.regional && A.pos >= 17);
 const legendUnlocked = i => i === LEG0 || !!(A.quests[i - 1] && A.quests[i - 1].done);
@@ -3467,8 +3475,7 @@ function trailWild() {
 }
 async function trailFight(i) {
   const lv = trailLv(i), name = TRAIL_TRAINERS[i];
-  const keys = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
-  const sets = [0, 1, 2].map(() => E.regionalWild(17, lv, keys[Math.floor(Math.random() * keys.length)]));
+  const sets = TRAIL_TEAMS[i].map(k => E.regionalWild(17, lv, k));
   await talk({name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Laurel Pass for a worthy challenger. Show me what you have got!']);
   advFight({type: 'trailTrainer', idx: i, lv, sets, foe: {name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown', title: name, subtitle: `${TRAIL} · level ${lv}`}});
 }
