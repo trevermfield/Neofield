@@ -3205,7 +3205,7 @@ function entranceRoad(root, later, finish) {
     const t = performance.now() - t0, H = root.clientHeight || innerHeight;
     const walking = t > T.stairsIn && t < T.open;
     const bobK = walking ? 1 : (t >= T.open ? Math.max(0, 1 - seg(t, T.open, T.open + 750)) : 0);
-    const ph = t / 760, bob = Math.sin(ph * Math.PI * 2) * bobAmp(t) * bobK, roll = Math.sin(ph * Math.PI) * .1 * bobK;
+    const ph = t / 900, bob = Math.sin(ph * Math.PI * 2) * bobAmp(t) * bobK, roll = 0;   // only up and down
     // shot 1: the head lifts. The tall image slides from the stairs up to the spire
     { const k = ease(seg(t, 450, 7050)), s = lerp(1.5, 1.32, k), lim = (s - 1) * H / 2 * .98;
       const ty = lerp(-lim - H * .22, lim, k);   // starts below the picture, looking at the dark ground, then the head lifts
@@ -3217,14 +3217,13 @@ function entranceRoad(root, later, finish) {
       imgs[1].style.transform = `translateY(${bob}px) rotate(${roll}deg) scale(${s})`;
       imgs[1].style.opacity = String(Math.min(seg(t, T.stairsIn, T.stairsIn + 1350), 1 - seg(t, T.stairsEnd - 300, T.stairsEnd + 1050))); }
     // shots 3 and 4 share one camera, so fading the closed gate into the open one looks like the doors swinging open
-    { const k1 = seg(t, T.gateIn, T.open), k2 = seg(t, T.open, T.flashAt + 600);
-      const s = k2 > 0 ? lerp(1.12, 1.5, easeIn(k2)) : lerp(1.0, 1.12, ease(k1));
+    { const k1 = seg(t, T.gateIn, T.open);
+      const s = lerp(1.0, 1.12, ease(k1));   // no more zoom once the doors open: hold
       const tf = `translateY(${bob}px) rotate(${roll}deg) scale(${s})`;
       for (const i of [2, 3]) { imgs[i].style.transformOrigin = '57% 62%'; imgs[i].style.transform = tf; }
       imgs[2].style.opacity = String(seg(t, T.gateIn, T.gateIn + 1350));
       imgs[3].style.opacity = String(seg(t, T.open, T.open + 1500)); }
-    flash.style.opacity = String(easeIn(seg(t, T.flashAt, T.end - 900)));
-    // a footstep on every bob
+        // a footstep on every bob
     const step = Math.floor(ph + .5);
     if (walking && step !== lastStep) { lastStep = step; tone(78 - Math.min(20, (t - T.stairsIn) / 450), 0, .11, 'sine', .15 * (1 - .4 * seg(t, T.stairsIn, T.open))); }
     raf = requestAnimationFrame(frame);
@@ -3234,7 +3233,7 @@ function entranceRoad(root, later, finish) {
   // sound: a rising line while the head lifts, a warm pad for the walk, a rumble as the doors open, a bright chord in the light
   bgmStop(); bgmStart('rising', {loop: false, fade: 2.5, vol: .7});   // the Rising Strings music runs under the whole walk
   later(T.open - 100, () => { tone(55, 0, 3.2, 'sine', .28); tone(82.4, 0, 3, 'sine', .12); });
-  later(T.end - 500, () => { dead = true; cancelAnimationFrame(raf); finish(); });
+  later(T.open + 2500, () => { dead = true; cancelAnimationFrame(raf); finish(); });   // doors open, hold a second, fade out
   root.addEventListener('entrance-end', () => { dead = true; cancelAnimationFrame(raf); bgmStop(); }, {once: true});
 }
 function openEntrancePicker() {
