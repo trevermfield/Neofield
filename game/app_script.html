@@ -2759,7 +2759,8 @@ async function championReveal(species) {
   };
 }
 // the Champion, seen only as a dark silhouette (waist up) in the fog
-const HUMAN_SVG = `<span class="ciHumanBox"><img class="ciHuman" src="cancer.png" alt="" draggable="false"></span>`;
+// the whole layout is in place from the start; only opacity changes, so nothing moves while he speaks
+const ciLayout = (over) => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox" id="ciImg"><img class="ciHuman" src="cancer.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName" id="ciName">CANCER</b><p class="ciLine" id="ciLine"></p></div>`;
 async function ciSay(lineEl, text, ms, tap) {
   lineEl.textContent = text; lineEl.classList.remove('say'); void lineEl.offsetWidth; lineEl.classList.add('say');
   await Promise.race([tap, new Promise(r => setTimeout(r, reducedMotion() ? 800 : ms))]);
@@ -2769,7 +2770,8 @@ async function championDefeat() {
   let release = () => {};
   const tapP = new Promise(r => { release = r; });
   $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
-  stage.innerHTML = `<div class="ciHumanWrap">${HUMAN_SVG}<div class="ciWho"><small>${esc(LEAGUE)}</small><b class="red">CANCER</b></div><p class="ciLine" id="ciLine"></p></div>`;
+  stage.innerHTML = ciLayout('');
+  $('ciImg').classList.add('on'); $('ciName').classList.add('on');
   el.style.opacity = '0'; el.hidden = false; void el.offsetWidth; el.style.opacity = '1';
   const fx = gloomFX($('ciCanvas'));
   tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22);
@@ -2790,21 +2792,19 @@ async function championIntro(sets, lv, sp) {
   el.hidden = false; el.classList.remove('out');
   bgmStart('fog');
   const fx = gloomFX($('ciCanvas'));
-  // 1. the title, out of the dark
-  stage.innerHTML = `<div class="ciTitle"><small>${esc(LEAGUE)}</small><b>THE CHAMPION</b><span>level ${lv}</span></div>`;
+  // 1. just the words, "THE CHAMPION", in the middle of the dark
+  stage.innerHTML = ciLayout('THE CHAMPION');
+  requestAnimationFrame(() => requestAnimationFrame(() => $('ciOver') && $('ciOver').classList.add('on')));
   beat(); await sleepOrSkip(1100); beat(); tone(98, 0, 2.5, 'sine', .12); tone(147, .1, 2.5, 'sine', .05);
-  await Promise.race([sleepOrSkip(3600), tap()]);
-  // 2. the silhouette fades in out of the fog; his words fade in and out below it
-  stage.innerHTML = `<div class="ciHumanWrap">${HUMAN_SVG}<div class="ciWho"><small>${esc(LEAGUE)}</small><b id="ciName">THE CHAMPION</b></div><p class="ciLine" id="ciLine"></p></div>`;
+  await Promise.race([sleepOrSkip(3200), tap()]);
+  // 2. the words fade as his silhouette fades in right behind them
+  $('ciOver').classList.remove('on'); $('ciImg').classList.add('on');
   tone(98, 0, 1.8, 'sine', .14);
-  await sleepOrSkip(2600);
+  await Promise.race([sleepOrSkip(3200), tap()]);
+  // 3. his name appears under the image, then his words under the name
+  $('ciName').classList.add('on'); beat(); tone(65, 0, 2.4, 'sine', .2);
+  await Promise.race([sleepOrSkip(2600), tap()]);
   for (const line of CHAMP_LINES.intro) { if (skipped) break; await ciSay($('ciLine'), line, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); }
-  // his name, only now
-  if (!skipped) {
-    const nm = $('ciName'); nm.style.transition = 'opacity 1.4s'; nm.style.opacity = '0'; await sleepOrSkip(1500);
-    nm.textContent = 'CANCER'; nm.classList.add('red'); nm.style.opacity = '1'; beat(); tone(65, 0, 2.4, 'sine', .2);
-    await sleepOrSkip(2600);
-  }
   // 4. out through the dark into the battle
   const fl = $('ciFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
   el.classList.add('quake'); tone(60, 0, 1.2, 'sine', .35); tone(90, .05, .9, 'sawtooth', .05);
