@@ -3734,7 +3734,7 @@ function migrateRegionalLines() {
   if (changed) saveA();
 }
 // Tyler's move/ability revision (rev 1): rebuild every owned Mon's battle goal and moves from the new family data, once per save.
-const MOVE_REV = 1;
+const MOVE_REV = 2;
 function migrateMoveRev() {
   if (!A || !E || A.moveRev >= MOVE_REV) return;
   const bySpecies = {};

@@ -23,7 +23,7 @@ export const FAMILIES = [
     ],
     moves: [[1, 'Tackle'], [1, 'Growl'], [4, 'Vine Whip'], [8, 'Thunder Shock'], [12, 'Razor Leaf'], [16, 'Spark'], [20, 'Bullet Seed'],
       [24, 'Synthesis'], [28, 'Seed Bomb'], [32, 'Thunder Fang'], [36, 'Horn Leech'], [40, 'Wild Charge'], [46, 'Power Whip'], [52, 'Wood Hammer'], [58, 'Swords Dance']],
-    evoMoves: {'Venuzoid': ['Horn Leech']},
+    evoMoves: {},
     final: {ability: 'Overgrow', item: 'Life Orb', nature: 'Adamant', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Horn Leech', 'Wild Charge', 'Swords Dance', 'Earthquake']}},
 
   {key: 'starter2', starter: true, color: '#f0857a', catchRate: 45,
@@ -51,7 +51,7 @@ export const FAMILIES = [
     ],
     moves: [[1, 'Tackle'], [1, 'Tail Whip'], [4, 'Water Gun'], [8, 'Withdraw'], [12, 'Bite'], [16, 'Aqua Jet'], [20, 'Water Pulse'],
       [24, 'Protect'], [28, 'Crunch'], [32, 'Iron Defense'], [36, 'Liquidation'], [40, 'Knock Off'], [46, 'Sucker Punch'], [52, 'Hydro Pump'], [58, 'Shell Smash']],
-    evoMoves: {'Bellowtoise': ['Liquidation']},
+    evoMoves: {},
     final: {ability: 'Torrent', item: 'Life Orb', nature: 'Adamant', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Shell Smash', 'Liquidation', 'Crunch', 'Aqua Jet']}},
 
   // ---------- wild ----------
@@ -369,7 +369,7 @@ export const FAMILIES = [
 // Tyler's move/ability revisions: each listed [level, move] replaces the move(s) at that level
 // (in order), or is added when the level has none. Applies to every stage of the line.
 const MOVE_EDITS = {
-  starter1: [[1, 'Bind'], [1, 'Flash'], [24, 'Light Screen'], [32, 'Shock Wave'], [36, 'Solar Beam'], [52, 'Solar Blade'], [65, 'Frenzy Plant']],
+  starter1: [[1, 'Bind'], [1, 'Flash'], [24, 'Light Screen'], [32, 'Shock Wave'], [36, 'Solar Beam'], [46, 'Power Whip'], [46, 'Horn Leech'], [52, 'Solar Blade'], [65, 'Frenzy Plant']],
   starter2: [[1, 'Scratch'], [1, 'Tail Whip'], [52, 'Dragon Dance'], [58, 'Fire Blast'], [65, 'Blast Burn']],
   starter3: [[1, 'Tackle'], [1, 'Growl'], [20, 'Protect'], [24, 'Crunch'], [28, 'Iron Defense'], [32, 'Hyper Voice'], [36, 'Aqua Tail'], [65, 'Hydro Cannon']],
   wild2: [[10, 'Confuse Ray'], [20, 'Confusion'], [31, 'Tri Attack']],
@@ -388,7 +388,7 @@ const MOVE_EDITS = {
   wyrmie: [[1, 'Cut'], [1, 'String Shot'], [15, 'Sticky Web']],
   nivalux: [[1, 'Powder Snow'], [1, 'Noble Roar'], [10, 'Icy Wind'], [20, 'Aurora Beam'], [30, 'Psychic'], [50, 'Tailwind'], [60, 'Aurora Veil'], [70, 'Blizzard']],
   storment: [[1, 'Thunder Fang'], [1, 'Torment'], [60, 'Wildbolt Storm'], [70, 'Electro Shot']],
-  rensylk: [[1, 'Ember'], [1, 'Howl'], [10, 'Mystical Fire'], [40, 'Morning Sun'], [50, 'Calm Mind'], [60, null], [70, 'Fire Blast']],
+  rensylk: [[1, 'Ember'], [1, 'Howl'], [10, 'Mystical Fire'], [40, 'Morning Sun'], [50, 'Calm Mind'], [60, 'Weather Ball'], [70, 'Blue Flare']],
   aerialyn: [[1, 'Gust'], [1, 'Agility'], [10, 'Icy Wind'], [20, 'Aerial Ace'], [30, 'Esper Wing'], [40, 'Zippy Zap'], [50, 'Torch Song'], [70, 'Bleakwind Storm']],
 };
 // The two legendaries below know exactly these four moves and nothing else.
@@ -402,6 +402,7 @@ const ABILITY_EDITS = [
   ['marooner', 0, ['Wind Power', 'Speed Boost']],
   ['nidomonk', 0, ['Psychic Surge', 'Inner Focus']],
   ['storment', 0, ['Drizzle', 'Strong Jaw']],
+  ['rensylk', 0, ['Drought', 'Flash Fire']],
 ];
 for (const f of FAMILIES) {
   const edits = MOVE_EDITS[f.key];
