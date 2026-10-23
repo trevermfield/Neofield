@@ -2833,7 +2833,7 @@ function gloomFX(canvas, ash) {
 }
 // background music: a looping track decoded once and looped without a gap (follows the Sound setting)
 let bgm = null; const bgmBuf = {};
-async function bgmStart(name) {
+async function bgmStart(name, o = {}) {
   if (!evoSound || bgm) return;
   const token = bgm = {};
   try {
@@ -2841,8 +2841,8 @@ async function bgmStart(name) {
     if (!bgmBuf[name]) bgmBuf[name] = await fetch(`music/${name}.mp3`).then(r => r.arrayBuffer()).then(a => audio.decodeAudioData(a));
     if (bgm !== token) return;
     const src = audio.createBufferSource(), g = audio.createGain();
-    src.buffer = bgmBuf[name]; src.loop = true;
-    g.gain.setValueAtTime(0, audio.currentTime); g.gain.linearRampToValueAtTime(.6, audio.currentTime + 3);
+    src.buffer = bgmBuf[name]; src.loop = o.loop !== false;
+    g.gain.setValueAtTime(0, audio.currentTime); g.gain.linearRampToValueAtTime(o.vol || .6, audio.currentTime + (o.fade || 3));
     src.connect(g).connect(audio.destination); src.start();
     token.src = src; token.gain = g;
   } catch (e) { if (bgm === token) bgm = null; }
@@ -3232,13 +3232,10 @@ function entranceRoad(root, later, finish) {
   imgs[3].decode && Promise.all(imgs.map(i => i.decode ? i.decode().catch(() => {}) : 0));
   raf = requestAnimationFrame(frame);
   // sound: a rising line while the head lifts, a warm pad for the walk, a rumble as the doors open, a bright chord in the light
-  later(450, () => [261.6, 329.6, 392, 523.3].forEach((f, i) => tone(f, i * 1.35, 3.4, 'sine', .06)));
-  later(T.stairsIn, () => [130.8, 196].forEach(f => tone(f, 0, 11.5, 'triangle', .05)));
+  bgmStop(); bgmStart('rising', {loop: false, fade: 2.5, vol: .7});   // the Rising Strings music runs under the whole walk
   later(T.open - 100, () => { tone(55, 0, 3.2, 'sine', .28); tone(82.4, 0, 3, 'sine', .12); });
-  later(T.open + 300, () => [392, 523.3, 659.3, 784, 1046.5].forEach((f, i) => tone(f, i * .12, 3.4, 'sine', .07)));
-  later(T.flashAt, () => [523.3, 659.3, 784, 1046.5, 1318.5].forEach((f, i) => tone(f, i * .05, 2.6, 'triangle', .07)));
-  later(T.end, () => { dead = true; cancelAnimationFrame(raf); finish(); });
-  root.addEventListener('entrance-end', () => { dead = true; cancelAnimationFrame(raf); }, {once: true});
+  later(T.end - 500, () => { dead = true; cancelAnimationFrame(raf); finish(); });
+  root.addEventListener('entrance-end', () => { dead = true; cancelAnimationFrame(raf); bgmStop(); }, {once: true});
 }
 function openEntrancePicker() {
   $('epickList').innerHTML = ENTRANCES.map(e => `<button class="btn eopt" type="button" data-ent="${esc(e.id)}">${esc(e.name)}<small>${esc(e.blurb)}</small></button>`).join('');
