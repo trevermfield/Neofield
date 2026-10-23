@@ -2720,7 +2720,7 @@ const CI_LINES = {
   pain: 'It aches, and it never asks first.',
   chemo: 'The cure that takes so much with it.',
   fear: 'What if it all comes back?',
-  relapse: '...',
+  relapse: 'It always comes back.',
 };
 // each of the Champion's Mons gets its own dark reveal the first time it enters the battle
 let ciClose = null;   // fades the reveal away once the new Mon is already out
@@ -2736,7 +2736,7 @@ async function championReveal(species) {
   if (f.revealed[id] || !(id in CI_LINES)) { await sleep(700); return; }
   const sleepBefore = 500;
   f.revealed[id] = true;
-  const el = $('champIntro'), stage = $('ciStage'), last = id === 'relapse';
+  const el = $('champIntro'), stage = $('ciStage'), last = false;
   let done = false, release = () => {};
   const col = TYPE_COLORS[E.Dex.species.get(species).types[0]] || '#999';
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }

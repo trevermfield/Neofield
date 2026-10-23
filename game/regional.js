@@ -361,7 +361,7 @@ export const FAMILIES = [
     moves: [[1, 'Icy Wind'], [30, 'Psychic'], [50, 'Freeze-Dry'], [60, 'Calm Mind']], evoMoves: {},
     final: {ability: 'Snow Cloak', item: '', nature: 'Calm', evs: {hp: 252, spa: 252, spd: 4}, moves: ['Freeze-Dry', 'Psychic', 'Calm Mind', 'Recover']}},
   {key: 'relapse', boss: true, rare: true, color: '#4a2a5a', catchRate: 0,
-    stages: [{name: 'Relapse', types: ['Dragon', 'Dark'], stats: S(95, 110, 95, 115, 95, 90), abilities: ['Regenerator'], h: 3.0, w: 250, entry: 'It comes back stronger every time it is cut down. Art coming soon.'}],
+    stages: [{name: 'Relapse', types: ['Dragon', 'Dark'], stats: S(95, 110, 95, 115, 95, 90), abilities: ['Regenerator'], h: 3.0, w: 250, entry: 'Seven heads of black scale and violet flame. Cut one off and it grows back, stronger than before.'}],
     moves: [[1, 'Bite'], [30, 'Dragon Pulse'], [50, 'Dark Pulse'], [60, 'Draco Meteor']], evoMoves: {},
     final: {ability: 'Regenerator', item: '', nature: 'Naive', evs: {atk: 128, spa: 128, spe: 252}, moves: ['Draco Meteor', 'Dark Pulse', 'Flamethrower', 'Recover']}},
 ];
