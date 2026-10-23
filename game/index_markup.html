@@ -629,7 +629,8 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 @keyframes ciFade { from { opacity: 0; letter-spacing: .5em; filter: blur(8px); } to { opacity: 1; } }
 
 .ciHumanWrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.ciHuman { width: min(52vw, 230px); height: auto; filter: drop-shadow(0 0 16px #5a3fb8) drop-shadow(0 0 2px #8a6fe0); animation: ciHumanIn 3.2s ease-out both; }
+.ciHumanBox { display: block; filter: drop-shadow(0 0 16px #5a3fb8) drop-shadow(0 0 2px #8a6fe0); animation: ciHumanIn 3.2s ease-out both; }
+.ciHuman { display: block; width: min(70vw, 300px); height: auto; -webkit-mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); mask-image: linear-gradient(to bottom, #000 58%, transparent 100%); }
 @keyframes ciHumanIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 .ciWho { display: flex; flex-direction: column; gap: 2px; margin-top: -4px; }
 .ciWho small { color: #8f86b8; letter-spacing: .3em; text-transform: uppercase; font-size: 11px; }

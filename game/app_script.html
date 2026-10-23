@@ -2759,8 +2759,7 @@ async function championReveal(species) {
   };
 }
 // the Champion, seen only as a dark silhouette (waist up) in the fog
-const HUMAN_SVG = `<svg class="ciHuman" viewBox="0 0 200 250" aria-hidden="true"><defs><linearGradient id="hmF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05040a"/><stop offset=".68" stop-color="#05040a"/><stop offset="1" stop-color="#05040a" stop-opacity="0"/></linearGradient></defs>
-  <g fill="url(#hmF)"><ellipse cx="100" cy="66" rx="29" ry="35"/><path d="M83 92 L117 92 L121 120 C152 130 186 160 184 250 L16 250 C14 160 48 130 79 120 Z"/></g></svg>`;
+const HUMAN_SVG = `<span class="ciHumanBox"><img class="ciHuman" src="cancer.png" alt="" draggable="false"></span>`;
 async function ciSay(lineEl, text, ms, tap) {
   lineEl.textContent = text; lineEl.classList.remove('say'); void lineEl.offsetWidth; lineEl.classList.add('say');
   await Promise.race([tap, new Promise(r => setTimeout(r, reducedMotion() ? 800 : ms))]);
