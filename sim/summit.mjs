@@ -11,6 +11,10 @@ const opt = (k, d) => { const i = args.indexOf('--' + k); return i >= 0 ? args[i
 const TRIALS = +opt('trials', 150);
 const LEVELS = opt('levels', '56,60,64,68,72,76,80,84').split(',').map(Number);
 const ITEMS = opt('items', 'full');
+const DELTA = +opt('delta', 0);                 // add this to every Elite Four and Champion level
+const CDELTA = +opt('cdelta', DELTA);          // separate shift for the Champion
+const TEAM = opt('team', '');                    // e.g. rimeocerus:56,ripgool:61 (a fixed team instead of random ones)
+const BAG = opt('bag', 'normal') === 'big' ? {hyperpotion: 30, fullrestore: 25, revive: 15, maxrevive: 10} : {hyperpotion: 15, fullrestore: 10, revive: 8, maxrevive: 4};
 
 const src = fs.readFileSync(new URL('../game/app_script.html', import.meta.url), 'utf8');
 const E4_FIGHTS = new Function('return ' + /const E4_FIGHTS = (\{[\s\S]*?\n\});/.exec(src)[1])();
@@ -58,11 +62,11 @@ function itemTurn(b, aiChoice, bag) {
 function runTrial(L, rnd) {
   const fams = E.FAMILIES.filter(f => !f.boss).map(f => f.key);
   for (let i = fams.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [fams[i], fams[j]] = [fams[j], fams[i]]; }
-  const team = fams.slice(0, 6).map(k => E.newMember(k, L));
-  const bag = ITEMS === 'none' ? {} : {hyperpotion: 15, fullrestore: 10, revive: 8, maxrevive: 4};
+  const team = TEAM ? TEAM.split(',').map(x => { const [n, lv] = x.split(':'); return E.newMember(E.regionalInfo(n).familyKey, +lv + (L ? L : 0)); }) : fams.slice(0, 6).map(k => E.newMember(k, L));
+  const bag = ITEMS === 'none' ? {} : {...BAG};
   const order = E4_KEYS.slice().sort(() => rnd() - .5);
-  const fights = order.map(k => ({name: k, type: E4_FIGHTS[k].mode, sets: e4Sets(E4_FIGHTS[k], G.E4_LV[order.indexOf(k)])}));
-  fights.push({name: 'champion', type: 'singles', sets: E.leaderSets(E.CHAMPION_TEXT, G.CHAMP_LV)});
+  const fights = order.map(k => ({name: k, type: E4_FIGHTS[k].mode, sets: e4Sets(E4_FIGHTS[k], G.E4_LV[order.indexOf(k)] + DELTA)}));
+  fights.push({name: 'champion', type: 'singles', sets: E.leaderSets(E.CHAMPION_TEXT, G.CHAMP_LV + CDELTA)});
   let used = 0;
   for (let fi = 0; fi < fights.length; fi++) {
     // between fights: revive, then heal anything under 60%
