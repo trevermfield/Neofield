@@ -3228,6 +3228,7 @@ function playEntrance(id, after, opts = {}) {
     root.classList.remove('on');
     setTimeout(() => { root.hidden = true; root.innerHTML = ''; entrOpen = false; if (after) after(); }, 750);
   };
+  if (A && A.dev) { const sk = document.createElement('button'); sk.className = 'btn eskip'; sk.type = 'button'; sk.textContent = 'Skip'; sk.onclick = e => { e.stopPropagation(); finish(); }; root.appendChild(sk); }   // dev mode only
   ent.run(root, later, finish);
 }
 function entranceRoad(root, later, finish) {
