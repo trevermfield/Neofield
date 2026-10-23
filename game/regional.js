@@ -366,6 +366,71 @@ export const FAMILIES = [
     final: {ability: 'Regenerator', item: '', nature: 'Naive', evs: {atk: 128, spa: 128, spe: 252}, moves: ['Draco Meteor', 'Dark Pulse', 'Flamethrower', 'Recover']}},
 ];
 
+// Tyler's move/ability revisions: each listed [level, move] replaces the move(s) at that level
+// (in order), or is added when the level has none. Applies to every stage of the line.
+const MOVE_EDITS = {
+  starter1: [[1, 'Bind'], [1, 'Flash'], [24, 'Light Screen'], [32, 'Shock Wave'], [36, 'Solar Beam'], [52, 'Solar Blade'], [65, 'Frenzy Plant']],
+  starter2: [[1, 'Scratch'], [1, 'Tail Whip'], [52, 'Dragon Dance'], [58, 'Fire Blast'], [65, 'Blast Burn']],
+  starter3: [[1, 'Tackle'], [1, 'Growl'], [20, 'Protect'], [24, 'Crunch'], [28, 'Iron Defense'], [32, 'Hyper Voice'], [36, 'Aqua Tail'], [65, 'Hydro Cannon']],
+  wild2: [[10, 'Confuse Ray'], [20, 'Confusion'], [31, 'Tri Attack']],
+  bizon: [[45, 'Lunar Blessing']],
+  wild6: [[1, 'Astonish'], [1, 'Harden'], [5, 'Accelerock'], [30, 'Ancient Power'], [35, 'Last Respects']],
+  maraudur: [[10, 'Rage'], [54, 'Behemoth Blade']],
+  wild5: [[33, 'Super Fang'], [50, 'Ice Beam']],
+  marooner: [[38, 'Tailwind']],
+  weldonrust: [[6, 'Magnitude']],
+  noterish: [[1, 'Pay Day'], [1, 'Minimize'], [5, 'Leafage'], [9, 'Lucky Chant'], [46, 'Focus Punch']],
+  pinedale: [[23, 'Trailblaze'], [28, 'Trop Kick'], [55, 'Behemoth Bash']],
+  nidomonk: [[24, 'Dragon Claw'], [55, 'Expanding Force']],
+  chetswatch: [[1, 'Pound'], [1, 'Hone Claws']],
+  banchief: [[1, 'Astonish'], [1, 'Spite'], [12, 'Revenge'], [18, 'Poison Jab'], [30, 'Sacred Sword'], [36, 'Destiny Bond'], [48, 'Shadow Force']],
+  cryodon: [[5, 'Ice Ball'], [26, 'Snowscape'], [50, 'Head Smash'], [56, 'Mountain Gale']],
+  wyrmie: [[1, 'Cut'], [1, 'String Shot'], [15, 'Sticky Web']],
+  nivalux: [[1, 'Powder Snow'], [1, 'Noble Roar'], [10, 'Icy Wind'], [20, 'Aurora Beam'], [30, 'Psychic'], [50, 'Tailwind'], [60, 'Aurora Veil'], [70, 'Blizzard']],
+  storment: [[1, 'Thunder Fang'], [1, 'Torment'], [60, 'Wildbolt Storm'], [70, 'Electro Shot']],
+  rensylk: [[1, 'Ember'], [1, 'Howl'], [10, 'Mystical Fire'], [40, 'Morning Sun'], [50, 'Calm Mind'], [60, null], [70, 'Fire Blast']],
+  aerialyn: [[1, 'Gust'], [1, 'Agility'], [10, 'Icy Wind'], [20, 'Aerial Ace'], [30, 'Esper Wing'], [40, 'Zippy Zap'], [50, 'Torch Song'], [70, 'Bleakwind Storm']],
+};
+// The two legendaries below know exactly these four moves and nothing else.
+const ONLY_MOVES = {
+  okloyama: ['Play Rough', 'Swords Dance', 'Earthquake', 'Diamond Storm'],
+  hexabeake: ['Fire Blast', 'Nasty Plot', 'Sludge Wave', 'Draco Meteor'],
+};
+// [family, stage index, [normal ability, hidden ability]] and the final set's ability to match
+const ABILITY_EDITS = [
+  ['starter1', 2, ['Mega Sol', 'Lightning Rod']],
+  ['marooner', 0, ['Wind Power', 'Speed Boost']],
+  ['nidomonk', 0, ['Psychic Surge', 'Inner Focus']],
+  ['storment', 0, ['Drizzle', 'Strong Jaw']],
+];
+for (const f of FAMILIES) {
+  const edits = MOVE_EDITS[f.key];
+  if (edits) {
+    const byLv = new Map();
+    for (const [lv, mv] of edits) { if (!byLv.has(lv)) byLv.set(lv, []); byLv.get(lv).push(mv); }
+    const out = [];
+    const seen = new Map();
+    for (const [lv, mv] of f.moves) {
+      const rep = byLv.get(lv);
+      if (rep) {
+        const i = seen.get(lv) || 0; seen.set(lv, i + 1);
+        if (i < rep.length) { if (rep[i]) out.push([lv, rep[i]]); continue; }
+      }
+      out.push([lv, mv]);
+    }
+    for (const [lv, rep] of byLv) for (let i = seen.get(lv) || 0; i < rep.length; i++) if (rep[i]) out.push([lv, rep[i]]);
+    f.moves = out.sort((a, b) => a[0] - b[0]);
+  }
+  const only = ONLY_MOVES[f.key];
+  if (only) { f.moves = only.map(m => [1, m]); f.final.moves = only.slice(); f.evoMoves = {}; }
+}
+for (const [key, si, ab] of ABILITY_EDITS) {
+  const f = FAMILIES.find(x => x.key === key);
+  f.stages[si].abilities = ab;
+  const last = f.stages[f.stages.length - 1];
+  if (!last.abilities.includes(f.final.ability)) f.final.ability = last.abilities[0];
+}
+
 // Routes: index i joins map point i and i+1 (0 = home town, 18 = Victory Summit).
 // Rare (legendary) families are never random encounters: each one guards a legendary side quest on the Laurel Pass.
 export const ROUTES = [

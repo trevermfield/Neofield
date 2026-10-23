@@ -3552,6 +3552,26 @@ function migrateRegionalLines() {
   }
   if (changed) saveA();
 }
+// Tyler's move/ability revision (rev 1): rebuild every owned Mon's battle goal and moves from the new family data, once per save.
+const MOVE_REV = 1;
+function migrateMoveRev() {
+  if (!A || !E || A.moveRev >= MOVE_REV) return;
+  const bySpecies = {};
+  for (const k of E.familyKeys()) { const f = E.newMember(k, 1).final; bySpecies[f.species] = k; }
+  for (const m of [...A.team, ...(A.box || [])]) {
+    const k = m.final && bySpecies[m.final.species];
+    if (!k) continue;
+    const fresh = E.newMember(k, m.level);
+    m.final.moves = fresh.final.moves; m.final.ability = fresh.final.ability;
+    m.tutored = []; m.moves = fresh.moves;
+  }
+  for (const q of Object.values(A.quests || {})) for (const w of (q.wild || [])) {
+    if (!w.family) continue;
+    try { const fresh = E.regionalWild(0, w.level, w.family); w.moves = fresh.moves; w.ability = fresh.ability; } catch (e) {}
+  }
+  A.moveRev = MOVE_REV;
+  saveA();
+}
 function markSeen(species) { if (A && A.dex && species) A.dex.seen[toId(species)] = 1; }
 function syncDexFromTeam() {
   if (!A || !A.dex) return;
@@ -3983,7 +4003,7 @@ setInterval(() => {
 function loadSlot(n) {
   curSlot = n; ls.set('lastSlot', n);
   loadHallState(); loadJ(); loadA();
-  if (E) migrateRegionalLines();
+  if (E) { migrateRegionalLines(); migrateMoveRev(); }
   hallTeamSel = store.get('hallTeam', null);
   restartArmed = false;
 }
@@ -4839,7 +4859,7 @@ function boot() {
   E = window.Engine;
   if (!E) { $('whoisStatus').textContent = 'The battle engine did not load. Reload the page to try again.'; return; }
   convertLegacyTeams();
-  migrateRegionalLines();
+  migrateRegionalLines(); migrateMoveRev();
   engineReady = true;
   $('whoisFill').style.width = '100%';
   $('whoisStatus').textContent = 'Ready';
