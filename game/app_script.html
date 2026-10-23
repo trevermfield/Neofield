@@ -3535,7 +3535,11 @@ function migrateRegionalLines() {
 function markSeen(species) { if (A && A.dex && species) A.dex.seen[toId(species)] = 1; }
 function syncDexFromTeam() {
   if (!A || !A.dex) return;
-  for (const m of [...A.team, ...(A.box || [])]) { const id = toId(mset(m).species); A.dex.seen[id] = 1; A.dex.caught[id] = 1; }
+  // owning a Mon also registers the forms it grew from (a wild Mon found past its evolution level still completes the line)
+  for (const m of [...A.team, ...(A.box || [])]) {
+    let sp = E.Dex.species.get(mset(m).species);
+    for (let i = 0; sp && sp.exists && i < 4; i++) { const id = toId(sp.name); A.dex.seen[id] = 1; A.dex.caught[id] = 1; sp = sp.prevo ? E.Dex.species.get(sp.prevo) : null; }
+  }
 }
 
 // --- routes ---
