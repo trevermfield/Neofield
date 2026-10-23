@@ -792,8 +792,11 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .pick.sel { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
 .pick .ord { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #10131a; font-weight: 800; font-size: 12px; margin-right: 6px; }
 .stpill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px 3px 6px; border-radius: 999px; background: var(--stc); color: #10131a; animation: stpulse 1.6s ease-in-out infinite; }
+.stpill.icon { padding: 4px; gap: 0; }
+.stbadge { position: absolute; left: 2px; top: 2px; z-index: 4; line-height: 0; pointer-events: none; }
+.mon .cardart .stbadge { left: -2px; top: -2px; }
 .stpill svg { width: 15px; height: 15px; flex-shrink: 0; }
-.stpill.small { font-size: 10px; padding: 1px 7px 1px 4px; animation: none; vertical-align: 1px; }
+.stpill.small { font-size: 10px; padding: 3px; animation: none; vertical-align: 1px; }
 .stpill.small svg { width: 12px; height: 12px; }
 @keyframes stpulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--stc) 35%, transparent); } }
 .mon .stfx { position: absolute; inset: 0; pointer-events: none; border-radius: 14px; }

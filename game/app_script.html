@@ -28,7 +28,7 @@ const TYPE_COLORS = {
   Rock: '#c2a95c', Ghost: '#7f6bb0', Dragon: '#7b63f2', Dark: '#8a7466', Steel: '#9fb3d4', Fairy: '#ee9ad0', Stellar: '#ffffff',
 };
 const STATUS = {psn: ['Poisoned', '#b06ee0', 'drop'], tox: ['Badly poisoned', '#b06ee0', 'drop'], brn: ['Burned', '#f08a4b', 'flame'], par: ['Paralyzed', '#f2d04a', 'bolt'], slp: ['Asleep', '#b8c0cc', 'moon'], frz: ['Frozen', '#86d8ec', 'flake']};
-const statusPill = (st, small) => STATUS[st] ? `<span class="stpill st-${st}${small ? ' small' : ''}">${emblem(STATUS[st][2], '#10131a')}${STATUS[st][0]}</span>` : '';
+const statusPill = (st, small) => STATUS[st] ? `<span class="stpill icon st-${st}${small ? ' small' : ''}" title="${STATUS[st][0]}" aria-label="${STATUS[st][0]}">${emblem(STATUS[st][2], '#10131a')}</span>` : '';   // a symbol only, never a word
 const STAT_NAMES = {atk: 'Attack', def: 'Defense', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed', accuracy: 'accuracy', evasion: 'evasiveness'};
 const STAT_SHORT = {atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe', accuracy: 'Acc', evasion: 'Eva'};
 
@@ -609,12 +609,12 @@ function cardHTML(side) {
   }).join('');
   const balls = sideObj.pokemon.map(p => `<i class="${p.fainted || p.hp <= 0 ? 'out' : p.hp < p.maxhp / 2 ? 'hurt' : ''} ${p.isActive ? 'active' : ''}"></i>`).join('');
   const art = artOf(sp.name);
-  return `${art ? `<span class="cardart">${art}<span class="stfx"></span></span>` : ''}
+  return `${art ? `<span class="cardart">${art}<span class="stfx"></span>${v.status ? `<span class="stbadge">${statusPill(v.status)}</span>` : ''}</span>` : (v.status ? `<span class="stbadge">${statusPill(v.status)}</span>` : '')}
     <div class="head"><span class="name"><span class="nm${(sp.isMega ? 5 : 0) + (sp.isMega ? sp.baseSpecies : sp.name).length > 11 ? ' long' : ''}">${sp.isMega ? 'Mega ' : ''}${esc(sp.isMega ? sp.baseSpecies : sp.name)}</span>${battle[side].active[0] && battle[side].active[0].level !== 100 ? ` <small class="lvl">Lv ${battle[side].active[0].level}</small>` : ''}</span><span class="owner">${side === ME ? 'You' : esc(foe.name)}</span></div>
     <div class="row" style="justify-content:space-between">${typesHTML(sp.types)}<span class="balls" aria-label="Team status">${balls}</span></div>
     <div class="hpwrap"><div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><span class="hptext">${hpText}</span></div>
     ${side === ME ? battleXPBar() : ''}
-    <div class="tags">${statusPill(v.status)}${boosts}${hazards}</div>`;
+    <div class="tags">${boosts}${hazards}</div>`;
 }
 
 // Health bars move smoothly: every change takes 1 second from start to finish.
@@ -669,10 +669,10 @@ function cellHTML(slot) {
   const real = battle[slot.slice(0, 2)].active['abc'.indexOf(slot[2])];
   const boosts = Object.entries(v.boosts).filter(([, n]) => n).map(([k, n]) => `<span class="boost ${n > 0 ? 'up' : 'down'}">${STAT_SHORT[k] || k} ${n > 0 ? '+' : ''}${n}</span>`).join('');
   return `<div class="mcell${v.hp <= 0 ? ' down' : ''}${STATUS[v.status] && v.hp > 0 ? ' st-' + v.status : ''}${mc && mc.slot === slot ? ' picking' : ''}" data-slot="${slot}">
-    ${art ? `<span class="mart">${art}</span>` : ''}
+    ${v.status ? `<span class="stbadge">${statusPill(v.status)}</span>` : ''}${art ? `<span class="mart">${art}</span>` : ''}
     <b class="mn${name.length > 10 ? ' long' : ''}">${esc(name)}</b>${!mine && ctx && ctx.fight && ctx.fight.owners && ctx.fight.owners[sp.name] ? `<small class="own">${esc(ctx.fight.owners[sp.name])}</small>` : ''}${real && real.level !== 100 ? `<small class="lvl">Lv ${real.level}</small>` : ''}
     <div class="hp"><i style="width:${pct}%;background-color:${hpColor(pct)}"></i></div><span class="hptext">${hpLabel(slot, pct)}</span>
-    <div class="tags">${statusPill(v.status)}${boosts}</div></div>`;
+    <div class="tags">${boosts}</div></div>`;
 }
 function renderMultiCards() {
   const hazards = sd => Object.keys(battle[sd].sideConditions).filter(k => k !== 'catchguard').map(k => `<span class="hazard">${esc(E.Dex.conditions.get(k).name || k)}</span>`).join('');
