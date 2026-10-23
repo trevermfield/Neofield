@@ -689,6 +689,21 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .entr .em.lit { filter: drop-shadow(0 0 14px #ffd56a); }
 .entr .em .ering2 { position: absolute; }
 @keyframes ebob { 50% { transform: translateY(-6px); } }
+.entr .ehall { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: calc(70px + env(safe-area-inset-top, 0px)); }
+.entr .echamp { width: min(46vw, 190px); color: #0a0810; opacity: 0; transition: opacity 2s ease, filter 2s ease; filter: drop-shadow(0 0 0 #5a3a7a); }
+.entr .echamp.on { opacity: 1; filter: drop-shadow(0 0 22px #5a3a7a); animation: epulse 3.2s ease-in-out infinite; }
+.entr .echamp svg { width: 100%; display: block; }
+.entr .efour { display: flex; gap: 8px; width: 100%; padding: 0 12px; margin-top: 26px; justify-content: center; }
+.entr .eal { flex: 1 1 0; max-width: 92px; text-align: center; border: 2px solid #2a2840; border-bottom: 0; border-radius: 60px 60px 0 0; padding: 12px 4px 0; background: linear-gradient(#0e0d18, #07070d); color: #15141f; transition: color 1.4s ease, border-color 1.4s ease, box-shadow 1.4s ease; }
+.entr .eal.lit { color: var(--c); border-color: var(--c); box-shadow: 0 0 22px var(--c), inset 0 0 18px rgba(255, 255, 255, .06); }
+.entr .eal svg { width: 100%; display: block; }
+.entr .eal b { display: block; font-size: .72rem; line-height: 1.15; padding: 6px 0 8px; opacity: 0; color: #fff; transition: opacity 1s ease .5s; }
+.entr .eal.lit b { opacity: 1; }
+.entr .efoot { position: absolute; left: 0; right: 0; bottom: calc(10% + env(safe-area-inset-bottom, 0px)); text-align: center; opacity: 0; transition: opacity 1.4s ease; }
+.entr .efoot.on { opacity: 1; }
+.entr .efoot b { display: block; font-size: 1.15rem; letter-spacing: .2em; color: #e8e3ff; }
+.entr .efoot small { display: block; margin-top: 8px; letter-spacing: .08em; color: #b9a8e8; }
+@keyframes epulse { 50% { filter: drop-shadow(0 0 34px #7a4aa8); } }
 .epick { position: fixed; inset: 0; z-index: 61; background: rgba(6, 6, 10, .78); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .epick .ecard { width: 100%; max-width: 420px; max-height: 100%; overflow: auto; background: #14141c; border: 2px solid var(--accent, #a78bdb); border-radius: 18px; padding: 16px; }
 .epick h3 { margin: 0 0 4px; }
