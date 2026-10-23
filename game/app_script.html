@@ -3087,7 +3087,8 @@ function openQuest(i, opts = {}) {
     svg += k < nodes ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
     svg += `<text x="${p.x}" y="${p.y + 32}" text-anchor="middle" font-size="11" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(label)}</text>`;
   }
-  const mk0 = opts.animate && q.step > 0 ? pts[Math.min(q.step, nodes) - 1] : pts[Math.min(q.step, nodes)];
+  const kd = Math.min(q.step + 1, nodes);   // the ball sits on the spot you are about to face
+  const mk0 = opts.animate && q.step > 0 ? pts[kd - 1] : pts[kd];
   svg += `<g id="qmarker" transform="translate(${mk0.x} ${mk0.y})"><circle r="12" fill="${ar.color}" opacity=".3"/><circle r="6.5" fill="#fff" stroke="#10131a" stroke-width="2"/></g>`;
   $('questSvg').innerHTML = svg;
   let card;
@@ -3102,7 +3103,7 @@ function openQuest(i, opts = {}) {
   show('quest');
   if (opts.animate && q.step > 0 && !q.done) {
     const go = $('qGo'); if (go) go.disabled = true;
-    const k = Math.min(q.step, nodes), a = pts[k - 1], b = pts[k], c = {x: (a.x + b.x) / 2 + (k % 2 ? 40 : -40), y: (a.y + b.y) / 2};
+    const k = kd, a = pts[k - 1], b = pts[k], c = {x: (a.x + b.x) / 2 + (k % 2 ? 40 : -40), y: (a.y + b.y) / 2};
     const t0 = performance.now();
     const tick = now => {
       const mk = $('questSvg').querySelector('#qmarker');
@@ -3280,7 +3281,8 @@ function openSummit(opts = {}) {
     svg += emblemAt(st.icon, isDone ? '#10131a' : cur ? st.color : '#56616f', p.x, p.y, champ ? 26 : 20);
     svg += `<text x="${p.x + (champ ? 36 : 30)}" y="${p.y - 2}" font-size="12" font-weight="${cur ? 700 : 600}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(st.label)}</text><text x="${p.x + (champ ? 36 : 30)}" y="${p.y + 12}" font-size="10" fill="#7e8a9c">${isDone ? 'Beaten' : esc(st.sub)}</text>`;
   });
-  const mk0 = opts.animate && cleared > 0 ? pts[cleared - 1] : pts[cleared];
+  const kd = Math.min(cleared + 1, pts.length - 1);   // the ball sits on the spot you are about to face
+  const mk0 = opts.animate && cleared > 0 ? pts[kd - 1] : pts[kd];
   svg += `<g id="smarker" transform="translate(${mk0.x} ${mk0.y})"><circle r="12" fill="${gold}" opacity=".3"/><circle r="6.5" fill="#fff" stroke="#10131a" stroke-width="2"/></g>`;
   $('summitSvg').innerHTML = svg;
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
@@ -3295,7 +3297,7 @@ function openSummit(opts = {}) {
   show('summit');
   if (opts.animate && cleared > 0) {
     const go = $('sGoFight'); if (go) go.disabled = true;
-    const a = pts[cleared - 1], b = pts[cleared], t0 = performance.now();
+    const a = pts[kd - 1], b = pts[kd], t0 = performance.now();
     const tick = now => {
       const mk = $('summitSvg').querySelector('#smarker');
       if (!mk || curScreen !== 'summit') return;
