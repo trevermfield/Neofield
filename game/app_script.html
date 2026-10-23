@@ -3117,7 +3117,7 @@ function summitSteps() {
 }
 // Dev-only note: players never reach it because the "under construction" notice stops them first.
 function showTylerNote() {
-  const n = $('tnote'); n.style.backgroundImage = "url('tyler-note.jpg')"; n.hidden = false;
+  const n = $('tnote'); $('tpic').style.backgroundImage = "url('tyler-note.jpg')"; n.hidden = false;
   requestAnimationFrame(() => requestAnimationFrame(() => n.classList.add('on')));
 }
 $('tnoteGo').addEventListener('click', () => { const n = $('tnote'); n.classList.remove('on'); setTimeout(() => { n.hidden = true; }, 1200); });
