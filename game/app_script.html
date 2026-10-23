@@ -3180,7 +3180,8 @@ function entranceRoad(root, later, finish) {
   const seg = (t, a, b) => clamp((t - a) / (b - a));
   // timeline (ms): 0-5200 the lift, 4600-9800 the stairs, 9000-13200 the gate, 12800-13700 the doors open, 13700-17200 into the light
   const SL = 1.5;   // slowed down: every time below is multiplied
-  const T = {lift: 5200 * SL, stairsIn: 4600 * SL, stairsEnd: 9800 * SL, gateIn: 9000 * SL, open: 12800 * SL, flashAt: 15600 * SL, end: 17600 * SL};
+  const HOLD = 2000;   // the castle stays on screen this much longer after the head has lifted
+  const T = {lift: 5200 * SL, stairsIn: 4600 * SL + HOLD, stairsEnd: 9800 * SL + HOLD, gateIn: 9000 * SL + HOLD, open: 12800 * SL + HOLD, flashAt: 15600 * SL + HOLD, end: 17600 * SL + HOLD};
   const t0 = performance.now(); let raf = 0, dead = false, lastStep = -1;
   const bobAmp = t => 1.1 + 2.4 * seg(t, T.stairsIn, T.open);                       // steps get heavier as you near the gate
   function frame() {
@@ -3223,9 +3224,9 @@ function entranceRoad(root, later, finish) {
 let introNext = false;   // after the first-visit note, the walk up to the gate plays
 function showTylerNote(solid) {
   const n = $('tnote'); $('tpic').style.backgroundImage = "url('tyler-note.jpg')";
-  n.classList.toggle('solid', !!solid); n.hidden = false;
-  if (solid) n.classList.add('on');   // dark at once, so the Summit screen never shows through
-  else requestAnimationFrame(() => requestAnimationFrame(() => n.classList.add('on')));
+  n.classList.remove('on', 'leaving'); n.classList.toggle('solid', !!solid); n.hidden = false;
+  void n.offsetWidth;   // let the browser see the hidden starting state, or the fade-in is skipped
+  requestAnimationFrame(() => requestAnimationFrame(() => n.classList.add('on')));
 }
 $('tnoteGo').addEventListener('click', () => {
   const n = $('tnote');
