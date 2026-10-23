@@ -3118,6 +3118,7 @@ function summitSteps() {
 // ---- Victory Summit entrances (dev preview). Each entrance is {id, name, blurb, run(root, later, finish)}; add new ones to ENTRANCES. ----
 const ENTRANCES = [
   {id: 'badges', name: 'The Seventeen Badges', blurb: 'All 17 badges rise in a ring, merge into one gold light, and open the road.', run: entranceBadges},
+  {id: 'team', name: 'The Gathering', blurb: 'Your team walks in one by one, each answering with a cry, then the gate opens before them.', run: entranceTeam},
 ];
 let entrTimers = [], entrOpen = false;
 function entranceAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; } }
@@ -3159,6 +3160,28 @@ function entranceBadges(root, later, finish) {
   later(t1 + 1100, () => { core.classList.add('burst'); [523.3, 659.3, 784, 1046.5].forEach((f, i) => tone(f, i * .05, 2.4, 'sine', .08)); });
   later(t1 + 1500, () => title.classList.add('on'));
   later(t1 + 4800, finish);
+}
+function entranceTeam(root, later, finish) {
+  const team = (A && A.team && A.team.length ? A.team : []).slice(0, 6).map(m => { const st = mset(m); return {name: st.species, lv: m.level}; });
+  const gate = document.createElement('div'); gate.className = 'egate'; gate.innerHTML = '<i></i><i></i>'; root.appendChild(gate);
+  const title = document.createElement('div'); title.className = 'etitle'; title.style.top = '46%';
+  title.innerHTML = '<b>TOGETHER</b><small>Your team stands at the gate.</small>'; root.appendChild(title);
+  const row = document.createElement('div'); row.className = 'elineup'; root.appendChild(row);
+  const els = team.map((t, i) => {
+    const d = document.createElement('div'); d.className = 'em'; d.style.setProperty('--from', i % 2 ? '120vw' : '-120vw'); d.style.setProperty('--d', (i * .17) + 's');
+    d.innerHTML = `<span class="emart">${artOf(t.name)}</span><b>${esc(t.name)}</b><small>Lv ${t.lv}</small>`; row.appendChild(d); return d;
+  });
+  later(300, () => gate.classList.add('on'));
+  els.forEach((d, i) => later(1100 + i * 950, () => {
+    d.classList.add('in');
+    const f = 330 * Math.pow(1.122, i * 2);   // a short cry for each Mon, a little higher every time
+    [1, 1.26, 1.5].forEach((r, k) => tone(f * r, k * .09, .22, 'square', .045)); tone(f / 2, 0, .5, 'sine', .12);
+  }));
+  const t1 = 1100 + Math.max(1, els.length) * 950 + 700;
+  later(t1, () => { gate.classList.add('hot'); els.forEach(d => d.classList.add('lit')); [196, 262, 330, 392].forEach(f => tone(f, 0, 2.6, 'triangle', .07)); });
+  later(t1 + 900, () => { gate.classList.add('open'); [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .1, 2.2, 'sine', .07)); });
+  later(t1 + 2600, () => title.classList.add('on'));
+  later(t1 + 6000, finish);
 }
 function openEntrancePicker() {
   $('epickList').innerHTML = ENTRANCES.map(e => `<button class="btn eopt" type="button" data-ent="${esc(e.id)}">${esc(e.name)}<small>${esc(e.blurb)}</small></button>`).join('');
