@@ -3115,6 +3115,12 @@ function summitSteps() {
   steps.push({key: null, label: 'The Champion', sub: `Champion · level ${champLv()}`, icon: 'crown', color: CHAMP.color});
   return steps;
 }
+// Dev-only note: players never reach it because the "under construction" notice stops them first.
+function showTylerNote() {
+  const n = $('tnote'); n.style.backgroundImage = "url('tyler-note.jpg')"; n.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => n.classList.add('on')));
+}
+$('tnoteGo').addEventListener('click', () => { const n = $('tnote'); n.classList.remove('on'); setTimeout(() => { n.hidden = true; }, 1200); });
 function openSummit(opts = {}) {
   if (!A || !A.regional) { openAdvMap({}); return; }
   if (!A.dev) {   // the League isn't open to players yet
@@ -3122,6 +3128,7 @@ function openSummit(opts = {}) {
     return;
   }
   mapMode = 'adventure';
+  if (!A.summitNote && !opts.keepAsk) { A.summitNote = 1; saveA(); showTylerNote(); }
   const steps = summitSteps();
   if (!opts.keepAsk) summitAsk = false;
   $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
@@ -3164,7 +3171,7 @@ function openSummit(opts = {}) {
     <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
-  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button></div>`);
+  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button><button class="btn" id="sDevNote">Replay the note</button></div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at the In-Laws. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
   show('summit');
@@ -3185,6 +3192,7 @@ $('summitBar').addEventListener('click', e => {
   if (e.target.id === 'sGoFight') advChallenge();
   else if (e.target.id === 'sDevSkip') { A.e4pos = 4; saveA(); openSummit({animate: true}); }
   else if (e.target.id === 'sDevWin') devSummitWin();
+  else if (e.target.id === 'sDevNote') showTylerNote();
   else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.champTeam = null; saveA(); openSummit(); }
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
