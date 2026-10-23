@@ -3115,6 +3115,57 @@ function summitSteps() {
   steps.push({key: null, label: 'The Champion', sub: `Champion · level ${champLv()}`, icon: 'crown', color: CHAMP.color});
   return steps;
 }
+// ---- Victory Summit entrances (dev preview). Each entrance is {id, name, blurb, run(root, later, finish)}; add new ones to ENTRANCES. ----
+const ENTRANCES = [
+  {id: 'badges', name: 'The Seventeen Badges', blurb: 'All 17 badges rise in a ring, merge into one gold light, and open the road.', run: entranceBadges},
+];
+let entrTimers = [], entrOpen = false;
+function entranceAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; } }
+function playEntrance(id, after) {
+  const ent = ENTRANCES.find(e => e.id === id); if (!ent || entrOpen) return;
+  entrOpen = true; entranceAudio();
+  const root = $('entr'); root.innerHTML = '<button class="btn ghost eskip" id="eskip" type="button">Skip</button>'; root.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('on')));
+  const later = (ms, fn) => { entrTimers.push(setTimeout(fn, ms)); };
+  let ended = false;
+  const finish = () => {
+    if (ended) return; ended = true;
+    entrTimers.forEach(clearTimeout); entrTimers = [];
+    root.classList.remove('on');
+    setTimeout(() => { root.hidden = true; root.innerHTML = ''; entrOpen = false; if (after) after(); }, 750);
+  };
+  $('eskip').addEventListener('click', finish);
+  ent.run(root, later, finish);
+}
+function entranceBadges(root, later, finish) {
+  const ring = document.createElement('div'); ring.className = 'ering'; root.appendChild(ring);
+  const core = document.createElement('div'); core.className = 'ecore'; root.appendChild(core);
+  const title = document.createElement('div'); title.className = 'etitle';
+  title.innerHTML = `<b>${esc(LEAGUE.toUpperCase())}</b><small>Seventeen badges. One road.</small>`; root.appendChild(title);
+  const R = Math.min(135, Math.round(window.innerWidth * .34)), N = JORDER.length, steps = [0, 2, 4, 7, 9];
+  const els = JORDER.map((k, i) => {
+    const L = LEADERS[k], a = (i / N) * Math.PI * 2 - Math.PI / 2;
+    const b = document.createElement('div'); b.className = 'eb';
+    b.style.setProperty('--x', Math.round(Math.cos(a) * R) + 'px'); b.style.setProperty('--y', Math.round(Math.sin(a) * R) + 'px'); b.style.setProperty('--c', L.color);
+    b.innerHTML = `<span class="ei">${emblem(L.icon, L.color)}</span>`; ring.appendChild(b); return b;
+  });
+  els.forEach((b, i) => later(700 + i * 260, () => {
+    b.classList.add('in');
+    const deg = steps[i % 5] + 12 * Math.floor(i / 5);
+    tone(261.6 * Math.pow(2, deg / 12), 0, .9, 'sine', .07);
+  }));
+  const t1 = 700 + N * 260 + 900;
+  later(t1, () => { els.forEach(b => b.classList.add('merge')); core.classList.add('glow'); [130.8, 196, 261.6].forEach(f => tone(f, 0, 1.6, 'triangle', .08)); });
+  later(t1 + 1100, () => { core.classList.add('burst'); [523.3, 659.3, 784, 1046.5].forEach((f, i) => tone(f, i * .05, 2.4, 'sine', .08)); });
+  later(t1 + 1500, () => title.classList.add('on'));
+  later(t1 + 4800, finish);
+}
+function openEntrancePicker() {
+  $('epickList').innerHTML = ENTRANCES.map(e => `<button class="btn eopt" type="button" data-ent="${esc(e.id)}">${esc(e.name)}<small>${esc(e.blurb)}</small></button>`).join('');
+  $('epick').hidden = false;
+}
+$('epickClose').addEventListener('click', () => { $('epick').hidden = true; });
+$('epickList').addEventListener('click', e => { const b = e.target.closest('[data-ent]'); if (!b) return; $('epick').hidden = true; playEntrance(b.dataset.ent, () => { $('epick').hidden = false; }); });
 // Dev-only note: players never reach it because the "under construction" notice stops them first.
 function showTylerNote() {
   const n = $('tnote'); $('tpic').style.backgroundImage = "url('tyler-note.jpg')"; n.hidden = false;
@@ -3171,7 +3222,7 @@ function openSummit(opts = {}) {
     <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}${cleared > 0 && cleared < 5 ? ' · no healing in between, use your bag' : ''}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
-  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button><button class="btn" id="sDevNote">Replay the note</button></div>`);
+  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button><button class="btn" id="sDevNote">Replay the note</button><button class="btn" id="sDevEntr">Preview entrances</button></div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at the In-Laws. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
   show('summit');
@@ -3193,6 +3244,7 @@ $('summitBar').addEventListener('click', e => {
   else if (e.target.id === 'sDevSkip') { A.e4pos = 4; saveA(); openSummit({animate: true}); }
   else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sDevNote') showTylerNote();
+  else if (e.target.id === 'sDevEntr') openEntrancePicker();
   else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.champTeam = null; saveA(); openSummit(); }
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
