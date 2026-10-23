@@ -3121,11 +3121,12 @@ const ENTRANCES = [
 ];
 let entrTimers = [], entrOpen = false;
 function entranceAudio() { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; } }
-function playEntrance(id, after) {
+function playEntrance(id, after, opts = {}) {
   const ent = ENTRANCES.find(e => e.id === id); if (!ent || entrOpen) return;
   entrOpen = true; entranceAudio();
   const root = $('entr'); root.innerHTML = '<button class="btn ghost eskip" id="eskip" type="button">Skip</button>'; root.hidden = false;
-  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('on')));
+  if (opts.instant) { root.style.transition = 'none'; root.classList.add('on'); requestAnimationFrame(() => { root.style.transition = ''; }); }   // already dark underneath: no flash of the screen behind
+  else requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('on')));
   const later = (ms, fn) => { entrTimers.push(setTimeout(fn, ms)); };
   let ended = false;
   const finish = () => {
@@ -3190,11 +3191,18 @@ function entranceRoad(root, later, finish) {
   root.addEventListener('entrance-end', () => { dead = true; cancelAnimationFrame(raf); bgmStop(); }, {once: true});
 }
 // Dev-only note: players never reach it because the "under construction" notice stops them first.
-function showTylerNote() {
-  const n = $('tnote'); $('tpic').style.backgroundImage = "url('tyler-note.jpg')"; n.hidden = false;
-  requestAnimationFrame(() => requestAnimationFrame(() => n.classList.add('on')));
+let introNext = false;   // after the first-visit note, the walk up to the gate plays
+function showTylerNote(solid) {
+  const n = $('tnote'); $('tpic').style.backgroundImage = "url('tyler-note.jpg')";
+  n.classList.toggle('solid', !!solid); n.hidden = false;
+  if (solid) n.classList.add('on');   // dark at once, so the Summit screen never shows through
+  else requestAnimationFrame(() => requestAnimationFrame(() => n.classList.add('on')));
 }
-$('tnoteGo').addEventListener('click', () => { const n = $('tnote'); n.classList.remove('on'); setTimeout(() => { n.hidden = true; }, 1200); });
+$('tnoteGo').addEventListener('click', () => {
+  const n = $('tnote');
+  if (introNext) { introNext = false; playEntrance('road', null, {instant: true}); n.hidden = true; n.classList.remove('on', 'solid'); return; }
+  n.classList.remove('on'); setTimeout(() => { n.hidden = true; n.classList.remove('solid'); }, 1200);
+});
 function openSummit(opts = {}) {
   if (!A || !A.regional) { openAdvMap({}); return; }
   if (!A.dev) {   // the League isn't open to players yet
@@ -3202,9 +3210,9 @@ function openSummit(opts = {}) {
     return;
   }
   mapMode = 'adventure';
-  if (!opts.keepAsk && !A.summitIntro) {   // first visit: the walk up to the gate, then the note
+  if (!opts.keepAsk && !A.summitIntro) {   // first visit: the note, then the walk up to the gate
     A.summitIntro = 1; A.summitNote = 1; saveA();
-    playEntrance('road', showTylerNote);
+    introNext = true; showTylerNote(true);
   } else if (!opts.keepAsk && !A.summitNote) { A.summitNote = 1; saveA(); showTylerNote(); }
   const steps = summitSteps();
   if (!opts.keepAsk) summitAsk = false;
