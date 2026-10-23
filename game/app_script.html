@@ -2307,7 +2307,6 @@ function gymSets(key, pos, lv) {
 async function advChallenge() {
   const st = aStage();
   if (!st || st.kind === 'done') return;
-  hallOff();   // the hall music fades out as the battle begins
   let sets, lv;
   if (st.kind === 'gym') { lv = GYM_LV[A.pos]; sets = gymSets(st.key, A.pos, lv); }
   else if (st.kind === 'e4') {
@@ -2317,6 +2316,7 @@ async function advChallenge() {
     await introScene({kicker: `Elite Four · ${A.e4pos + 1} of 4`, title: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} battle · ${g.members.length} trainers`, color: g.color,
       speakers: g.members.map(k => ({key: k, first: LEADERS[k].first, name: LEADERS[k].title, color: LEADERS[k].color, line: E4_TALK[g.key].intro.find(x => x[0] === k)[1]})),
       sets: t.sets, owners: t.owners});
+    hallOff();   // the hall music fades out once the last trainer has finished talking
     advFight({type: 'e4', stage: st, level: lv, sets: t.sets, owners: t.owners, gameType: g.mode, speaker: speakerFor(st),
       foe: {name: g.title, key: g.members[0], color: g.color, icon: g.icon, title: g.title,
         subtitle: `Elite Four ${A.e4pos + 1} of 4 · ${g.mode === 'triples' ? 'triples' : 'doubles'} · level ${lv}`}});
@@ -2330,6 +2330,7 @@ async function advChallenge() {
   const sp = speakerFor(st);
   if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp); } finally { duskBusy = false; } }
   else await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
+  hallOff();
   const f = st.kind === 'champion'
     ? {...CHAMP, name: 'Cancer', title: 'Cancer', key: null, subtitle: `Victory Summit · level ${lv}`}
     : {name: LEADERS[st.key].first, key: st.key, color: LEADERS[st.key].color, icon: LEADERS[st.key].icon,
