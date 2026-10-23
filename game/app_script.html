@@ -2863,6 +2863,15 @@ async function bgmStart(name, o = {}) {
     token.src = src; token.gain = g;
   } catch (e) { if (bgm === token) bgm = null; }
 }
+// hand one track over to another: the old one fades out while the new one fades in beneath it
+function bgmCross(name, o = {}) {
+  const old = bgm; bgm = null;
+  if (old && old.src && audio) {
+    const fade = o.fade || 4;
+    try { old.gain.gain.cancelScheduledValues(audio.currentTime); old.gain.gain.setValueAtTime(old.gain.gain.value, audio.currentTime); old.gain.gain.linearRampToValueAtTime(0, audio.currentTime + fade); old.src.stop(audio.currentTime + fade + .1); } catch (e) {}
+  }
+  bgmStart(name, o);
+}
 // the hall music (Victory Summit between fights) only ever stops itself, never another track
 function hallOff() { if (bgm && bgm.name === 'hall') bgmStop(); }
 function bgmStop() {
@@ -3205,7 +3214,7 @@ function entranceRoad(root, later, finish) {
   bgmStop(); bgmStart('rising', {loop: false, fade: 2.5, vol: .7});   // the Rising Strings music runs under the whole walk
   later(T.open - 100, () => { tone(55, 0, 3.2, 'sine', .28); tone(82.4, 0, 3, 'sine', .12); });
   later(T.open + 2500, () => { dead = true; cancelAnimationFrame(raf); finish(); });   // doors open, hold a second, fade out
-  root.addEventListener('entrance-end', () => { dead = true; cancelAnimationFrame(raf); bgmStop(); }, {once: true});
+  root.addEventListener('entrance-end', () => { dead = true; cancelAnimationFrame(raf); bgmCross('hall', {fade: 6, vol: .45}); }, {once: true});   // the entrance music melts into the hall music
 }
 // Dev-only note: players never reach it because the "under construction" notice stops them first.
 let introNext = false;   // after the first-visit note, the walk up to the gate plays
@@ -3244,7 +3253,7 @@ function openSummit(opts = {}) {
   steps.forEach((st, i) => { if (i < 4 && i > cleared) { st.label = `Elite Four - ${i + 1}`; st.sub = 'Not yet'; st.icon = 'star'; } });
   const gold = CHAMP.color;
   setAccent(cleared < 4 ? steps[cleared].color : gold);
-  if (cleared >= 1 && !A.done && !introNext) bgmStart('hall', {fade: 3.5, vol: .45}); else hallOff();   // fades in once an Elite Four has fallen
+  if (!A.done && !introNext) bgmStart('hall', {fade: 3.5, vol: .45}); else if (A.done) hallOff();   // the hall music plays whenever you're in the Summit between fights
   $('summitSub').textContent = A.done ? `Hall of Fame · ${money(A.money)}` : `${cleared} of 5 beaten · ${money(A.money)}`;
   const pts = [{x: 180, y: 392}, ...steps.map((_, i) => ({x: 180, y: 330 - i * 70}))];
   const r = rng(555);
