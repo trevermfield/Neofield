@@ -2545,12 +2545,15 @@ async function showGrowth(events) {
 }
 // XP for the fight that was just won (call while the battle still exists). Team Mons that were sent out get full XP,
 // the rest of the team half, and Mons on the Farm none.
-const XP_KIND = {gym: 'gym', e4: 'gym', champion: 'gym', route: 'wild', train: 'wild', questWild: 'wild', shamburg: 'trainer', trailTrainer: 'trainer', questTrainer: 'trainer', questLegend: 'legend'};
+const XP_KIND = {gym: 'gym', e4: 'gym', champion: 'gym', route: 'wild', train: 'wild', questWild: 'wild', shamburg: 'trainer', trailTrainer: 'trainer', trailWild: 'wild', questTrainer: 'trainer', questLegend: 'legend'};
 function awardFightXP(fight) {
   if (fight.type === 'questLegend' && !fight.caught) return [];
   const parts = E.participantsFromLog(battle.log, ctx.names);
   A.team.forEach(ensureMoves);
-  const events = E.awardXP(A.team, parts, XP_KIND[fight.type] || 'wild', fight.sets.map(x => x.level));
+  // everything on the Laurel Pass (its road, wild Mons and legendary sites) gives double XP
+  const trail = fight.type === 'trailTrainer' || fight.type === 'trailWild' || (fight.quest != null && fight.quest >= LEG0);
+  const cfg = trail ? {...E.XP, base: Object.fromEntries(Object.entries(E.XP.base).map(([k, v]) => [k, v * 2]))} : E.XP;
+  const events = E.awardXP(A.team, parts, XP_KIND[fight.type] || 'wild', fight.sets.map(x => x.level), cfg);
   saveA();
   return events;
 }
@@ -2601,6 +2604,15 @@ async function advBattleOver(won) {
       `${esc(caughtMsg)}${arrived ? ` You can now go to ${esc(placeName(advDest()))}.` : ''}`, lines,
       arrived ? `<button class="btn primary" id="aToMapTown">Go to ${esc(placeName(advDest()))}</button><button class="btn" id="aRouteAgain">Keep exploring</button>`
         : `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
+    return;
+  }
+  if (fight.type === 'trailWild') {
+    const caughtMsg = fight.caught ? addCaught(fight.caught) : '';
+    saveA();
+    const lines = await showGrowth(xpEvents);
+    const f = E.familyOf(fight.sets[0].family);
+    advResult(fight.caught ? 'star' : 'leaf', f.color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', `${esc(caughtMsg)} Double XP on the ${TRAIL}.`, lines,
+      `<button class="btn primary" id="aTrailAgain">Keep exploring</button><button class="btn" id="aToTrail">Back to the trail</button>`);
     return;
   }
   if (fight.type === 'shamburg') {
@@ -2978,11 +2990,12 @@ $('result').addEventListener('click', e => {
   const id = e.target.id;
   if (id === 'fNo') { $('overlay').hidden = true; return; }
   if (id === 'fYes' && ctx) { $('overlay').hidden = true; ctx.forfeitOk = true; forfeitArmed = true; $('forfeit').click(); return; }
-  if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
+  if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aTrailAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
   endBattleQuietly(); ctx = null;
   if (id === 'aTrainAgain') advTrain();
+  else if (id === 'aTrailAgain') trailWild();
   else if (id === 'aRouteAgain') routeBattle(fight.route);
   else if (id === 'aShamNext') shamFight(fight.sham);
   else if (id === 'aToTrail') openTrail();
@@ -3248,12 +3261,14 @@ function openTrail() {
   $('trailSvg').innerHTML = svg;
   const t = nextT >= 0 ? road[nextT] : nextL >= 0 ? sites[nextL] : slots[10];
   $('trailBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>${nextT >= 0 ? esc(TRAIL_TRAINERS[nextT]) : doneL < 6 ? 'The legendary Mons' : 'Laurel Pass cleared'}</b><small>${nextT >= 0 ? `Beat all ${TRAIL_TRAINERS.length} trainers to reach ${esc(LEAGUE)} · three Mons around level ${trailLv(nextT)} · prize ${money(trainerPrize(trailLv(nextT)))}` : doneL < 6 ? 'The road is clear. The legendary sites beside it are optional; each one unlocks after the last.' : 'Nothing left here. The Elite Four are waiting.'}</small></div></div>
-    <div class="row"><button class="btn" id="trailHeal">Heal team</button></div>`;
+    <div class="row"><button class="btn primary" id="trailWild">Wild battle</button><button class="btn" id="trailHeal">Heal team</button></div>
+    <p class="note">Double XP on the ${TRAIL}.</p>`;
   show('trail');
   const wrap = $('trailWrap');
   requestAnimationFrame(() => { const k = wrap.scrollHeight / TRAIL_H; wrap.scrollTop = Math.max(0, t.y * k - wrap.clientHeight / 2); });
 }
 $('trailBar').addEventListener('click', e => {
+  if (e.target.closest('#trailWild')) { trailWild(); return; }
   if (e.target.closest('#trailHeal')) { advHealAll(); saveA(); toast('Your team was fully healed.'); }
 });
 $('trailSvg').addEventListener('click', e => {
@@ -3262,6 +3277,12 @@ $('trailSvg').addEventListener('click', e => {
   const t = e.target.closest('[data-tt]');
   if (t) { const i = +t.dataset.tt; if (A.trail.t[i]) toast(`${TRAIL_TRAINERS[i]} has already been beaten.`); else trailFight(i); }
 });
+function trailWild() {
+  const lv = Math.max(2, trailLv(Math.floor(Math.random() * TRAIL_TRAINERS.length)) - 2 + Math.floor(Math.random() * 4));
+  const set = E.regionalWild(17, lv);
+  const f = E.familyOf(set.family);
+  advFight({type: 'trailWild', catchable: true, sets: [set], foe: {name: 'Wild', wild: true, key: null, color: f.color, icon: 'leaf', title: `Wild ${set.species}`, subtitle: `${TRAIL} · level ${lv}`}});
+}
 async function trailFight(i) {
   const lv = trailLv(i), name = TRAIL_TRAINERS[i];
   const keys = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
