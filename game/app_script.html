@@ -3030,7 +3030,7 @@ async function finale() {
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   crowd.innerHTML = E4_CHEER.map(([k]) => `<span class="fslot" style="--c:${LEADERS[k].color}">${portraitHTML(k, LEADERS[k].color)}</span>`).join('');
   team.innerHTML = ''; team.hidden = true; crowd.hidden = true; go.hidden = true;
-  title.className = 'ftitle'; title.innerHTML = `<small>The Champion is beaten</small><b>CHAMPION!</b>`;
+  title.className = 'ftitle splash'; title.innerHTML = `<small>You are the</small><b>CHAMPION!</b>`;
   el.hidden = false; $('talk').style.zIndex = 55;
   const fx = finaleFX($('finCanvas'));
   const fl = $('finFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');

@@ -707,6 +707,8 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 @keyframes etchSettle { to { color: #2e2008; text-shadow: 0 1px 0 rgba(255, 238, 180, .5); } }
 @keyframes etchSpark { 0% { left: 0; opacity: 1; } 96% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
 .ftitle { position: relative; z-index: 2; text-align: center; display: flex; flex-direction: column; gap: 4px; margin-top: 1vh; }
+.ftitle.splash { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); margin: 0; gap: 8px; }
+.ftitle.splash small { font-size: 16px; }
 .ftitle small { color: #e8c76a; letter-spacing: .18em; text-transform: uppercase; font-size: 13px; font-weight: 700; }
 .ftitle b { font-size: clamp(34px, 12vw, 58px); letter-spacing: .06em; background: linear-gradient(90deg, #b8892e, #fff3b0, #e8c76a, #fff3b0, #b8892e); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: shimmer 3s linear infinite, namePop .9s ease-out both; }
 .ftitle.hof b { font-size: clamp(30px, 10vw, 48px); }
