@@ -1517,6 +1517,12 @@ const E4_CHEER = [
   ['charlotte', "That was the best day ever! You did it, {n}!"],
   ['lillian', "We all believed in you, {n}. Now go enjoy it. You earned every bit."],
 ];
+// the brothers' extra lines, right after Trever's, followed by the coupon
+const E4_BROS = [
+  ['trever', 'Here is your reward for all your hard work from the three of us.'],
+  ['tanner', 'You better thank me, this was my idea.'],
+  ['tucker', 'Better take a screenshot. Proof must be provided to redeem.'],
+];
 const START_BAG = {hyperpotion: 10, fullrestore: 4, fullheal: 5, revive: 4, maxrevive: 1};
 const GYM_REWARD = {hyperpotion: 2, fullrestore: 1, revive: 1};
 const E4_REWARD = {hyperpotion: 2, fullrestore: 2, revive: 1};
@@ -2769,13 +2775,21 @@ async function ciSay(lineEl, text, ms, tap) {
   lineEl.textContent = text; lineEl.classList.remove('say'); void lineEl.offsetWidth; lineEl.classList.add('say');
   await Promise.race([tap, new Promise(r => setTimeout(r, reducedMotion() ? 800 : ms))]);
 }
+// the coupon: a card the size of the note before Victory Summit; stays up until tapped Continue
+function showCoupon() {
+  const c = $('coupon');
+  c.classList.remove('on', 'leaving'); c.hidden = false; void c.offsetWidth;
+  requestAnimationFrame(() => requestAnimationFrame(() => c.classList.add('on')));
+  { const m = toneMuted; toneMuted = false; tone(880, 0, .25, 'triangle', .08); tone(1175, .12, .3, 'triangle', .07); toneMuted = m; }
+  return new Promise(r => { $('couponGo').onclick = () => { c.classList.add('leaving'); setTimeout(() => { c.hidden = true; c.classList.remove('on', 'leaving'); r(); }, 950); }; });
+}
 async function championDefeat() {
   const el = $('champIntro'), stage = $('ciStage');
   let release = () => {};
   const tapP = new Promise(r => { release = r; });
   $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
   stage.innerHTML = ciLayout('');
-  $('ciImg').classList.add('on'); $('ciName').classList.add('on');
+  $('ciImg').classList.add('on');   // no name under him now that he is beaten
   el.style.opacity = '0'; el.hidden = false; void el.offsetWidth; el.style.opacity = '1';
   const fx = gloomFX($('ciCanvas'));
   tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22);
@@ -3042,6 +3056,10 @@ async function finale() {
     slots[i].classList.add('in'); tone(660 + i * 40, 0, .18, 'triangle', .07);
     if (i % 3 === 0) fx.confetti(30);
     await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line.replace(/\{n\}/g, who)]);
+    if (k === 'trever' && !skipped) {
+      for (const [bk, bl] of E4_BROS) await talk({name: LEADERS[bk].title, key: bk, color: LEADERS[bk].color}, [bl]);
+      await showCoupon();
+    }
   }
   for (const sl of slots) sl.classList.add('in');
   go.hidden = false;
