@@ -369,7 +369,7 @@ export const FAMILIES = [
 // Tyler's move/ability revisions: each listed [level, move] replaces the move(s) at that level
 // (in order), or is added when the level has none. Applies to every stage of the line.
 const MOVE_EDITS = {
-  starter1: [[1, 'Bind'], [1, 'Flash'], [24, 'Light Screen'], [32, 'Shock Wave'], [36, 'Solar Beam'], [46, 'Power Whip'], [46, 'Horn Leech'], [52, 'Solar Blade'], [65, 'Frenzy Plant']],
+  starter1: [[1, 'Bind'], [1, 'Flash'], [24, 'Light Screen'], [32, 'Shock Wave'], [36, 'Solar Beam'], [46, 'Horn Leech'], [52, 'Solar Blade'], [65, 'Frenzy Plant']],
   starter2: [[1, 'Scratch'], [1, 'Tail Whip'], [52, 'Dragon Dance'], [58, 'Fire Blast'], [65, 'Blast Burn']],
   starter3: [[1, 'Tackle'], [1, 'Growl'], [20, 'Protect'], [24, 'Crunch'], [28, 'Iron Defense'], [32, 'Hyper Voice'], [36, 'Aqua Tail'], [65, 'Hydro Cannon']],
   wild2: [[10, 'Confuse Ray'], [20, 'Confusion'], [31, 'Tri Attack']],
