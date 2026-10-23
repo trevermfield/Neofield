@@ -3124,7 +3124,7 @@ function entranceAudio() { try { audio = audio || new (window.AudioContext || wi
 function playEntrance(id, after, opts = {}) {
   const ent = ENTRANCES.find(e => e.id === id); if (!ent || entrOpen) return;
   entrOpen = true; entranceAudio();
-  const root = $('entr'); root.innerHTML = '<button class="btn ghost eskip" id="eskip" type="button">Skip</button>'; root.hidden = false;
+  const root = $('entr'); root.innerHTML = ''; root.hidden = false;
   if (opts.instant) { root.style.transition = 'none'; root.classList.add('on'); requestAnimationFrame(() => { root.style.transition = ''; }); }   // already dark underneath: no flash of the screen behind
   else requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('on')));
   const later = (ms, fn) => { entrTimers.push(setTimeout(fn, ms)); };
@@ -3136,7 +3136,6 @@ function playEntrance(id, after, opts = {}) {
     root.classList.remove('on');
     setTimeout(() => { root.hidden = true; root.innerHTML = ''; entrOpen = false; if (after) after(); }, 750);
   };
-  $('eskip').addEventListener('click', finish);
   ent.run(root, later, finish);
 }
 function entranceRoad(root, later, finish) {
@@ -3164,7 +3163,7 @@ function entranceRoad(root, later, finish) {
     { const k = ease(seg(t, 450, 7050)), s = lerp(1.5, 1.32, k), lim = (s - 1) * H / 2 * .98;
       const ty = lerp(-lim - H * .22, lim, k);   // starts below the picture, looking at the dark ground, then the head lifts
       imgs[0].style.transform = `translateY(${ty}px) scale(${s})`;
-      imgs[0].style.opacity = String(1 - seg(t, T.stairsIn, T.stairsIn + 1350)); }
+      imgs[0].style.opacity = String(Math.min(seg(t, 0, 2200), 1 - seg(t, T.stairsIn, T.stairsIn + 1350))); }
     // shot 2: walking up the stairs, zooming toward the gate
     { const k = seg(t, T.stairsIn, T.stairsEnd + 900), s = lerp(1.0, 1.2, ease(k));
       imgs[1].style.transformOrigin = '50% 52%';
@@ -3200,7 +3199,12 @@ function showTylerNote(solid) {
 }
 $('tnoteGo').addEventListener('click', () => {
   const n = $('tnote');
-  if (introNext) { introNext = false; playEntrance('road', null, {instant: true}); n.hidden = true; n.classList.remove('on', 'solid'); return; }
+  if (n.classList.contains('leaving')) return;
+  if (introNext) {   // the card fades away over the dark, then the walk begins
+    introNext = false; n.classList.add('leaving');
+    setTimeout(() => { playEntrance('road', null, {instant: true}); n.hidden = true; n.classList.remove('on', 'solid', 'leaving'); }, 1000);
+    return;
+  }
   n.classList.remove('on'); setTimeout(() => { n.hidden = true; n.classList.remove('solid'); }, 1200);
 });
 function openSummit(opts = {}) {
