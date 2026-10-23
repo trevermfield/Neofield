@@ -2779,9 +2779,12 @@ async function championDefeat() {
   el.style.opacity = '0'; el.hidden = false; void el.offsetWidth; el.style.opacity = '1';
   const fx = gloomFX($('ciCanvas'));
   tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22);
-  setTimeout(() => el.addEventListener('click', release, {once: true}), 1500);
   await new Promise(r => setTimeout(r, reducedMotion() ? 200 : 2600));
-  await ciSay($('ciLine'), 'You have defeated me.', 7000, tapP);
+  // his words stay on screen for as long as you like; tap to go on
+  const line = $('ciLine'); line.textContent = 'You have defeated me.'; line.classList.remove('say'); void line.offsetWidth; line.classList.add('stay');
+  setTimeout(() => { $('ciHint').hidden = false; el.addEventListener('click', release, {once: true}); }, 1800);
+  await tapP;
+  $('ciHint').hidden = true;
   fx.stop();   // the overlay stays up until the finale covers it
 }
 // "Face the Champion": the hall dims, fog rolls in across it and the music slips into the fog theme, then the intro fades in over it
@@ -2796,7 +2799,11 @@ async function duskIn() {
   tone(49, 0, 3.4, 'sine', .16); tone(73.4, .4, 3, 'sine', .07); tone(55, 1.6, 2.6, 'sine', .1);
   await new Promise(r => setTimeout(r, 3600));
 }
-function duskOut() { const d = $('dusk'); d.classList.remove('on'); d.hidden = true; }
+function duskOut(now) {
+  const d = $('dusk');
+  if (now || reducedMotion()) { d.classList.remove('on', 'fade'); d.hidden = true; return; }
+  d.classList.add('fade'); setTimeout(() => { d.classList.remove('on', 'fade'); d.hidden = true; }, 1900);   // the dusk melts away under the intro
+}
 async function championIntro(sets, lv, sp) {
   const el = $('champIntro'), stage = $('ciStage');
   let skipped = false, pending = [];
@@ -2806,8 +2813,8 @@ async function championIntro(sets, lv, sp) {
   const beat = () => { tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22); };
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   $('ciSkip').onclick = e => { e.stopPropagation(); skipped = true; release(); };
-  el.classList.add('pre'); el.hidden = false; el.classList.remove('out');
-  requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transitionDuration = '1.8s'; el.classList.remove('pre'); setTimeout(duskOut, 2000); }));   // fades in over the dusk
+  $('ciHint').hidden = true; el.classList.add('pre'); el.hidden = false; el.classList.remove('out');
+  requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transitionDuration = '2.6s'; el.classList.remove('pre'); setTimeout(duskOut, 1400); }));   // fades in over the dusk
   bgmStart('fog');
   const fx = gloomFX($('ciCanvas'));
   // 1. just the words, "THE CHAMPION", in the middle of the dark
@@ -2827,7 +2834,7 @@ async function championIntro(sets, lv, sp) {
   const fl = $('ciFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
   el.classList.add('quake'); tone(60, 0, 1.2, 'sine', .35); tone(90, .05, .9, 'sawtooth', .05);
   await new Promise(r => setTimeout(r, skipped ? 100 : 700));
-  fx.stop(); el.hidden = true; el.classList.remove('quake', 'pre'); el.style.transitionDuration = ''; stage.innerHTML = ''; fl.classList.remove('go'); duskOut();
+  fx.stop(); el.hidden = true; el.classList.remove('quake', 'pre'); el.style.transitionDuration = ''; stage.innerHTML = ''; fl.classList.remove('go'); duskOut(true);
 }
 // slow rain / drifting ash on a canvas
 function gloomFX(canvas, ash) {
@@ -2970,6 +2977,32 @@ async function finale() {
   const el = $('finale'), crowd = $('finCrowd'), team = $('finTeam'), title = $('finTitle'), go = $('finGo');
   let skipped = false;
   const sleep = ms => new Promise(r => setTimeout(r, skipped || reducedMotion() ? 0 : ms));
+  // every screen after the Champion falls waits for a tap, so you can stay as long as you like
+  const finTap = async (delay = 800) => {
+    await sleep(delay);
+    $('finHint').hidden = false;
+    await new Promise(r => { const h = () => { el.removeEventListener('click', h); r(); }; el.addEventListener('click', h); });
+    $('finHint').hidden = true;
+  };
+  const foley = (...a) => { const m = toneMuted; toneMuted = false; tone(...a); toneMuted = m; };   // small sound effects still play under the piano
+  const plaque = async () => {
+    const pl = $('finPlaque'), n1 = $('pn1'), n2 = $('pn2'), n3 = $('pn3');
+    [n1, n2, n3].forEach(n => n.classList.remove('in', 'go')); pl.classList.remove('on');
+    title.style.transition = 'opacity .8s'; title.style.opacity = '0'; await sleep(900);
+    pl.hidden = false; void pl.offsetWidth; pl.classList.add('on'); foley(196, 0, 1.4, 'triangle', .06);
+    await sleep(1600); n1.classList.add('in'); foley(330, 0, .9, 'triangle', .05);
+    await sleep(1500); n2.classList.add('in'); foley(392, 0, .9, 'triangle', .05);
+    await sleep(1900);
+    // the newest name is etched in, letter by letter, with a spark running along the metal
+    n3.classList.add('in', 'go');
+    let ticks = null;
+    if (!skipped && !reducedMotion()) ticks = setInterval(() => foley(1500 + Math.random() * 1900, 0, .04, 'square', .03), 85);
+    await sleep(3700); clearInterval(ticks);
+    foley(784, 0, 1, 'triangle', .07); foley(1175, .06, 1.1, 'triangle', .05); fx.confetti(35);
+    await finTap(1700);
+    pl.classList.remove('on'); await sleep(1500); pl.hidden = true;
+    title.style.opacity = '';
+  };
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   crowd.innerHTML = E4_CHEER.map(([k]) => `<span class="fslot" style="--c:${LEADERS[k].color}">${portraitHTML(k, LEADERS[k].color)}</span>`).join('');
   team.innerHTML = ''; team.hidden = true; crowd.hidden = true; go.hidden = true;
@@ -2981,7 +3014,7 @@ async function finale() {
   $('champIntro').hidden = true; $('champIntro').style.opacity = '';
   fx.confetti(170);
   $('finSkip').onclick = () => { skipped = true; if (talkQueue) { const r = talkQueue.resolve; talkQueue = null; $('talk').hidden = true; r(); } };
-  await sleep(1800);
+  await finTap(1800);   // the CHAMPION! splash waits for a tap
   // Hall of Fame
   fx.confetti(90); fx.fireworks(true);
   title.className = 'ftitle hof'; title.innerHTML = `<small>${esc(LEAGUE)}</small><b>HALL OF FAME</b>`;
@@ -2997,9 +3030,10 @@ async function finale() {
   await sleep(last * 1000);
   title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
   fx.confetti(60);
-  await sleep(1200);
+  await finTap(1200);   // the Hall of Fame stays up until tapped
   // then the Elite Four come out to cheer: only the trainers on screen
   team.style.transition = 'opacity .8s'; team.style.opacity = '0'; await sleep(900); team.hidden = true; team.style.opacity = '';
+  await plaque();   // Previous Victors
   title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
   crowd.hidden = false;
   const slots = crowd.children;
