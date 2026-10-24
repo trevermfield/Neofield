@@ -14,6 +14,7 @@ const ITEMS = opt('items', 'full');
 const DELTA = +opt('delta', 0);                 // add this to every Elite Four and Champion level
 const CDELTA = +opt('cdelta', DELTA);          // separate shift for the Champion
 const TEAM = opt('team', '');                    // e.g. rimeocerus:56,ripgool:61 (a fixed team instead of random ones)
+const SKILL = opt('skill', 'normal'), FOE = opt('foe', 'normal');   // AI level of the player bot and of the Elite Four / Champion (easy | normal | hard)
 const GROW = args.includes('--grow');   // Mons earn XP after every fight, and the Elite Four rewards are added to the bag, like the real game
 const BAGOPT = opt('bag', 'normal');
 const BAG = BAGOPT.startsWith('{') ? JSON.parse(BAGOPT) : BAGOPT === 'big' ? {hyperpotion: 30, fullrestore: 25, revive: 15, maxrevive: 10} : {hyperpotion: 15, fullrestore: 10, revive: 8, maxrevive: 4};
@@ -94,7 +95,7 @@ function runTrial(L, rnd) {
       for (const sid of ['p1', 'p2']) {
         const r = b[sid].activeRequest;
         if (!r || r.wait || b[sid].isChoiceDone()) continue;
-        const ch = E.aiChoose(b, sid, mem[sid], 'normal');
+        const ch = E.aiChoose(b, sid, mem[sid], sid === 'p1' ? SKILL : FOE);
         if (sid === 'p1' && ITEMS === 'battle' && ch && r.active && !r.forceSwitch && !r.teamPreview && itemTurns < 8) {
           const made = itemTurn(b, ch, bag);
           if (made) { itemTurns++; used++; if (made === 'DONE' || b.choose('p1', made)) continue; }
