@@ -1486,17 +1486,17 @@ const E4_FIGHTS = {
 for (const g of Object.values(E4_FIGHTS)) { g.color = LEADERS[g.members[0]].color; g.icon = LEADERS[g.members[0]].icon; g.label = `${g.mode === 'triples' ? 'Triples' : 'Doubles'} · ${g.members.length} trainers`; }
 const E4_TALK = {
   inlaws: {
-    intro: [['kaley', "Welcome to Victory Summit! The first test is the In-Laws, and we fight together."], ['rachel', "Three of us against you. I have notes on every move you make."], ['oksana', "Kiev and I are ready. Try to keep up with three trainers at once!"]],
-    win: [['kaley', "Okay, okay. You've earned the family's respect."], ['rachel', "I'll have to rewrite my notes."], ['oksana', "Kiev says well done. Go on up."]]},
+    intro: [['kaley', "Ha! I thought you might show up here. I'm ready! Are you?"], ['rachel', "Tyler, your old age is catching up with you this round. You're going down!"], ['oksana', "Welcome to my arena! It's time for you to take your medicine!"]],
+    win: [['kaley', "Well, I suppose I saw this coming. You're determined, wise, and strong! Congratulations! Now, defeat the champion!"], ['rachel', "Okay, okay, it didn't turn out like I planned. I'll take this defeat if you can go beat the bigger threat!"], ['oksana', "Congrats! You drowned the competition! Best of luck against the champion. And remember to stay hydrated!"]]},
   brothers: {
-    intro: [['tucker', "Now you get the brothers. We've trained side by side our whole lives."], ['tanner', "Three trainers, three Mons out each. Hope you brought a plan."], ['trever', "I've run the numbers on this one. The odds are not in your favor."]],
-    win: [['tucker', "Not bad. Not bad at all."], ['tanner', "That's the first time all three of us lost at once."], ['trever', "Recalculating. Keep climbing."]]},
+    intro: [['tucker', "Here for another challenge? You must be boulder than ever. But let's see if you can move mountains twice!"], ['tanner', "Hello Tyler, you're on fire! But it's time for me to cool you down!"], ['trever', "I feel kind of bad ganging up on the short brother."]],
+    win: [['tucker', "My skills are clearly not as finely cut as diamonds. But the champion will truly test your hardness scale."], ['tanner', "Congrats Ty! I guess you truly are the strongest brother. Good luck against the champion. Now go get your ring!"], ['trever', "You always were really tough. Don't worry about the champion, you can take him."]]},
   parents: {
-    intro: [['kent', "You've made it to the parents. Lynne and I will take you on together."], ['lynne', "A double battle. Don't make us go easy on you, now."]],
-    win: [['kent', "Proud of you. Now go finish it."], ['lynne', "You're almost there. One more battle after this."]]},
+    intro: [['kent', "Hi Tyler, great job so far. But can you defeat me?"], ['lynne', "This is fun! Take it easy on your senior citizen mom."]],
+    win: [['kent', "Unbelievable, Tyler! You are so strong! You have what it takes."], ['lynne', "Good luck, fight as hard as you fight for your family."]]},
   family: {
-    intro: [['anna', "This is the last stop before the Champion. The whole family is here!"], ['makenna', "Four of us this time. Don't blink."], ['charlotte', "I've been waiting for this one all day!"], ['lillian', "Let's show them everything we have."]],
-    win: [['anna', "Wow. You beat all four of us."], ['makenna', "Alright, that was impressive."], ['charlotte', "That was so much fun!"], ['lillian', "The Champion is waiting at the top. Good luck."]]},
+    intro: [['anna', "Since we both agree that I'm always right, there's no way you can beat me."], ['makenna', "Hey, dad. Just try and battle me. You won't win."], ['charlotte', "Dad, you won't win if you fight me. I'll kick you."], ['lillian', "Hey, backup QB. Let's see what you got."]],
+    win: [['anna', "Okay, maybe I'm not ALWAYS right. Congrats on the win, Ty Ty."], ['makenna', "Bro, why'd you beat me."], ['charlotte', "What?! You serious? How did daddy beat me."], ['lillian', "Hmm, maybe you should be the starter. Nice win!"]]},
 };
 const E4_LAST = ["That's the whole Elite Four. The Champion is waiting at the top of Victory Summit."];
 const CHAMP_LINES = {
@@ -1505,18 +1505,18 @@ const CHAMP_LINES = {
 };
 // after the Champion falls, the whole Elite Four has a word ({n} is the player's name)
 const E4_CHEER = [
-  ['kaley', "{n}! You beat every one of us and then the Champion. Welcome to the family hall of fame!"],
-  ['rachel', "I'm putting this whole run in my notes. Chapter one: {n} wins."],
-  ['oksana', "Kiev is howling with joy, {n}. That means he's proud of you."],
-  ['tucker', "Proud of you, {n}. Seriously. Best battle I've ever lost."],
-  ['tanner', "{n}, you made all three of us look like rookies. Champion suits you."],
-  ['trever', "The odds said no. You said yes, {n}. I'm rerunning my numbers."],
-  ['kent', "That's my kid up there. Well done, {n}."],
-  ['lynne', "I knew you could do it, {n}. I'm so proud of you."],
-  ['makenna', "Okay, {n}, that was unreal. Umbreon says congratulations."],
-  ['charlotte', "That was the best day ever! You did it, {n}!"],
-  ['lillian', "We all believed in you, {n}. Now go enjoy it. You earned every bit."],
-  ['anna', "Champion {n}! I'm going to be telling people about this one for years."],
+  ['kaley', "Tyler, you're an inspiration. We love you!"],
+  ['rachel', "Wohoo!! GOOD JOB! Winning this thing just like you do every challenge! Thanks for your example as an older brother!"],
+  ['oksana', "You're doing pretty good! Keep it up or I'll have to give you an IV!"],
+  ['tucker', "Great job bro! You not only conquered this mountain, but you did it twice!! Your hardness level must be OVER 9000!!!"],
+  ['tanner', "Wow! You're so talented! I might have to recruit you to my team! Who's your agent?"],
+  ['trever', "Good job big bro, proud to call you the leader of the field boys."],
+  ['kent', "Outstanding in every aspect! I always believed you would!"],
+  ['lynne', "Way to go! I've always believed you could do the hard stuff. You make me proud!"],
+  ['makenna', "Glad you're better. Now I can defeat you."],
+  ['charlotte', "Don't eat candy ever again."],
+  ['lillian', "aaaAAAAHHHHhhh! (Which can be translated to: Congratulations, Dada!)"],
+  ['anna', "Thank you for fighting so hard for me and the girls. I love you, besto friendo."],
 ];
 // the brothers' extra lines, right after Trever's, followed by the coupon
 const E4_BROS = [
