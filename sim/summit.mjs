@@ -14,6 +14,7 @@ const ITEMS = opt('items', 'full');
 const DELTA = +opt('delta', 0);                 // add this to every Elite Four and Champion level
 const CDELTA = +opt('cdelta', DELTA);          // separate shift for the Champion
 const TEAM = opt('team', '');                    // e.g. rimeocerus:56,ripgool:61 (a fixed team instead of random ones)
+const GD = Object.fromEntries(opt('gdelta', '').split(',').filter(Boolean).map(x => { const [k, v] = x.split(':'); return [k, +v]; }));   // per-group level shift, e.g. brothers:-4
 const SKILL = opt('skill', 'normal'), FOE = opt('foe', 'normal');   // AI level of the player bot and of the Elite Four / Champion (easy | normal | hard)
 const GROW = args.includes('--grow');   // Mons earn XP after every fight, and the Elite Four rewards are added to the bag, like the real game
 const BAGOPT = opt('bag', 'normal');
@@ -68,7 +69,7 @@ function runTrial(L, rnd) {
   const team = TEAM ? TEAM.split(',').map(x => { const [n, lv] = x.split(':'); return E.newMember(E.regionalInfo(n).familyKey, +lv + (L ? L : 0)); }) : fams.slice(0, 6).map(k => E.newMember(k, L));
   const bag = ITEMS === 'none' ? {} : {...BAG};
   const order = E4_KEYS.slice().sort(() => rnd() - .5);
-  const fights = order.map(k => ({name: k, type: E4_FIGHTS[k].mode, sets: e4Sets(E4_FIGHTS[k], G.E4_LV[order.indexOf(k)] + DELTA)}));
+  const fights = order.map(k => ({name: k, type: E4_FIGHTS[k].mode, sets: e4Sets(E4_FIGHTS[k], G.E4_LV[order.indexOf(k)] + DELTA + (GD[k] || 0))}));
   fights.push({name: 'champion', type: 'singles', sets: E.leaderSets(E.CHAMPION_TEXT, G.CHAMP_LV + CDELTA)});
   let used = 0;
   for (let fi = 0; fi < fights.length; fi++) {
