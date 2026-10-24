@@ -14,6 +14,7 @@ const ITEMS = opt('items', 'full');
 const DELTA = +opt('delta', 0);                 // add this to every Elite Four and Champion level
 const CDELTA = +opt('cdelta', DELTA);          // separate shift for the Champion
 const TEAM = opt('team', '');                    // e.g. rimeocerus:56,ripgool:61 (a fixed team instead of random ones)
+const GROW = args.includes('--grow');   // Mons earn XP after every fight, and the Elite Four rewards are added to the bag, like the real game
 const BAGOPT = opt('bag', 'normal');
 const BAG = BAGOPT.startsWith('{') ? JSON.parse(BAGOPT) : BAGOPT === 'big' ? {hyperpotion: 30, fullrestore: 25, revive: 15, maxrevive: 10} : {hyperpotion: 15, fullrestore: 10, revive: 8, maxrevive: 4};
 
@@ -103,6 +104,10 @@ function runTrial(L, rnd) {
     }
     for (const p of b.p1.pokemon) { const i = names.indexOf(p.name); if (i >= 0) team[i].frac = p.fainted ? 0 : p.hp / p.maxhp; }
     if (!(b.ended && b.winner === 'You')) return {won: false, failedAt: f.name, used};
+    if (GROW) {
+      E.awardXP(team, E.participantsFromLog(b.log, names), 'gym', f.sets.map(x => x.level), E.XP);
+      if (f.name !== 'champion') { bag.hyperpotion = (bag.hyperpotion || 0) + 2; bag.fullrestore = (bag.fullrestore || 0) + 2; bag.revive = (bag.revive || 0) + 1; }
+    }
   }
   return {won: true, used};
 }
