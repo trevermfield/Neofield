@@ -14,7 +14,8 @@ const ITEMS = opt('items', 'full');
 const DELTA = +opt('delta', 0);                 // add this to every Elite Four and Champion level
 const CDELTA = +opt('cdelta', DELTA);          // separate shift for the Champion
 const TEAM = opt('team', '');                    // e.g. rimeocerus:56,ripgool:61 (a fixed team instead of random ones)
-const BAG = opt('bag', 'normal') === 'big' ? {hyperpotion: 30, fullrestore: 25, revive: 15, maxrevive: 10} : {hyperpotion: 15, fullrestore: 10, revive: 8, maxrevive: 4};
+const BAGOPT = opt('bag', 'normal');
+const BAG = BAGOPT.startsWith('{') ? JSON.parse(BAGOPT) : BAGOPT === 'big' ? {hyperpotion: 30, fullrestore: 25, revive: 15, maxrevive: 10} : {hyperpotion: 15, fullrestore: 10, revive: 8, maxrevive: 4};
 
 const src = fs.readFileSync(new URL('../game/app_script.html', import.meta.url), 'utf8');
 const E4_FIGHTS = new Function('return ' + /const E4_FIGHTS = (\{[\s\S]*?\n\});/.exec(src)[1])();
