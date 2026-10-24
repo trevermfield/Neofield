@@ -1048,6 +1048,7 @@ $('result').addEventListener('click', e => {
 });
 
 function endBattleQuietly() {
+  battleOff();
   if (match && match.link) linkEnd();
   if (unsubMoves) { unsubMoves(); unsubMoves = null; }
   if (unsubMatch) { unsubMatch(); unsubMatch = null; }
@@ -2184,6 +2185,7 @@ function advFight(fight) {
   ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
   startVsCpu(fight.sets, null, sets, A.playerName, fight.gameType);
   if (fight.type === 'champion') gloomOn();
+  if (fight.type === 'e4') bgmStart('battle', {fade: 1.5, vol: .5});   // Gauntlet plays through every Elite Four fight
   if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
 }
 function applyAdvHP() {
@@ -2585,6 +2587,7 @@ function summaryHTML(lines) {
   return `<div class="summary">${out.join('')}</div>`;
 }
 function advResult(icon, color, title, text, lines, buttons) {
+  battleOff();
   $('result').innerHTML = `${emblem(icon, color)}<h3>${esc(title)}</h3><p>${text}</p>${lines && lines.length ? summaryHTML(lines) : ''}<div class="row" style="justify-content:center">${buttons}</div>`;
   $('overlay').hidden = false;
 }
@@ -2701,7 +2704,7 @@ async function advBattleOver(won) {
     return;
   }
   // gym, Elite Four, Champion
-  if (fight.type === 'e4') { bgmStart('hall', {fade: 3, vol: .45});   // the hall music comes back while the trainers talk
+  if (fight.type === 'e4') { battleOff(); bgmStart('hall', {fade: 3, vol: .45});   // the hall music comes back while the trainers talk
     await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); if (A.e4pos === 3) await talk(fight.speaker, E4_LAST); }
   else if (fight.type === 'champion') await championDefeat();
   else await talk(fight.speaker, LINES[fight.stage.key].win);
@@ -2907,6 +2910,7 @@ function bgmCross(name, o = {}) {
 }
 // the hall music (Victory Summit between fights) only ever stops itself, never another track
 function hallOff() { if (bgm && bgm.name === 'hall') bgmStop(); }
+function battleOff() { if (bgm && bgm.name === 'battle') bgmStop(); }   // the Elite Four battle music (Gauntlet)
 function bgmStop() {
   if (!bgm) return;
   const b = bgm; bgm = null;
