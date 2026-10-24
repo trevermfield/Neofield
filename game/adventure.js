@@ -142,6 +142,21 @@ function familyTypes(sp) {
 const rand = a => a[Math.floor(Math.random() * a.length)];
 
 // A random wild (or trainer) Mons at a level, optionally of certain types.
+// A specific species at a level (used for fixed trainer teams), in the form given even if the level is below its evolution level
+export function monOf(speciesName, level, trained = true) {
+  const sp = dex.species.get(speciesName);
+  if (!sp.exists) throw new Error('Unknown species ' + speciesName);
+  const chain = chainOf(sp.name);
+  const idx = chain.length - 1;
+  const moves = pickMoves(chain, idx, level, [], new Set()).map(id => dex.moves.get(id).name);
+  const abilities = [sp.abilities[0], sp.abilities[1]].filter(Boolean);
+  const ev = trained ? 84 : 0, iv = trained ? 24 : 15;
+  return {
+    name: sp.name, species: sp.name, level, moves, ability: abilities[0], item: '',
+    nature: ['Hardy', 'Adamant', 'Modest', 'Jolly', 'Timid', 'Bold', 'Calm'][Math.floor(Math.random() * 7)], gender: '',
+    evs: {hp: ev, atk: ev, def: ev, spa: ev, spd: ev, spe: ev}, ivs: {hp: iv, atk: iv, def: iv, spa: iv, spd: iv, spe: iv},
+  };
+}
 export function randomMon(level, types = null, trained = false) {
   let list = bases();
   if (types && types.length) {

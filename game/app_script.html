@@ -2025,11 +2025,23 @@ const legendUnlocked = i => i === LEG0 || !!(A.quests[i - 1] && A.quests[i - 1].
 // Team Shamburg: three must-win fights on routes 4, 9 and 14. Trainers come one after another and HP carries over.
 const SHAM_COLOR = '#c9514d';
 const SHAMBURG = [
-  {route: 3, levels: 2, trainers: [['Shamburg Grunt Foster', 2, 1], ['Shamburg Grunt Miranda', 2, 1]]},
-  {route: 8, levels: 3, trainers: [['Shamburg Grunt Ivori', 2, 1], ['Shamburg Grunt Harbor', 3, 1], ['Shamburg Lieutenant Addi', 3, 2]]},
+  {route: 3, levels: 2, trainers: [['Shamburg Grunt Foster', 3, 1], ['Shamburg Grunt Miranda', 3, 1]]},
+  {route: 8, levels: 3, trainers: [['Shamburg Grunt Ivori', 3, 1], ['Shamburg Grunt Harbor', 3, 1], ['Shamburg Lieutenant Addi', 3, 2]]},
   {route: 13, levels: 4, trainers: [['Shamburg Grunt Savannah', 3, 1], ['Shamburg Grunt Merrit', 3, 1], ['Shamburg Lieutenant Kathi', 3, 2], ['Boss Greg', 4, 3]]},
 ];
 // Tyler's trainer art (www/portraits/). Groups are shown when a Team Shamburg stage begins.
+// Team Shamburg's fixed teams
+const SHAM_TEAMS = {
+  'Shamburg Grunt Foster': ['Raticate', 'Sharpedo', 'Krookodile'],
+  'Shamburg Grunt Miranda': ['Banette', 'Dustox', 'Carnivine'],
+  'Shamburg Grunt Ivori': ['Cloyster', 'Mightyena', 'Shedinja'],
+  'Shamburg Grunt Harbor': ['Electrode', 'Ariados', 'Zangoose'],
+  'Shamburg Lieutenant Addi': ['Omastar', 'Shiftry', 'Scolipede'],
+  'Shamburg Grunt Savannah': ['Swoobat', 'Swalot', 'Luxray'],
+  'Shamburg Grunt Merrit': ['Pinsir', 'Seismitoad', 'Exploud'],
+  'Shamburg Lieutenant Kathi': ['Drapion', 'Cacturne', 'Dusknoir'],
+  'Boss Greg': ['Seviper', 'Slaking', 'Feraligatr', 'Haxorus'],
+};
 const SHAM_ART = {'Shamburg Grunt Foster': 's-foster', 'Shamburg Grunt Miranda': 's-miranda', 'Shamburg Grunt Ivori': 's-ivori', 'Shamburg Grunt Harbor': 's-harbor',
   'Shamburg Lieutenant Addi': 's-addi', 'Shamburg Grunt Savannah': 's-savannah', 'Shamburg Grunt Merrit': 's-merrit', 'Shamburg Lieutenant Kathi': 's-kathi', 'Boss Greg': 's-greg'};
 const SHAM_GROUP = ['s-group1', 's-group2', null];
@@ -3865,7 +3877,7 @@ async function shamFight(k) {
     ? [`Hold it right there! We are Team Shamburg, and we take Mons from trainers who are not strong enough to keep them.`, `Your Mons look strong. Hand them over, or beat all ${S.trainers.length} of us!`]
     : boss ? [`So you got past my team. I am the boss of Team Shamburg. No trainer has ever kept their Mons after facing me!`]
     : [`You beat my partner? Then you still have to get past me. No healing, no breaks!`]);
-  const sets = Array.from({length: t[1]}, () => E.regionalWild(S.route, lv));
+  const sets = SHAM_TEAMS[t[0]].map(n => E.monOf(n, lv));
   advFight({type: 'shamburg', sham: k, k: n, lv, sets, foe: {name: t[0], key: SHAM_ART[t[0]] || null, color: SHAM_COLOR, icon: 'star', title: t[0], subtitle: `Team Shamburg · ${n + 1} of ${S.trainers.length} · level ${lv}`}});
 }
 function routeBattle(r) {
