@@ -104,6 +104,7 @@ function runTrial(L, rnd) {
     }
     for (const p of b.p1.pokemon) { const i = names.indexOf(p.name); if (i >= 0) team[i].frac = p.fainted ? 0 : p.hp / p.maxhp; }
     if (!(b.ended && b.winner === 'You')) return {won: false, failedAt: f.name, used};
+    if (GROW && process.env.DBG) console.error('lv', team.map(m => m.level).join(','));
     if (GROW) {
       E.awardXP(team, E.participantsFromLog(b.log, names), 'gym', f.sets.map(x => x.level), E.XP);
       if (f.name !== 'champion') { bag.hyperpotion = (bag.hyperpotion || 0) + 2; bag.fullrestore = (bag.fullrestore || 0) + 2; bag.revive = (bag.revive || 0) + 1; }
