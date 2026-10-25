@@ -641,6 +641,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .ciTitle b { font-size: clamp(34px, 11vw, 54px); letter-spacing: .14em; color: #e9e2ff; text-shadow: 0 0 30px #6a4fd6; }
 .ciTitle span { color: #8f86b8; font-size: 14px; }
 .ciTitle.sm b { font-size: 26px; }
+@keyframes ciFadeMon { from { opacity: 0; filter: blur(8px); } to { opacity: 1; } }
 @keyframes ciFade { from { opacity: 0; letter-spacing: .5em; filter: blur(8px); } to { opacity: 1; } }
 
 .ciStack { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -656,7 +657,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .ciLine { margin: 10px 0 0; height: 7.2em; font-size: 18px; line-height: 1.45; color: #d9d2f0; font-style: italic; max-width: 20em; opacity: 0; text-align: center; }
 .ciLine.say { animation: ciSay 6.2s ease-in-out both; }
 @keyframes ciSay { 0% { opacity: 0; } 22% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
-.ciMon { display: flex; flex-direction: column; align-items: center; gap: 10px; animation: ciFade 1.6s ease-out both; }
+.ciMon { display: flex; flex-direction: column; align-items: center; gap: 10px; animation: ciFadeMon 1.6s ease-out both; }   /* fade only: animating letter-spacing made the text re-wrap and jump */
 .ciArt .monart { width: min(62vw, 270px); height: min(62vw, 270px); object-fit: contain; filter: brightness(0) drop-shadow(0 0 2px #000); transition: filter 2.4s ease-out; }
 .ciArt.lit .monart { filter: drop-shadow(0 0 22px var(--c)) brightness(.9); }
 .ciArt.dark .monart { filter: brightness(0) drop-shadow(0 0 14px #5a3a7a); }
