@@ -2067,7 +2067,7 @@ const TRAINER_ART = {'Bug Catcher': 't-bugcatcher', 'Spelunker': 't-spelunker', 
   'Veteran Boone': 't-veteran', 'Cooltrainer Juno': 't-cooltrainer', 'Black Belt Ryo': 't-blackbelt', 'Expert Hana': 't-experthana'};
 const shamAt = r => SHAMBURG.findIndex(x => x.route === r);
 const shamOpen = r => { const k = shamAt(r); return k >= 0 && !(A.shamburg && A.shamburg.done[k]); };
-const questLevel = i => AREAS[i].lv ? AREAS[i].lv - 3 : Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
+const questLevel = i => i === MISS ? 69 : AREAS[i].lv ? AREAS[i].lv - 3 : Math.round((GYM_LV[i] + (i + 1 < GYM_LV.length ? GYM_LV[i + 1] : E4_LV[0])) / 2);
 
 let A = null;
 function loadA() {
