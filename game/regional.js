@@ -329,7 +329,7 @@ export const FAMILIES = [
     ],
     moves: [[1, 'Ember'], [1, 'Poison Sting'], [10, 'Wing Attack'], [20, 'Sludge Bomb'], [30, 'Flamethrower'], [40, 'Nasty Plot'], [50, 'Sludge Wave'], [60, 'Overheat']],
     evoMoves: {},
-    final: {ability: 'Flame Body', item: 'Life Orb', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Sludge Bomb', 'Flamethrower', 'Nasty Plot', 'Roost']}},
+    final: {ability: 'Levitate', item: 'Life Orb', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Sludge Bomb', 'Flamethrower', 'Nasty Plot', 'Roost']}},
 
   {key: 'aerialyn', color: '#f4a58a', catchRate: 20, rare: true,
     stages: [
@@ -403,6 +403,7 @@ const ABILITY_EDITS = [
   ['nidomonk', 0, ['Psychic Surge', 'Inner Focus']],
   ['storment', 0, ['Drizzle', 'Strong Jaw']],
   ['rensylk', 0, ['Drought', 'Flash Fire']],
+  ['hexabeake', 0, ['Levitate', 'Flame Body']],
 ];
 for (const f of FAMILIES) {
   const edits = MOVE_EDITS[f.key];

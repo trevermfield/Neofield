@@ -157,8 +157,9 @@ export function monOf(speciesName, level, trained = true) {
     evs: {hp: ev, atk: ev, def: ev, spa: ev, spd: ev, spe: ev}, ivs: {hp: iv, atk: iv, def: iv, spa: iv, spd: iv, spe: iv},
   };
 }
-export function randomMon(level, types = null, trained = false) {
+export function randomMon(level, types = null, trained = false, skip = null) {
   let list = bases();
+  if (skip && skip.length) { const f = list.filter(x => ![...familyTypes(x)].some(t => skip.includes(t))); if (f.length) list = f; }
   if (types && types.length) {
     const t = list.filter(s => [...familyTypes(s)].some(x => types.includes(x)));
     if (t.length) list = t;

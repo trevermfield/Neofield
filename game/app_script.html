@@ -178,6 +178,7 @@ function setAccent(color) { document.documentElement.style.setProperty('--accent
 
 // ---------- shared battle start ----------
 function beginBattle(p1, p2, seed, gameType) {
+  $('forfeit').textContent = 'Forfeit';
   battle = E.createBattle(p1, p2, seed, gameType);
   logIdx = battle.log.length;
   view = {p1: blankMon(), p2: blankMon()};
@@ -977,9 +978,11 @@ $('controls').addEventListener('click', e => {
 
 // ---------- forfeit and results ----------
 let forfeitArmed = false;
+const WILD_FIGHTS = ['route', 'train', 'questWild', 'trailWild', 'questLegend'];
 $('forfeit').addEventListener('click', async () => {
   if (!battle) return;
   if (battle.ended) { leaveBattle(); return; }
+  if (ctx && ctx.kind === 'adventure' && ctx.fight && WILD_FIGHTS.includes(ctx.fight.type)) { readAdvHP(); saveA(); leaveBattle(); return; }   // flee: no blackout
   if (ctx && ctx.kind === 'adventure' && ctx.fight && (ctx.fight.type === 'e4' || ctx.fight.type === 'champion') && !ctx.forfeitOk) {
     advResult('star', '#e25b4f', 'Forfeit the Elite Four?', 'If you forfeit this battle you lose all your progress at Victory Summit and must start over at the In-Laws. Are you sure?', null,
       `<button class="btn primary" id="fYes">Yes, forfeit</button><button class="btn" id="fNo">Keep fighting</button>`);
@@ -1064,7 +1067,7 @@ function leaveBattle() {
   endBattleQuietly();
   ctx = null;
   if (wasJourney) { openMap({}); return; }
-  if (wasAdv) { if (wasAdv.quest != null) openQuest(wasAdv.quest); else openAdvMap({}); return; }
+  if (wasAdv) { if (wasAdv.quest != null) openQuest(wasAdv.quest); else if (wasAdv.type === 'trailWild') openTrail(); else openAdvMap({}); return; }
   openHall();
 }
 
@@ -1478,7 +1481,7 @@ const E4_WIN = ['Well fought. Go on, the next member of the Elite Four is waitin
 // Each trainer brings their strongest Mons (by total base stats); 'must' forces a favourite into the team.
 const E4_KEYS = ['inlaws', 'brothers', 'parents', 'family'];
 const E4_FIGHTS = {
-  inlaws:   {title: 'The In-Laws', members: ['kaley', 'rachel', 'oksana'], picks: [2, 2, 2], mode: 'triples', must: {oksana: 'Herdier'}},
+  inlaws:   {title: 'The In-Laws', members: ['kaley', 'rachel', 'oksana'], picks: [2, 2, 2], mode: 'triples', must: {oksana: 'Stoutland'}},
   brothers: {title: 'The Brothers', members: ['tucker', 'tanner', 'trever'], picks: [2, 2, 2], mode: 'triples', must: {}},
   parents:  {title: 'The Parents', members: ['kent', 'lynne'], picks: [3, 3], mode: 'doubles', must: {}},
   family:   {title: 'The Family', members: ['anna', 'makenna', 'charlotte', 'lillian'], picks: [2, 2, 1, 1], mode: 'triples', must: {makenna: 'Umbreon'}},
@@ -1982,12 +1985,12 @@ const money = n => '$' + n.toLocaleString('en-US');
 
 // One side quest unlocks after each gym. Trainers go by their trade, never a personal name.
 const AREAS = [
-  {name: 'Whisperleaf Forest', kind: 'Forest', types: ['Bug', 'Grass'], trainer: 'Bug Catcher', color: '#6fb35a', icon: 'leaf'},
+  {name: 'Whisperleaf Forest', kind: 'Forest', types: ['Bug', 'Grass'], trainer: 'Bug Catcher', skip: ['Grass'], color: '#6fb35a', icon: 'leaf'},
   {name: 'Echo Cave', kind: 'Cave', types: ['Rock', 'Ground', 'Dark'], trainer: 'Spelunker', color: '#9b8a6e', icon: 'peak'},
   {name: 'Galecrest Mountain', kind: 'Mountain', types: ['Rock', 'Flying', 'Fighting'], trainer: 'Hiker', color: '#b39a6b', icon: 'peak'},
   {name: 'Mirror Lake', kind: 'Lake', types: ['Water'], trainer: 'Fisher', color: '#5f9cf0', icon: 'wave'},
   {name: 'Sunscar Desert', kind: 'Desert', types: ['Ground', 'Fire'], trainer: 'Desert Nomad', color: '#e0b25a', icon: 'pyramid'},
-  {name: 'Emberpeak Volcano', kind: 'Volcano', types: ['Fire', 'Rock'], trainer: 'Fire Breather', color: '#f08a4b', icon: 'flame'},
+  {name: 'Emberpeak Volcano', kind: 'Volcano', types: ['Fire', 'Rock'], trainer: 'Fire Breather', skip: ['Rock'], color: '#f08a4b', icon: 'flame'},
   {name: 'Fogmire Swamp', kind: 'Swamp', types: ['Poison', 'Water', 'Ghost'], trainer: 'Swamp Guide', color: '#8e7cc3', icon: 'drop'},
   {name: 'Frostfang Tundra', kind: 'Tundra', types: ['Ice'], trainer: 'Skier', color: '#86d8ec', icon: 'flake'},
   {name: 'Old Stone Ruins', kind: 'Ruins', types: ['Psychic', 'Rock', 'Ghost'], trainer: 'Ruin Maniac', color: '#c99ad6', icon: 'eye'},
@@ -1997,7 +2000,7 @@ const AREAS = [
   {name: 'Skyreach Cliffs', kind: 'Cliffs', types: ['Flying', 'Dragon'], trainer: 'Bird Keeper', color: '#7fb8e6', icon: 'wing'},
   {name: 'Old Iron Works', kind: 'Factory', types: ['Steel', 'Electric'], trainer: 'Mechanic', color: '#9fb3d4', icon: 'nut'},
   {name: 'Fairy Meadow', kind: 'Meadow', types: ['Fairy', 'Grass'], trainer: 'Picnicker', color: '#ee9ad0', icon: 'fairy'},
-  {name: "Dragon's Den", kind: 'Den', types: ['Dragon', 'Water'], trainer: 'Dragon Tamer', color: '#6f86e8', icon: 'dragon'},
+  {name: "Dragon's Den", kind: 'Den', types: ['Dragon', 'Water'], trainer: 'Dragon Tamer', skip: ['Water'], color: '#6f86e8', icon: 'dragon'},
 ];
 // Legendary side quests on the Laurel Pass (they open one after another once the last gym leader is beaten)
 AREAS.push(
@@ -2196,6 +2199,7 @@ function advFight(fight) {
   const seen = {};
   ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
   startVsCpu(fight.sets, null, sets, A.playerName, fight.gameType);
+  if (WILD_FIGHTS.includes(fight.type)) $('forfeit').textContent = 'Flee';   // wild Mons: you can just leave, no blackout
   if (fight.type === 'champion') gloomOn();
   if (fight.type === 'e4') bgmStart('battle', {fade: 1.5, vol: .5});   // Gauntlet plays through every Elite Four fight
   if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
@@ -3118,9 +3122,8 @@ function ensureQuest(i) {
   if (A.quests[i] && A.quests[i].wild) return A.quests[i];
   const ar = AREAS[i], lv = questLevel(i);
   if (ar.legend) {
-    const mine = E.familyOf(ar.legend).stages[E.familyOf(ar.legend).stages.length - 1].types;
-    let pool = E.FAMILIES.filter(f => !f.rare && f.stages[f.stages.length - 1].types.some(t => mine.includes(t))).map(f => f.key);
-    if (pool.length < 2) pool = E.FAMILIES.filter(f => !f.rare).map(f => f.key);
+    // the two wild Mons on a legendary quest are random Neofield Mons #010-#039 (no type restriction)
+    let pool = E.FAMILIES.filter(f => !f.rare && f.stages[0].num >= 10 && f.stages[0].num <= 39).map(f => f.key);
     const pick = () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
     A.quests[i] = {level: lv, step: 0, done: false, legend: true, trainer: E.familyOf(ar.legend).stages[0].name,
       wild: [E.regionalWild(17, lv, pick()), E.regionalWild(17, lv + 1, pick())], boss: E.regionalWild(17, ar.lv, ar.legend)};
@@ -3130,7 +3133,7 @@ function ensureQuest(i) {
   A.quests[i] = {
     level: lv, step: 0, done: false, trainer: ar.trainer,
     wild: [0, 1, 2].map(k => A.regional ? E.regionalWild(i, Math.max(2, lv - 2 + k)) : E.randomMon(Math.max(2, lv - 2 + k), ar.types)),
-    trainerTeam: [0, 1, 2].map(() => E.randomMon(lv + 1, ar.types, true)),
+    trainerTeam: [0, 1, 2].map(() => E.randomMon(lv + 1, ar.types, true, ar.skip)),
   };
   saveA();
   return A.quests[i];
