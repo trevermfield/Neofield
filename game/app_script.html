@@ -2787,7 +2787,7 @@ async function championReveal(species) {
   requestAnimationFrame(() => requestAnimationFrame(() => { const a = stage.querySelector('.ciArt'); if (a && !last) a.classList.add('lit'); }));
   await new Promise(r => {
     release = r;
-    const tm = setTimeout(r, reducedMotion() ? 600 : 6500);
+    const tm = setTimeout(r, reducedMotion() ? 600 : 7500);
     setTimeout(() => el.addEventListener('click', () => { clearTimeout(tm); r(); }, {once: true}), 900);
   });
   ciClose = async () => {
