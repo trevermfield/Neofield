@@ -356,8 +356,8 @@ export const FAMILIES = [
     stages: [{name: 'Pain', types: ['Rock', 'Fighting'], stats: S(85, 140, 100, 60, 70, 105), abilities: ['Sturdy'], h: 1.8, w: 400, entry: 'A wolf made of jagged red crystal. Every step cracks the ground.'}],
     moves: [[1, 'Rock Throw'], [30, 'Stone Edge'], [50, 'Close Combat'], [60, 'Swords Dance']], evoMoves: {},
     final: {ability: 'Sturdy', item: '', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Swords Dance', 'Close Combat', 'Stone Edge', 'Earthquake']}},
-  {key: 'isolation', boss: true, rare: true, color: '#7fb6e8', catchRate: 0,
-    stages: [{name: 'Isolation', types: ['Ice', 'Psychic'], stats: S(95, 55, 110, 125, 115, 70), abilities: ['Snow Cloak'], h: 1.2, w: 30, entry: 'A lonely child curled up inside a sphere of ice, circled by pale ghosts.'}],
+  {key: 'loneliness', boss: true, rare: true, color: '#7fb6e8', catchRate: 0,
+    stages: [{name: 'Loneliness', types: ['Ice', 'Psychic'], stats: S(95, 55, 110, 125, 115, 70), abilities: ['Snow Cloak'], h: 1.2, w: 30, entry: 'A lonely child curled up inside a sphere of ice, circled by pale ghosts.'}],
     moves: [[1, 'Icy Wind'], [30, 'Psychic'], [50, 'Freeze-Dry'], [60, 'Calm Mind']], evoMoves: {},
     final: {ability: 'Snow Cloak', item: '', nature: 'Calm', evs: {hp: 252, spa: 252, spd: 4}, moves: ['Freeze-Dry', 'Psychic', 'Calm Mind', 'Recover']}},
   {key: 'relapse', boss: true, rare: true, color: '#4a2a5a', catchRate: 0,
@@ -503,7 +503,7 @@ export const STARTERS = FAMILIES.filter(f => f.starter);
 
 // The Champion's team (Victory Summit), as set text
 const SHORT = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
-export const CHAMPION_ORDER = ['fatigue', 'isolation', 'pain', 'chemo', 'fear', 'relapse'];
+export const CHAMPION_ORDER = ['fatigue', 'loneliness', 'pain', 'chemo', 'fear', 'relapse'];
 export const CHAMPION_TEXT = CHAMPION_ORDER.map(k => {
   const f = FAMILIES.find(x => x.key === k), fs = f.final, n = f.stages[0].name;
   return `${n}\nAbility: ${fs.ability}\nEVs: ${Object.entries(fs.evs).map(([a, v]) => v + ' ' + SHORT[a]).join(' / ')}\n${fs.nature} Nature\n${fs.moves.map(m => '- ' + m).join('\n')}`;
