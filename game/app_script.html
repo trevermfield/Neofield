@@ -5125,31 +5125,58 @@ function finishIntro() {
 const SHARED_SAVE_KEYS = ['builtTeams', 'recentTeams', 'evoSound', 'lastSlot', 'saveVersion'];
 const OLD_SAVE_KEYS = ['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'adventure'];
 const isSaveKey = k => /^slot[1-4]\./.test(k) || SHARED_SAVE_KEYS.includes(k);
-function saveCode() {
+// Save codes: GLB2 is the save data squeezed with deflate (much shorter); GLB1 codes from before still load.
+const b64u = bytes => { let s = ''; for (let i = 0; i < bytes.length; i += 8192) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64u = t => { const s = atob(t.replace(/-/g, '+').replace(/_/g, '/')); const b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i); return b; };
+const pipeBytes = async (bytes, stream) => { const w = stream.writable.getWriter(); w.write(bytes); w.close(); return new Uint8Array(await new Response(stream.readable).arrayBuffer()); };
+// slot: 1-4 for one slot, or null for everything. Values are stored as real JSON (not text inside text), which also makes the code shorter.
+async function saveCode(slot = null) {
   const data = {};
-  try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (isSaveKey(k)) data[k] = localStorage.getItem(k); } } catch (e) { /* storage unavailable */ }
-  return 'GLB1:' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!isSaveKey(k) || (slot && !k.startsWith(`slot${slot}.`))) continue;
+      const raw = localStorage.getItem(k);
+      try { data[k] = JSON.parse(raw); } catch (e) { data[k] = {$raw: raw}; }
+    }
+  } catch (e) { /* storage unavailable */ }
+  if (!Object.keys(data).length) return '';
+  if (typeof CompressionStream === 'undefined') return 'GLB1:' + btoa(unescape(encodeURIComponent(JSON.stringify(Object.fromEntries(Object.entries(data).map(([k, v]) => [k, v && v.$raw !== undefined ? v.$raw : JSON.stringify(v)]))))));
+  return 'GLB2:' + b64u(await pipeBytes(new TextEncoder().encode(JSON.stringify(data)), new CompressionStream('deflate-raw')));
 }
-$('saveCopy').addEventListener('click', async () => {
-  const code = saveCode();
+async function decodeSave(raw) {
+  if (raw.startsWith('GLB1:')) return JSON.parse(decodeURIComponent(escape(atob(raw.slice(5)))));
+  if (raw.startsWith('GLB2:')) {
+    const obj = JSON.parse(new TextDecoder().decode(await pipeBytes(unb64u(raw.slice(5)), new DecompressionStream('deflate-raw'))));
+    return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, v && typeof v === 'object' && v.$raw !== undefined ? v.$raw : JSON.stringify(v)]));
+  }
+  return null;
+}
+async function copySave(slot) {
+  const code = await saveCode(slot);
   $('saveBox').hidden = false; $('saveLoadRow').hidden = true;
+  if (!code) { $('saveText').value = ''; $('saveNote').textContent = slot ? `Slot ${slot} has no saved data yet.` : 'There is nothing to save yet.'; return; }
   $('saveText').value = code; $('saveText').readOnly = true;
   let copied = false;
   try { await navigator.clipboard.writeText(code); copied = true; } catch (e) { /* clipboard blocked */ }
   if (!copied) { $('saveText').select(); try { copied = document.execCommand('copy'); } catch (e) { copied = false; } }
-  $('saveNote').textContent = copied ? 'Save code copied. Paste it into a message to yourself.' : 'Select all the text above and copy it.';
-});
+  const what = slot ? `Slot ${slot} save code` : 'Save code for all slots';
+  $('saveNote').textContent = copied ? `${what} copied. Paste it into a message to yourself.` : 'Select all the text above and copy it.';
+}
+$('saveCopy').addEventListener('click', () => { $('saveSlotRow').hidden = true; copySave(null); });
+$('saveCopyOne').addEventListener('click', () => { $('saveSlotRow').hidden = !$('saveSlotRow').hidden; });
+$('saveSlotRow').addEventListener('click', e => { const b = e.target.closest('[data-saveslot]'); if (b) copySave(+b.dataset.saveslot); });
 $('saveLoadOpen').addEventListener('click', () => {
   $('saveBox').hidden = false; $('saveLoadRow').hidden = false;
-  $('saveText').readOnly = false; $('saveText').value = ''; $('saveText').placeholder = 'Paste a save code that starts with GLB1:';
+  $('saveText').readOnly = false; $('saveText').value = ''; $('saveText').placeholder = 'Paste a save code that starts with GLB2: (or GLB1:)';
   $('saveNote').textContent = 'Loading a code replaces only the save slots that are inside the code. Other slots are not touched.';
   $('saveText').focus();
 });
-$('saveLoad').addEventListener('click', () => {
+$('saveLoad').addEventListener('click', async () => {
   const raw = $('saveText').value.trim();
   let data = null;
-  try { if (raw.startsWith('GLB1:')) data = JSON.parse(decodeURIComponent(escape(atob(raw.slice(5))))); } catch (e) { data = null; }
-  if (!data || typeof data !== 'object') { $('saveNote').textContent = "That doesn't look like a save code. Copy the whole thing, starting with GLB1:"; return; }
+  try { data = await decodeSave(raw); } catch (e) { data = null; }
+  if (!data || typeof data !== 'object') { $('saveNote').textContent = "That doesn't look like a save code. Copy the whole thing, starting with GLB2: (or GLB1: for an older code)"; return; }
   try {
     // only the slots (and shared items) that are in the code are replaced; every other slot is left alone
     const inCode = Object.keys(data), slots = new Set(inCode.map(k => (/^slot([1-4])\./.exec(k) || [])[1]).filter(Boolean));

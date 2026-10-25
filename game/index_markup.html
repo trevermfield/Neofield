@@ -878,8 +878,9 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       </div>
       <div class="section">
         <h2>Save backup</h2>
-        <p class="note">Moves all 4 save slots and your built teams to another phone, or between the app and the browser. Copy your save code, send it to yourself, then paste it on the other device.</p>
-        <div class="row"><button class="btn" id="saveCopy">Copy my save code</button><button class="btn" id="saveLoadOpen">Load a save code</button></div>
+        <p class="note">Moves your saves to another phone, or between the app and the browser. Copy all save codes (every slot and your built teams) or just one slot, send it to yourself, then paste it on the other device.</p>
+        <div class="row"><button class="btn" id="saveCopy">Copy all save codes</button><button class="btn" id="saveCopyOne">Copy one slot</button><button class="btn" id="saveLoadOpen">Load a save code</button></div>
+        <div class="row" id="saveSlotRow" hidden><button class="btn" data-saveslot="1">Slot 1</button><button class="btn" data-saveslot="2">Slot 2</button><button class="btn" data-saveslot="3">Slot 3</button><button class="btn" data-saveslot="4">Slot 4</button></div>
         <div id="saveBox" hidden>
           <textarea id="saveText" spellcheck="false" style="min-height:90px" aria-label="Save code"></textarea>
           <div class="row" id="saveLoadRow" hidden><button class="btn primary" id="saveLoad">Replace my saves with this code</button></div>
