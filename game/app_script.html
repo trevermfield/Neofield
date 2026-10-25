@@ -19,6 +19,7 @@ const LEADERS = {
   oksana: {first: 'Oksana', title: 'Nurse Oksana and Kiev', badge: 'Hydratebadge', type: 'Water',  color: '#5fa8f0', icon: 'wave'},
   lynne:  {first: 'Lynne',  title: 'Matriarch Lynne', badge: 'Foundationbadge', type: 'Ground',    color: '#d9a85f', icon: 'pyramid'},
   kent:   {first: 'Kent',   title: 'Builder Kent',    badge: 'Wyvernbadge',     type: 'Dragon',    color: '#6f86e8', icon: 'dragon'},
+  okla:   {first: 'Okla',   title: 'Prof. Okla',      badge: 'Endgame',         type: 'Normal',    color: '#b8b29a', icon: 'star'},   // Okla's Lab, after the Champion: not part of the 17 badges
 };
 const ORDER = ['tyler', 'trever', 'tucker', 'tanner', 'makenna', 'charlotte', 'lillian', 'theo', 'rachel', 'anna', 'jack', 'parker', 'tali', 'kaley', 'oksana', 'lynne', 'kent'];
 const CUSTOM_COLOR = '#c9cfdb';
@@ -159,7 +160,16 @@ function renderLeaders() {
       ${emblem(L.icon, L.color)}
       <div class="who"><div class="meta">${esc(L.type)} · ${esc(L.badge)}</div><div class="title">${esc(L.title)}</div><div class="mons">${esc(mons)}</div></div>
       <div class="go">${badges[k] ? 'REMATCH' : 'BATTLE'}</div></button>`;
-  }).join('');
+  }).join('') + oklaCard();
+}
+// Prof. Okla joins the Battle Hall once he has been beaten in this slot's adventure (never counted as a badge)
+function oklaCard() {
+  let beat = false;
+  try { beat = !!(A && A.lab && A.lab.beat); } catch (e) { beat = false; }
+  if (!beat) return '';
+  const L = LEADERS.okla, mons = E ? teamNames(E.TEAM_TEXT.okla) : '';
+  return `<button class="leader" id="leader-okla" data-k="okla" style="--c:${L.color}" ${E ? '' : 'disabled'}>${emblem(L.icon, L.color)}
+    <div class="who"><div class="meta">${esc(L.type)} · ${esc(L.badge)}</div><div class="title">${esc(L.title)}</div><div class="mons">${esc(mons)}</div></div><div class="go">BATTLE</div></button>`;
 }
 
 $('leaders').addEventListener('click', e => {
@@ -978,7 +988,7 @@ $('controls').addEventListener('click', e => {
 
 // ---------- forfeit and results ----------
 let forfeitArmed = false;
-const WILD_FIGHTS = ['route', 'train', 'questWild', 'trailWild', 'questLegend'];
+const WILD_FIGHTS = ['route', 'train', 'questWild', 'trailWild', 'questLegend', 'labWild'];
 $('forfeit').addEventListener('click', async () => {
   if (!battle) return;
   if (battle.ended) { leaveBattle(); return; }
@@ -2012,6 +2022,9 @@ AREAS.push(
   {name: 'Whisperwind Perch', kind: 'Perch', types: ['Psychic', 'Flying'], trainer: 'Aerialyn', color: '#f4a58a', icon: 'wing', legend: 'aerialyn', lv: 67},
 );
 const LEG0 = AREAS.length - 6;   // index of the first legendary quest (the ordinary side quests come before it)
+// The secret quest at Prof. Okla's Lab (after the Champion): two wild Mons, then Missingno (#051). It is not part of the Laurel Pass.
+AREAS.push({name: 'Glitch Shore', kind: 'Shore', types: ['Normal'], trainer: 'Missingno', color: '#8f84d8', icon: 'eye', legend: 'missingno', lv: 80});
+const MISS = AREAS.length - 1;
 const TRAIL = 'Laurel Pass';
 const TRAIL_TRAINERS = ['Ace Trainer Mira', 'Veteran Boone', 'Cooltrainer Juno', 'Black Belt Ryo', 'Expert Hana'];
 // each Laurel Pass trainer has a fixed team (family keys)
@@ -2110,12 +2123,13 @@ function openAdvMap({fromBattle, msg, force} = {}) {
   setAccent(stColor(st));
   const dest = A.done ? 18 : Math.min(A.pos, 17) + 1;
   // Neofield: every new town is reached by winning one wild battle on the route that leads to it
-  const gated = !!A.regional && A.travelled < dest;
+  const labAt = !!labPlace();
+  const gated = !!A.regional && A.travelled < dest && !labAt;
   if (gated && !fromBattle && ((A.loc == null && advTown() === dest) || A.loc > dest - 1)) A.loc = dest - 1;
   const firstTrip = !A.regional && A.travelled < dest && !fromBattle;
   if (firstTrip) A.loc = null;
-  const from = firstTrip ? Math.max(0, dest - 1) : A.regional && A.loc != null ? A.loc : A.regional ? advTown() : dest;
-  renderWorldMap(from, {stage: aStage, done: A.done, pos: A.pos, order: A.order}, routeOverlay() + questOverlay());
+  const from = labAt ? 0 : firstTrip ? Math.max(0, dest - 1) : A.regional && A.loc != null ? A.loc : A.regional ? advTown() : dest;
+  renderWorldMap(from, {stage: aStage, done: A.done, pos: A.pos, order: A.order}, routeOverlay() + questOverlay() + labOverlay());
   $('mapSub').textContent = `${money(A.money)} · ${A.pos} of 17 badges · ${DIFFS[A.difficulty].label}`;
   $('mapMenu').hidden = mapFromBattle;
   $('mapBag').hidden = mapFromBattle;
@@ -2126,7 +2140,9 @@ function openAdvMap({fromBattle, msg, force} = {}) {
   requestAnimationFrame(() => {
     scrollMapTo(mapPoints()[from].y);
     if (A.regional && A.loc != null) placeMarkerOnRoute(A.loc);
+    if (labAt) labMarker();
     if (msg) toast(msg, 4600);
+    if (!fromBattle && !msg) oklaNote();
     if (firstTrip) animateMarker(dest, () => { A.travelled = dest; saveA(); });
   });
 }
@@ -2137,6 +2153,7 @@ function renderAdvNextBar() {
 function renderAdvNextBarMain() {
   const bar = $('nextBar');
   if (mapFromBattle) { bar.innerHTML = `<button class="btn primary" id="mapBackBattle">Back to battle</button>`; return; }
+  if (labPlace()) { bar.innerHTML = labPlace() === 'r0' ? labRouteCardHTML() : labCardHTML(); return; }
   if (A.regional && A.loc != null) { bar.innerHTML = routeCardHTML(A.loc); return; }
   if (A.regional && advTown() < advDest()) {
     const ti = advTown(), L = ti > 0 ? LEADERS[A.order[ti - 1]] : null, c = L ? L.color : '#c9d3e3';
@@ -2173,6 +2190,9 @@ function advNextBarClick(id) {
   else if (id === 'aFarm') openFarm();
   else if (id === 'aDev') openDev();
   else if (id === 'rGrass') routeBattle(A.loc);
+  else if (id === 'lGrass') labGrass();
+  else if (id === 'lChallenge') oklaChallenge();
+  else if (id === 'lMiss') openQuest(MISS);
   else if (id === 'tGo') openTrail();
   else if (id === 'sGo') shamFight(shamAt(A.loc));
     else if (id === 'aCenter') { advHealAll(); saveA(); toast('Your team was fully healed at the Mon Center.'); }
@@ -2183,6 +2203,8 @@ $('mapSvg').addEventListener('click', e => {
   if (tr) { openTrail(); return; }
   const g = e.target.closest('[data-quest]');
   if (g) { openQuest(+g.dataset.quest); return; }
+  if (e.target.closest('[data-lab]')) { openLab(); return; }
+  if (e.target.closest('[data-r0]')) { openLabRoute(); return; }
   const t = e.target.closest('[data-town]');
   if (t) { openTown(+t.dataset.town); return; }
   const r = e.target.closest('[data-route]');
@@ -2581,7 +2603,7 @@ async function showGrowth(events) {
 }
 // XP for the fight that was just won (call while the battle still exists). Team Mons that were sent out get full XP,
 // the rest of the team half, and Mons on the Farm none.
-const XP_KIND = {gym: 'gym', e4: 'gym', champion: 'gym', route: 'wild', train: 'wild', questWild: 'wild', shamburg: 'trainer', trailTrainer: 'trainer', trailWild: 'wild', questTrainer: 'trainer', questLegend: 'legend'};
+const XP_KIND = {gym: 'gym', e4: 'gym', champion: 'gym', route: 'wild', labWild: 'wild', okla: 'gym', train: 'wild', questWild: 'wild', shamburg: 'trainer', trailTrainer: 'trainer', trailWild: 'wild', questTrainer: 'trainer', questLegend: 'legend'};
 function awardFightXP(fight) {
   if (fight.type === 'questLegend' && !fight.caught) return [];
   const parts = E.participantsFromLog(battle.log, ctx.names);
@@ -2643,6 +2665,24 @@ async function advBattleOver(won) {
         : `<button class="btn primary" id="aRouteAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
     return;
   }
+  if (fight.type === 'labWild') {
+    const caughtMsg = fight.caught ? addCaught(fight.caught) : '';
+    saveA();
+    const lines = await showGrowth(xpEvents);
+    const f = E.familyOf(fight.sets[0].family);
+    advResult(fight.caught ? 'star' : 'leaf', f.color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', esc(caughtMsg), lines,
+      `<button class="btn primary" id="aLabAgain">Keep exploring</button><button class="btn" id="aToMap">Back to map</button>`);
+    return;
+  }
+  if (fight.type === 'okla') {
+    const L = labS(), first = !L.beat, prize = OKLA_PRIZE();
+    L.beat = true; A.money += prize; advHealAll(); saveA();
+    await talk(fight.speaker, first ? OKLA_LINES.win : OKLA_LINES.winAgain);
+    const lines = await showGrowth(xpEvents);
+    advResult('star', OKLA.color, 'Prof. Okla defeated', `You won ${money(prize)} and your team was fully healed.${first ? ' A new side quest opened near the lab: Glitch Shore.' : ''}`, lines,
+      `<button class="btn primary" id="aToMap">Back to the lab</button>`);
+    return;
+  }
   if (fight.type === 'trailWild') {
     const caughtMsg = fight.caught ? addCaught(fight.caught) : '';
     saveA();
@@ -2685,16 +2725,18 @@ async function advBattleOver(won) {
   }
   if (fight.type === 'questLegend') {
     const q = A.quests[fight.quest], ar = AREAS[fight.quest];
+    let missGift = '';
+    if (fight.quest === MISS && !q.rewarded) { q.rewarded = true; A.bag.pokeball = (A.bag.pokeball || 0) + 99; missGift = ' You found 99 Mon Balls in the glitched ground!'; }
     if (fight.caught) {
       const caughtMsg = addCaught(fight.caught);
       q.step = 3; q.done = true; saveA();
       const lines = await showGrowth(xpEvents);
-      advResult('star', ar.color, `${fight.caught.species} caught!`, `${esc(caughtMsg)} ${esc(ar.name)} is cleared.${fight.quest < AREAS.length - 1 ? ` A new quest opened: ${esc(AREAS[fight.quest + 1].name)}.` : ' That was the last legendary Mon on the trail!'}`, lines,
-        `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
+      advResult('star', ar.color, `${fight.caught.species} caught!`, `${esc(caughtMsg)} ${esc(ar.name)} is cleared.${fight.quest === MISS ? '' : fight.quest < MISS - 1 ? ` A new quest opened: ${esc(AREAS[fight.quest + 1].name)}.` : ' That was the last legendary Mon on the trail!'}${missGift}`, lines,
+        fight.quest === MISS ? `<button class="btn primary" id="aToMap">Back to the lab</button>` : `<button class="btn primary" id="aToTrail">Back to the ${TRAIL}</button>`);
     } else {
       saveA();
-      advResult(ar.icon, ar.color, 'It got away', `${esc(q.trainer)} was knocked out but not caught, and it slipped away. It will come back if you try again. Weaken it a little, then throw a Mon Ball.`, null,
-        `<button class="btn primary" id="aQuestNext">Try again</button><button class="btn" id="aToTrail">Back to the ${TRAIL}</button>`);
+      advResult(ar.icon, ar.color, 'It got away', `${esc(q.trainer)} was knocked out but not caught, and it slipped away. It will come back if you try again. Weaken it a little, then throw a Mon Ball.${missGift}`, null,
+        `<button class="btn primary" id="aQuestNext">Try again</button>${fight.quest === MISS ? `<button class="btn" id="aToMap">Back to the lab</button>` : `<button class="btn" id="aToTrail">Back to the ${TRAIL}</button>`}`);
     }
     return;
   }
@@ -3107,6 +3149,7 @@ $('result').addEventListener('click', e => {
   if (id === 'aTrainAgain') advTrain();
   else if (id === 'aTrailAgain') trailWild();
   else if (id === 'aRouteAgain') routeBattle(fight.route);
+  else if (id === 'aLabAgain') labGrass();
   else if (id === 'aShamNext') shamFight(fight.sham);
   else if (id === 'aToTrail') openTrail();
   else if (id === 'aToSummit') openSummit({animate: true});
@@ -3216,7 +3259,7 @@ function questContinue(i) {
   }
 }
 $('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questContinue(questIdx()); });
-$('questLeave').addEventListener('click', () => { if (AREAS[questIdx()] && AREAS[questIdx()].legend) openTrail(); else openAdvMap({}); });
+$('questLeave').addEventListener('click', () => { if (AREAS[questIdx()] && AREAS[questIdx()].legend && questIdx() !== MISS) openTrail(); else openAdvMap({}); });
 $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
 
@@ -3417,7 +3460,7 @@ const TRAIL_H = 840;
 function trailPts() {
   const slots = Array.from({length: 11}, (_, i) => ({x: 180 + 78 * Math.sin(i * 0.95 + 0.4), y: TRAIL_H - 70 - i * 66}));
   const road = TRAIL_TRAINERS.map((_, i) => slots[i * 2 + 1]);
-  const sites = AREAS.slice(LEG0).map((_, k) => {
+  const sites = AREAS.slice(LEG0, MISS).map((_, k) => {
     const r = slots[k * 2], left = r.x > 180;
     return {x: left ? 52 : 308, y: r.y - 14, rx: r.x, ry: r.y};
   });
@@ -3428,12 +3471,12 @@ function openTrail() {
   mapMode = 'adventure';
   setAccent('#e8c76a');
   const T = A.trail, doneT = TRAIL_TRAINERS.filter((_, i) => T.t[i]).length;
-  const doneL = AREAS.slice(LEG0).filter((a, k) => (A.quests[LEG0 + k] || {}).done).length;
+  const doneL = AREAS.slice(LEG0, MISS).filter((a, k) => (A.quests[LEG0 + k] || {}).done).length;
   $('trailSub').textContent = `${doneT} of ${TRAIL_TRAINERS.length} trainers · ${doneL} of 6 legendary Mons · ${money(A.money)}`;
   const {slots, road, sites} = trailPts();
   const gold = '#e8c76a';
   const nextT = TRAIL_TRAINERS.findIndex((_, i) => !T.t[i]);
-  const nextL = AREAS.slice(LEG0).findIndex((_, k) => legendUnlocked(LEG0 + k) && !(A.quests[LEG0 + k] || {}).done);
+  const nextL = AREAS.slice(LEG0, MISS).findIndex((_, k) => legendUnlocked(LEG0 + k) && !(A.quests[LEG0 + k] || {}).done);
   const r = rng(77);
   let svg = `<rect width="360" height="${TRAIL_H}" fill="color-mix(in srgb, ${gold} 9%, #121820)"/>`;
   for (let k = 0; k < 70; k++) {
@@ -3509,7 +3552,7 @@ function renderShop() {
   $('shopMoney').textContent = money(A.money);
   $('tutorPrice').textContent = money(TUTOR_PRICE);
   $('shopItems').innerHTML = Object.entries(PRICES).map(([id, price]) => `<div class="shoprow"><div><b>${esc(E.ITEMS[id].name)} <small style="display:inline">· you have ${A.bag[id] || 0}</small></b><small>${esc(E.ITEMS[id].desc)}</small><span class="price">${money(price)}</span></div>
-    <button class="btn primary" id="buy-${id}" data-buy="${id}" ${A.money < price ? 'disabled' : ''}>Buy</button></div>`).join('');
+    <button class="btn primary" id="buy-${id}" data-buy="${id}" ${A.money < price || (id === 'pokeball' && (A.bag.pokeball || 0) >= 99) ? 'disabled' : ''}>${id === 'pokeball' && (A.bag.pokeball || 0) >= 99 ? 'Max 99' : 'Buy'}</button></div>`).join('');
   $('shopTutor').innerHTML = A.team.map((m, i) => {
     const cur = mset(m);
     const opts = E.tutorOptions(m);
@@ -3521,6 +3564,7 @@ $('shopItems').addEventListener('click', e => {
   const b = e.target.closest('[data-buy]'); if (!b || b.disabled) return;
   const id = b.dataset.buy;
   if (A.money < PRICES[id]) return;
+  if (id === 'pokeball' && (A.bag.pokeball || 0) >= 99) { $('shopNote').textContent = 'You can carry up to 99 Mon Balls from the shop.'; return; }   // rewards can take you past 99
   A.money -= PRICES[id]; A.bag[id] = (A.bag[id] || 0) + 1; saveA();
   $('shopNote').textContent = `Bought a ${E.ITEMS[id].name}.`;
   renderShop();
@@ -3808,7 +3852,7 @@ function routeOverlay() {
     const here = A.loc === r;
     const label = r === 17 ? 'LP' : 'R' + (r + 1);
     if (r === 17) {   // the Laurel Pass is drawn like a side quest marker: a gold diamond on the road to Victory Summit
-      const all = TRAIL_TRAINERS.every((_, i) => A.trail.t[i]) && AREAS.slice(LEG0).every((a, k) => (A.quests[LEG0 + k] || {}).done);
+      const all = TRAIL_TRAINERS.every((_, i) => A.trail.t[i]) && AREAS.slice(LEG0, MISS).every((a, k) => (A.quests[LEG0 + k] || {}).done);
       svg += `<g data-route="17" role="button" aria-label="${TRAIL}"><path d="${segPath(a, b, 18)}" stroke="transparent" stroke-width="22" fill="none"/><circle cx="${mx}" cy="${my}" r="19" fill="transparent"/>
         <rect x="${mx - 11}" y="${my - 11}" width="22" height="22" rx="3" transform="rotate(45 ${mx} ${my})" fill="${all ? '#1d2633' : '#e8c76a'}" stroke="#e8c76a" stroke-width="2"/>
         ${all ? `<path d="M${mx - 4} ${my} l3 3 l5 -6" stroke="#e8c76a" stroke-width="2" fill="none"/>` : `<text x="${mx}" y="${my + 4}" text-anchor="middle" font-size="11" font-weight="800" fill="#10131a">★</text>`}
@@ -3834,10 +3878,87 @@ function placeMarkerOnRoute(r) {
 }
 function openRoute(r) {
   if (!routeOpen(r)) return;
+  if (A.lab) A.lab.at = null;
   if (r === 17) { openTrail(); return; }   // the road to the Victory Summit is the Laurel Pass
   A.loc = r;
   saveA();
   openAdvMap({});
+}
+// ---------- Prof. Okla's Lab (opens once the Champion is beaten): Route 0 with the three starters, the lab town, Okla, and the Missingno quest ----------
+const LAB = {x: 296, y: 662};
+const OKLA = {name: 'Prof. Okla', key: 'okla', color: '#b8b29a', icon: 'star'};
+const OKLA_PRIZE = () => 5 * trainerPrize(trailLv(TRAIL_TRAINERS.length - 1));   // five times the last Laurel Pass trainer, every time
+const OKLA_LINES = {
+  note: ['Congratulations, Champion! I watched your whole journey from my window.', "Come and see me at my lab, just past Willow Hearth on Route 0. I have one more challenger for you, and he has been waiting a long time."],
+  intro: ['So you really did it. I have studied Mons my whole life, and I have never stopped training my own.', 'No badges, no rules, no mercy. Every one of my Mons is level 99. Show me everything you have!'],
+  again: ['Back for another round? My Mons have been training too. Let us go!'],
+  win: ['Incredible... beaten by my own student. I could not be prouder.', "Take this prize. And one more thing: the shore near my lab has started to glitch, and strange blocks of light float over the water. Something that belongs to no type at all lives there. Be careful if you go looking."],
+  winAgain: ['Ha! Beaten again. You truly are the best there is. Come back whenever you like.'],
+};
+const labOn = () => !!(A && A.regional && A.done);
+const labS = () => A.lab || (A.lab = {});
+function labPlace() { const l = labOn() ? labS() : null; return l && l.at; }
+function labRoad() { const a = mapPoints()[0], c = {x: (a.x + LAB.x) / 2, y: Math.min(a.y, LAB.y) - 26}; return {a, c, d: `M${a.x} ${a.y} Q${c.x} ${c.y} ${LAB.x} ${LAB.y}`, mid: {x: .25 * a.x + .5 * c.x + .25 * LAB.x, y: .25 * a.y + .5 * c.y + .25 * LAB.y}}; }
+function labOverlay() {
+  if (!labOn()) return '';
+  const {d, mid} = labRoad(), at = labPlace(), L = labS(), q = A.quests[MISS] || {};
+  let svg = `<path d="${d}" fill="none" stroke="#c9d3e3" stroke-width="3" stroke-linecap="round"/>`;
+  svg += `<g data-r0="1" role="button" aria-label="Route 0"><path d="${d}" stroke="transparent" stroke-width="22" fill="none"/>
+    <rect x="${mid.x - 14}" y="${mid.y - 9}" width="28" height="18" rx="9" fill="${at === 'r0' ? '#8fb36a' : '#1d2633'}" stroke="#8fb36a" stroke-width="1.5"/>
+    <text x="${mid.x}" y="${mid.y + 4}" text-anchor="middle" font-size="10" font-weight="800" fill="${at === 'r0' ? '#10131a' : '#cfe6b8'}">R0</text></g>`;
+  svg += `<g data-lab="1" role="button" aria-label="Prof. Okla's Lab"><circle cx="${LAB.x}" cy="${LAB.y}" r="28" fill="transparent"/>
+    <circle cx="${LAB.x}" cy="${LAB.y}" r="17" fill="#c9d3e3" stroke="${at === 'lab' ? OKLA.color : '#c9d3e3'}" stroke-width="${at === 'lab' ? 3 : 2}"/></g>`;
+  svg += emblemAt('star', '#10131a', LAB.x, LAB.y, 20);
+  svg += `<text x="${LAB.x}" y="${LAB.y + 32}" text-anchor="middle" font-size="10" font-weight="${at === 'lab' ? 700 : 500}" fill="${at === 'lab' ? '#e9edf3' : '#b4bdcb'}">Prof. Okla's Lab</text>`;
+  if (L.beat) {
+    const ar = AREAS[MISS], x = LAB.x + 27, y = LAB.y - 26, done = q.done;
+    svg += `<g data-quest="${MISS}" role="button" aria-label="${esc(ar.name)}"><circle cx="${x}" cy="${y}" r="15" fill="transparent"/>
+      <rect x="${x - 8}" y="${y - 8}" width="16" height="16" rx="3" transform="rotate(45 ${x} ${y})" fill="${done ? '#1d2633' : ar.color}" stroke="${ar.color}" stroke-width="2"/>
+      ${done ? `<path d="M${x - 4} ${y} l3 3 l5 -6" stroke="${ar.color}" stroke-width="2" fill="none"/>` : `<text x="${x}" y="${y + 3.5}" text-anchor="middle" font-size="10" font-weight="800" fill="#10131a">!</text>`}</g>`;
+  }
+  return svg;
+}
+function openLabRoute() { if (!labOn()) return; labS().at = 'r0'; A.loc = null; A.townAt = null; saveA(); openAdvMap({}); }
+function openLab() { if (!labOn()) return; labS().at = 'lab'; A.loc = null; A.townAt = null; saveA(); openAdvMap({}); }
+function labMarker() {
+  const mk = $('mapSvg').querySelector('#marker'), at = labPlace();
+  if (!mk || !at) return;
+  const pt = at === 'lab' ? LAB : labRoad().mid;
+  mk.setAttribute('transform', `translate(${pt.x} ${pt.y})`);
+  scrollMapTo(pt.y);
+}
+function labCardHTML() {
+  const L = labS(), q = A.quests[MISS] || {};
+  const quest = L.beat ? (q.done ? `<p class="note">You cleared the Missingno quest.</p>` : `<button class="btn" id="lMiss">${q.step ? 'Back to Glitch Shore' : 'Explore Glitch Shore'}</button>`) : '';
+  return `<div class="nextcard" style="--c:${OKLA.color}"><span class="face">${portraitHTML('okla', OKLA.color)}</span><div><b>Prof. Okla's Lab</b><small>Prof. Okla · Normal · level 99 · prize ${money(OKLA_PRIZE())} every time · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
+    <button class="btn primary" id="lChallenge">${L.beat ? 'Battle Prof. Okla again' : 'Challenge Prof. Okla'}</button>
+    ${quest}<div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aFarm">Farm</button><button class="btn" id="aCenter">Heal team</button></div>`;
+}
+function labRouteCardHTML() {
+  const mons = ['starter1', 'starter2', 'starter3'].map(k => {
+    const st = E.familyOf(k).stages[0], seen = A.dex.seen[st.id], caught = A.dex.caught[st.id];
+    return `<div class="routemon ${seen ? '' : 'unseen'}">${E.monArt(st.id)}<span>${seen ? esc(st.name) : '???'}</span><small>${caught ? '<span class="caughtdot">●</span> Caught' : seen ? 'Seen' : 'Not seen yet'}</small></div>`;
+  }).join('');
+  return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>Route 0</b><small>${esc(HOME)} to Prof. Okla's Lab · wild Mons at level 5 · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
+    <div class="routemons">${mons}</div>
+    <p class="note">Tap the lab on the map to see Prof. Okla, or ${esc(HOME)} and the other towns to shop and heal.</p>
+    <div class="row"><button class="btn primary" id="lGrass">Walk in the tall grass</button></div>`;
+}
+function labGrass() {
+  const key = ['starter1', 'starter2', 'starter3'][Math.floor(Math.random() * 3)];
+  const set = E.regionalWild(0, 5, key), f = E.familyOf(key);
+  advFight({type: 'labWild', catchable: true, sets: [set], foe: {name: 'Wild', wild: true, key: null, color: f.color, icon: 'leaf', title: `Wild ${set.species}`, subtitle: 'Route 0 · level 5'}});
+}
+async function oklaChallenge() {
+  const L = labS();
+  await talk(OKLA, L.beat ? OKLA_LINES.again : OKLA_LINES.intro);
+  hallOff(); battleOff();   // no music in this fight
+  advFight({type: 'okla', level: 99, sets: E.leaderSets(E.TEAM_TEXT.okla, 99), speaker: OKLA, foe: {name: 'Okla', key: 'okla', color: OKLA.color, icon: 'star', title: 'Prof. Okla', subtitle: "Okla's Lab · level 99"}});
+}
+function oklaNote() {   // once, the first time you are back on the open map after the Champion
+  if (!labOn() || A.labNote) return;
+  A.labNote = true; saveA();
+  talk(OKLA, OKLA_LINES.note);
 }
 const advDest = () => A.done ? 18 : Math.min(A.pos, 17) + 1;
 // The town you are standing in: the newest one, or an earlier one you went back to for the shop and healing.
@@ -3847,6 +3968,7 @@ function openTown(idx) {
   const d = advDest();
   if (idx == null) idx = d;
   if (idx > A.travelled) { toast(`${d - 1 === 17 ? `Beat every trainer on the ${TRAIL}` : shamOpen(d - 1) ? 'Beat Team Shamburg' : `Beat one wild Mon on ${E.ROUTES[d - 1].name}`} to reach ${placeName(d)}.`); return; }
+  if (A.lab) A.lab.at = null;
   if (idx === 18) { A.loc = null; A.townAt = null; saveA(); openSummit(); return; }
   A.loc = null; A.townAt = idx < d ? idx : null; saveA(); openAdvMap({});
 }
@@ -4034,7 +4156,7 @@ function showDexEntry(name) {
   try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
   const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
   const status = adv && reg ? (A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : 'Seen') : '';
-  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
+  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
   const dexNames = [...$('dexList').querySelectorAll('[data-dex]:not([disabled])')].map(b => b.dataset.dex);
   const di = dexNames.indexOf(sp.name), prevN = di > 0 ? dexNames[di - 1] : '', nextN = di >= 0 && di < dexNames.length - 1 ? dexNames[di + 1] : '';
   const dexNav = `<div class="dexnav"><button class="btn ghost" data-dexgo="${esc(prevN)}" ${prevN ? '' : 'disabled'}>‹ Previous</button><button class="btn ghost" data-dexgo="${esc(nextN)}" ${nextN ? '' : 'disabled'}>Next ›</button></div>`;

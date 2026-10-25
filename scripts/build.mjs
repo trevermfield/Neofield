@@ -44,7 +44,8 @@ const HEAD = `<!doctype html>
 // Tyler's finished Mons, for the "Who's that Mon?" intro (it runs before the battle engine loads)
 const {SPECIES} = await import('../game/regional.js');
 const {MON_PICS} = await import('../game/art.js');
-const introMons = SPECIES.filter(sp => MON_PICS[sp.id]).map(sp => ({name: sp.name, num: sp.num, types: sp.types, pic: MON_PICS[sp.id]}));
+const introMons = SPECIES.filter(sp => MON_PICS[sp.id] && sp.id !== 'missingno')   // the secret Mon is never shown in the intro
+  .map(sp => ({name: sp.name, num: sp.num, types: sp.types, pic: MON_PICS[sp.id]}));
 
 const script = readFileSync(game('app_script.html'), 'utf8');
 if (!script.includes('/*NEO_MONS*/[]')) throw new Error('app_script.html is missing the /*NEO_MONS*/[] marker');

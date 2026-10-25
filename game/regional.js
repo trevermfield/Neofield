@@ -339,6 +339,15 @@ export const FAMILIES = [
     moves: [[1, 'Pound'], [1, 'Gust'], [10, 'Confusion'], [20, 'Air Slash'], [30, 'Psychic'], [40, 'Roost'], [50, 'Hurricane'], [60, 'Calm Mind']],
     evoMoves: {},
     final: {ability: 'Serene Grace', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Air Slash', 'Psychic', 'Calm Mind', 'Roost']}},
+  // ---------- #051: the secret Mon (Prof. Okla's side quest, after the Champion) ----------
+  {key: 'missingno', color: '#8f84d8', catchRate: 20, rare: true,
+    stages: [
+      {name: 'Missingno', types: ['???'], stats: S(105, 105, 95, 105, 95, 125), abilities: ['Serene Grace'], h: 3.3, w: 0,
+        entry: 'A tower of scrambled blocks that should not exist. It belongs to no type at all, and the world flickers where it walks. Found only by those who beat Prof. Okla.'},
+    ],
+    moves: [[1, 'Pound'], [1, 'Metronome'], [10, 'Swift'], [20, 'Tri Attack'], [30, 'Slam'], [40, 'Double-Edge'], [50, 'Hyper Beam'], [60, 'Extreme Speed']],
+    evoMoves: {},
+    final: {ability: 'Serene Grace', item: '', nature: 'Hasty', evs: {atk: 252, spa: 4, spe: 252}, moves: ['Hyper Beam', 'Tri Attack', 'Extreme Speed', 'Swift']}},
   // ---------- the Champion's six (never wild, never in the MonDex) ----------
   {key: 'chemo', boss: true, rare: true, color: '#8bd42a', catchRate: 0,
     stages: [{name: 'Chemo', types: ['Poison', 'Steel'], stats: S(100, 110, 120, 80, 100, 60), abilities: ['Corrosion'], h: 2.0, w: 80, entry: 'A skeleton in a tattered hospital gown, pushing an IV stand full of glowing green poison.'}],
