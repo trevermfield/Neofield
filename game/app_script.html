@@ -2721,7 +2721,7 @@ async function advBattleOver(won) {
   }
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { battleOff(); bgmStart('hall', {fade: 3, vol: .45});   // the hall music comes back while the trainers talk
-    await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); if (A.e4pos === 3) await talk(fight.speaker, E4_LAST); }
+    await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); }
   else if (fight.type === 'champion') await championDefeat();
   else await talk(fight.speaker, LINES[fight.stage.key].win);
   if (fight.type === 'champion') { gloomOff(); await finale(); }
