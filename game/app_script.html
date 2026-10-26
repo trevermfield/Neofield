@@ -4098,14 +4098,14 @@ function renderDexList() {
   const adv = dexMode === 'adventure';
   $('dexTitle').textContent = adv ? `${A.playerName}'s MonDex` : 'MonDex';
   if (adv) {
-    const reg = E.SPECIES, seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id]).length;
+    const reg = E.SPECIES.filter(s => s.id !== 'missingno'), seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id]).length;
     $('dexSub').textContent = `Neofield Mons: ${seen} of ${reg.length} seen, ${caught} caught. Tap one you've seen for everything about it.`;
-  } else $('dexSub').textContent = `${E.SPECIES.length} Neofield Mons and ${nationalList().length} Mons from the main games.`;
+  } else $('dexSub').textContent = `${E.SPECIES.filter(s => s.id !== 'missingno').length} Neofield Mons and ${nationalList().length} Mons from the main games.`;
   $('dexTabs').innerHTML = [['regional', 'Neofield'], ['national', adv ? 'Others you have seen' : 'National']].map(([k, l]) => `<button class="chip" id="dextab-${k}" data-dextab="${k}" aria-pressed="${dexTab === k}">${l}</button>`).join('');
   const match = (name, num, types) => !q || name.toLowerCase().includes(q) || String(num) === q.replace(/^#?0*/, '') || types.some(t => t.toLowerCase() === q);
   let rows = [];
   if (dexTab === 'regional') {
-    rows = E.SPECIES.filter(s => match(s.name, s.num, s.types)).map(s => {
+    rows = E.SPECIES.filter(s => s.id !== 'missingno' && match(s.name, s.num, s.types)).map(s => {
       const known = !adv || A.dex.seen[s.id];
       const c = E.regionalInfo(s.name).color;
       return `<button class="dexrow ${known ? '' : 'unseen'}" style="--c:${c}" data-dex="${esc(s.name)}" ${known ? '' : 'disabled'}><span class="thumb">${E.monArt(s.id)}</span><span><small>#${pad3(s.num)}${adv && A.dex.caught[s.id] ? ' <span class="caughtdot">●</span>' : ''}</small><b>${known ? esc(s.name) : '???'}</b>${known ? typesHTML(s.types) : '<small>Not seen yet</small>'}</span></button>`;
