@@ -3072,12 +3072,13 @@ async function finale() {
   };
   const foley = (...a) => { const m = toneMuted; toneMuted = false; tone(...a); toneMuted = m; };   // small sound effects still play under the piano
   const plaque = async () => {
-    const pl = $('finPlaque'), n1 = $('pn1'), n2 = $('pn2'), n3 = $('pn3');
-    [n1, n2, n3].forEach(n => n.classList.remove('in', 'go')); pl.classList.remove('on');
+    const pl = $('finPlaque'), n1 = $('pn1'), n2 = $('pn2'), n3 = $('pn3'), n2b = $('pn2b');
+    [n1, n2, n2b, n3].forEach(n => n.classList.remove('in', 'go')); pl.classList.remove('on');
     title.style.transition = 'opacity .8s'; title.style.opacity = '0'; await sleep(900);
     pl.hidden = false; void pl.offsetWidth; pl.classList.add('on'); foley(196, 0, 1.4, 'triangle', .06);
     await sleep(1600); n1.classList.add('in'); foley(330, 0, .9, 'triangle', .05);
     await sleep(1500); n2.classList.add('in'); foley(392, 0, .9, 'triangle', .05);
+    await sleep(1500); n2b.classList.add('in'); foley(440, 0, .9, 'triangle', .05);
     await sleep(1900);
     // the newest name is etched in, letter by letter, with a spark running along the metal
     n3.classList.add('in', 'go');
