@@ -1540,7 +1540,7 @@ const E4_BROS = [
 // ---- The open Victory Summit: not tied to any one family. Seven different gym leaders are drawn once, when the adventure begins:
 // Elite Four 1 and 2 are single battles, 3 is a doubles battle (two leaders), 4 is a triples battle (three leaders).
 // The Champion is a rival's mirror of the player's own team.
-const NEW_SUMMIT = 'open';   // what a brand-new adventure gets ('classic' keeps the Family summit)
+const NEW_SUMMIT = 'classic';   // what a brand-new adventure gets: 'classic' = Tyler Victory Summit, 'open' = Default Victory Summit (switch in Developer tools)
 const OPEN_KEYS = ['open0', 'open1', 'open2', 'open3'];
 const OPEN_SHAPE = [{mode: 'singles', n: 1, picks: [6]}, {mode: 'singles', n: 1, picks: [6]}, {mode: 'doubles', n: 2, picks: [3, 3]}, {mode: 'triples', n: 3, picks: [2, 2, 2]}];
 const E4_WIN_OPEN = {
@@ -3173,12 +3173,13 @@ async function finale() {
   fx.confetti(60);
   await finTap(1200);   // the Hall of Fame stays up until tapped
   // then the Elite Four come out to cheer: only the trainers on screen
-  team.style.transition = 'opacity .8s'; team.style.opacity = '0'; await sleep(900); team.hidden = true; team.style.opacity = '';
-  await plaque();   // Previous Victors
+  if (!summitOpen()) { team.style.transition = 'opacity .8s'; team.style.opacity = '0'; await sleep(900); team.hidden = true; team.style.opacity = ''; }
+  const classic = !summitOpen();   // the Default Victory Summit ends at the Hall of Fame: no plaque, no cheering leaders
+  if (classic) { await plaque();   // Previous Victors
   title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
-  crowd.hidden = false;
+  crowd.hidden = false; } else { team.hidden = false; team.style.opacity = '1'; }
   const slots = crowd.children;
-  for (let i = 0; i < cheer.length && !skipped; i++) {
+  for (let i = 0; i < cheer.length && classic && !skipped; i++) {
     const [k, line] = cheer[i];
     slots[i].classList.add('in'); tone(660 + i * 40, 0, .18, 'triangle', .07);
     if (i % 3 === 0) fx.confetti(30);
@@ -3425,10 +3426,13 @@ function openSummit(opts = {}) {
     return;
   }
   mapMode = 'adventure';
-  if (!opts.keepAsk && !A.summitIntro) {   // first visit: the note, then the walk up to the gate
+  if (!opts.keepAsk && !A.summitIntro && summitOpen()) {   // Default Victory Summit: no note, straight to the walk up to the gate
+    A.summitIntro = 1; A.summitNote = 1; saveA();
+    introNext = true; setTimeout(() => { introNext = false; playEntrance('road'); }, 60);
+  } else if (!opts.keepAsk && !A.summitIntro) {   // first visit: the note, then the walk up to the gate
     A.summitIntro = 1; A.summitNote = 1; saveA();
     introNext = true; showTylerNote(true);
-  } else if (!opts.keepAsk && !A.summitNote) { A.summitNote = 1; saveA(); showTylerNote(); }
+  } else if (!opts.keepAsk && !A.summitNote && !summitOpen()) { A.summitNote = 1; saveA(); showTylerNote(); }
   const steps = summitSteps();
   if (!opts.keepAsk) summitAsk = false;
   $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
@@ -3473,7 +3477,7 @@ function openSummit(opts = {}) {
     <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
-  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button><button class="btn" id="sDevNote">Replay the note</button></div>`);
+  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at ${summitOpen() ? 'the first Elite Four battle' : 'the In-Laws'}. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
   show('summit');
@@ -4271,6 +4275,9 @@ function openDev(msg) {
       <div class="row"><button class="btn primary" data-dev="jump">Jump there</button></div>
       <p class="note">This sets your badges, unlocked routes, Team Shamburg and Laurel Pass to match, and heals your team.</p></div>
     <div class="section"><h2>Side quests</h2><div class="row"><button class="btn" data-dev="questsdone">Clear all side quests</button><button class="btn" data-dev="questsreset">Reset side quests</button><button class="btn" data-dev="shamreset">Reset Team Shamburg</button><button class="btn" data-dev="trailreset">Reset Laurel Pass trainers</button><button class="btn" data-dev="summitreset">Reset Victory Summit</button></div></div>
+    <div class="section"><h2>Victory Summit version</h2><p class="note">Playing now: <b>${summitOpen() ? 'Default Victory Summit' : 'Tyler Victory Summit'}</b>. ${summitOpen() ? 'Seven random gym leaders (singles, singles, doubles, triples) and your own mirror as the Champion.' : 'The family fights and the Cancer Champion.'}</p>
+      <div class="row"><button class="btn ${summitOpen() ? '' : 'primary'}" data-dev="summitclassic">Tyler Victory Summit</button><button class="btn ${summitOpen() ? 'primary' : ''}" data-dev="summitopen">Default Victory Summit</button></div>
+      <p class="note">Switching resets your Summit progress so you can start it fresh.</p></div>
     <div class="section"><h2>Money and items</h2><div class="row"><input type="number" min="0" id="devMoney" value="${A.money}" aria-label="Money"><button class="btn" data-dev="setmoney">Set money</button><button class="btn" data-dev="items">99 of every item</button></div>
       <p class="note">Mon Balls never run out on developer saves.</p></div>
     <div class="section"><h2>Your team</h2><div class="devmons">${A.team.map((m, i) => mrow(m, i, 'team')).join('')}</div></div>
@@ -4296,6 +4303,11 @@ $('devBody').addEventListener('click', e => {
   else if (act === 'questsreset') { A.quests = {}; msg = 'Side quests reset.'; }
   else if (act === 'shamreset') { A.shamburg = {step: [0, 0, 0], done: [false, false, false]}; msg = 'Team Shamburg reset.'; }
   else if (act === 'trailreset') { A.trail = {t: []}; msg = 'Laurel Pass trainers reset.'; }
+  else if (act === 'summitclassic' || act === 'summitopen') {
+    A.summit = act === 'summitopen' ? 'open' : 'classic';
+    if (A.summit === 'open') setupOpenSummit(); else A.e4 = E4_KEYS.slice();
+    A.e4pos = 0; A.done = false; A.champTeam = null; A.summitIntro = 0; A.summitNote = 0;
+    msg = `Switched to the ${A.summit === 'open' ? 'Default' : 'Tyler'} Victory Summit and reset it.`; }
   else if (act === 'summitreset') { A.e4pos = 0; A.done = false; A.champTeam = null; A.summitIntro = 0; A.summitNote = 0; msg = 'Victory Summit reset: the Elite Four and the Champion are ready to fight again.'; }
   saveA();
   openDev(msg); sc.scrollTop = top;
