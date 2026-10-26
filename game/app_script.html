@@ -451,7 +451,7 @@ function translate(lines) {
       case 'switch': case 'drag': {
         const species = parts[2].split(',')[0];
         const hp = parseHP(parts[3], s);
-        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion' && !ctx.fight.mirror) ? () => championReveal(species) : null, after: championRevealEnd, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
+        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, after: championRevealEnd, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
           text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : sd === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(ownerOf(id))} sent out <span class="key">${esc(nick(id))}</span>!`});
         break;
       }
@@ -495,7 +495,7 @@ function translate(lines) {
         break;
       }
       case 'faint':
-        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: sd === ME ? 'bad' : 'good', wait: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion' && !ctx.fight.mirror) ? 1800 : 0});
+        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: sd === ME ? 'bad' : 'good', wait: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? 1800 : 0});
         break;
       case '-supereffective': out.push({text: `It's super effective!`, fx: {side: s, kind: 'shake'}}); break;
       case '-resisted': out.push({text: `It's not very effective…`, cls: 'info'}); break;
@@ -1557,8 +1557,8 @@ const E4_WIN_OPEN = {
 const OPEN_CHEER = ['Champion! I knew you could do it!', 'That was the battle of a lifetime, {n}!', 'The whole Summit is cheering for you, {n}!',
   'You make the Neofield Region proud, {n}!', 'I will never forget that fight. Congratulations, {n}!', 'You really earned this, {n}. Well done!', 'All hail Champion {n}!'];
 const MIRROR_LINES = {
-  intro: ['You made it through the Elite Four. That leaves one challenger.', 'Every Mon you raised, I raised one better. Let us see whose bond is stronger.'],
-  win: ['Beaten by my own reflection... that is the best way to lose.', 'You earned the title. Wear it well, Champion.'],
+  intro: ['You climbed the whole mountain, and I was behind you every step.', 'Everything you fear, everything you have built, I carry it all. Beat yourself, if you can.'],
+  defeat: 'You looked straight at me and did not look away.',
 };
 const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
 const summitOpen = () => !!A && A.summit === 'open';
@@ -2270,7 +2270,7 @@ function advFight(fight) {
   ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
   startVsCpu(fight.sets, null, sets, A.playerName, fight.gameType);
   if (WILD_FIGHTS.includes(fight.type)) $('forfeit').textContent = 'Flee';   // wild Mons: you can just leave, no blackout
-  if (fight.type === 'champion' && !fight.mirror) gloomOn();
+  if (fight.type === 'champion') gloomOn();
   if (fight.type === 'e4') bgmStart('battle', {fade: 1.5, vol: .5});   // Gauntlet plays through every Elite Four fight
   if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
 }
@@ -2431,12 +2431,11 @@ async function advChallenge() {
     else { A.champTeam = E.CHAMPION_TEXT; sets = E.leaderSets(A.champTeam, lv); }
   }
   const sp = speakerFor(st);
-  if (st.kind === 'champion' && summitOpen()) await talk(sp, MIRROR_LINES.intro);
-  else if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp); } finally { duskBusy = false; } }
+  if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp, summitOpen() ? {name: `MIRROR ${A.playerName}`.toUpperCase(), lines: MIRROR_LINES.intro} : {}); } finally { duskBusy = false; } }
   else await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
   hallOff();
   const f = st.kind === 'champion' && summitOpen()
-    ? {...CHAMP, key: null, subtitle: `Victory Summit · your mirror · level ${lv}`}
+    ? {...CHAMP, name: `Mirror ${A.playerName}`, title: `Mirror ${A.playerName}`, key: null, subtitle: `Victory Summit · level ${lv}`}
     : st.kind === 'champion'
     ? {...CHAMP, name: 'Cancer', title: 'Cancer', key: null, subtitle: `Victory Summit · level ${lv}`}
     : {name: LEADERS[st.key].first, key: st.key, color: LEADERS[st.key].color, icon: LEADERS[st.key].icon,
@@ -2815,8 +2814,7 @@ async function advBattleOver(won) {
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { battleOff(); bgmStart('hall', {fade: 3, vol: .45});   // the hall music comes back while the trainers talk
     await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); }
-  else if (fight.type === 'champion' && fight.mirror) await talk(fight.speaker, MIRROR_LINES.win);
-  else if (fight.type === 'champion') await championDefeat();
+  else if (fight.type === 'champion') await championDefeat(fight.mirror ? MIRROR_LINES.defeat : undefined);
   else await talk(fight.speaker, LINES[fight.stage.key].win);
   if (fight.type === 'champion') { gloomOff(); await finale(); }
   endBattleQuietly(); ctx = null;
@@ -2892,7 +2890,7 @@ async function championReveal(species) {
 }
 // the Champion, seen only as a dark silhouette (waist up) in the fog
 // the whole layout is in place from the start; only opacity changes, so nothing moves while he speaks
-const ciLayout = (over) => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox" id="ciImg"><img class="ciHuman" src="cancer.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName" id="ciName">CANCER</b><p class="ciLine" id="ciLine"></p></div>`;
+const ciLayout = (over, name = 'CANCER') => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox" id="ciImg"><img class="ciHuman" src="cancer.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName" id="ciName">${esc(name)}</b><p class="ciLine" id="ciLine"></p></div>`;
 async function ciSay(lineEl, text, ms, tap) {
   lineEl.textContent = text; lineEl.classList.remove('say'); void lineEl.offsetWidth; lineEl.classList.add('say');
   await Promise.race([tap, new Promise(r => setTimeout(r, reducedMotion() ? 800 : ms))]);
@@ -2905,7 +2903,7 @@ function showCoupon() {
   { const m = toneMuted; toneMuted = false; tone(880, 0, .25, 'triangle', .08); tone(1175, .12, .3, 'triangle', .07); toneMuted = m; }
   return new Promise(r => { $('couponGo').onclick = () => { c.classList.add('leaving'); setTimeout(() => { c.hidden = true; c.classList.remove('on', 'leaving'); r(); }, 950); }; });
 }
-async function championDefeat() {
+async function championDefeat(said = 'You have defeated me.') {
   const el = $('champIntro'), stage = $('ciStage');
   let release = () => {};
   const tapP = new Promise(r => { release = r; });
@@ -2917,7 +2915,7 @@ async function championDefeat() {
   tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22);
   await new Promise(r => setTimeout(r, reducedMotion() ? 200 : 2600));
   // his words stay on screen for as long as you like; tap to go on
-  const line = $('ciLine'); line.textContent = 'You have defeated me.'; line.classList.remove('say'); void line.offsetWidth; line.classList.add('stay');
+  const line = $('ciLine'); line.textContent = said; line.classList.remove('say'); void line.offsetWidth; line.classList.add('stay');
   setTimeout(() => { $('ciHint').hidden = false; el.addEventListener('click', release, {once: true}); }, 1800);
   await tapP;
   $('ciHint').hidden = true;
@@ -2941,7 +2939,7 @@ function duskOut(now) {
   if (now || reducedMotion()) { d.classList.remove('on', 'fade'); d.hidden = true; return; }
   d.classList.add('fade'); setTimeout(() => { d.classList.remove('on', 'fade'); d.hidden = true; }, 1900);   // the dusk melts away under the intro
 }
-async function championIntro(sets, lv, sp) {
+async function championIntro(sets, lv, sp, opts = {}) {
   const el = $('champIntro'), stage = $('ciStage');
   let skipped = false, pending = [];
   const release = () => { const p = pending; pending = []; p.forEach(f => f()); };
@@ -2955,7 +2953,7 @@ async function championIntro(sets, lv, sp) {
   bgmStart('fog');
   const fx = gloomFX($('ciCanvas'));
   // 1. just the words, "THE CHAMPION", in the middle of the dark
-  stage.innerHTML = ciLayout('THE CHAMPION');
+  stage.innerHTML = ciLayout('THE CHAMPION', opts.name);
   requestAnimationFrame(() => requestAnimationFrame(() => $('ciOver') && $('ciOver').classList.add('on')));
   beat(); await sleepOrSkip(1100); beat(); tone(98, 0, 2.5, 'sine', .12); tone(147, .1, 2.5, 'sine', .05);
   await Promise.race([sleepOrSkip(3200), tap()]);
@@ -2966,7 +2964,7 @@ async function championIntro(sets, lv, sp) {
   // 3. his name appears under the image, then his words under the name
   $('ciName').classList.add('on'); beat(); tone(65, 0, 2.4, 'sine', .2);
   await Promise.race([sleepOrSkip(2600), tap()]);
-  for (const line of CHAMP_LINES.intro) { if (skipped) break; await ciSay($('ciLine'), line, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); }
+  for (const line of (opts.lines || CHAMP_LINES.intro)) { if (skipped) break; await ciSay($('ciLine'), line, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); }
   // 4. out through the dark into the battle
   const fl = $('ciFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
   el.classList.add('quake'); tone(60, 0, 1.2, 'sine', .35); tone(90, .05, .9, 'sawtooth', .05);
@@ -3428,7 +3426,7 @@ function openSummit(opts = {}) {
   mapMode = 'adventure';
   if (!opts.keepAsk && !A.summitIntro && summitOpen()) {   // Default Victory Summit: no note, straight to the walk up to the gate
     A.summitIntro = 1; A.summitNote = 1; saveA();
-    introNext = true; setTimeout(() => { introNext = false; playEntrance('road'); }, 60);
+    introNext = true; playEntrance('road', null, {instant: true}); setTimeout(() => { introNext = false; }, 0);   // the dark cover is up before the Summit is ever drawn
   } else if (!opts.keepAsk && !A.summitIntro) {   // first visit: the note, then the walk up to the gate
     A.summitIntro = 1; A.summitNote = 1; saveA();
     introNext = true; showTylerNote(true);
