@@ -451,7 +451,7 @@ function translate(lines) {
       case 'switch': case 'drag': {
         const species = parts[2].split(',')[0];
         const hp = parseHP(parts[3], s);
-        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, after: championRevealEnd, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
+        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion' && !ctx.fight.mirror) ? () => championReveal(species) : null, after: championRevealEnd, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
           text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : sd === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(ownerOf(id))} sent out <span class="key">${esc(nick(id))}</span>!`});
         break;
       }
@@ -495,7 +495,7 @@ function translate(lines) {
         break;
       }
       case 'faint':
-        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: sd === ME ? 'bad' : 'good', wait: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? 1800 : 0});
+        out.push({fx: {side: s, kind: 'faint'}, apply() { view[s].hp = 0; view[s].status = ''; }, text: `${Nm(id)} fainted!`, cls: sd === ME ? 'bad' : 'good', wait: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion' && !ctx.fight.mirror) ? 1800 : 0});
         break;
       case '-supereffective': out.push({text: `It's super effective!`, fx: {side: s, kind: 'shake'}}); break;
       case '-resisted': out.push({text: `It's not very effective…`, cls: 'info'}); break;
@@ -994,7 +994,7 @@ $('forfeit').addEventListener('click', async () => {
   if (battle.ended) { leaveBattle(); return; }
   if (ctx && ctx.kind === 'adventure' && ctx.fight && WILD_FIGHTS.includes(ctx.fight.type)) { readAdvHP(); saveA(); leaveBattle(); return; }   // flee: no blackout
   if (ctx && ctx.kind === 'adventure' && ctx.fight && (ctx.fight.type === 'e4' || ctx.fight.type === 'champion') && !ctx.forfeitOk) {
-    advResult('star', '#e25b4f', 'Forfeit the Elite Four?', 'If you forfeit this battle you lose all your progress at Victory Summit and must start over at the In-Laws. Are you sure?', null,
+    advResult('star', '#e25b4f', 'Forfeit the Elite Four?', 'If you forfeit this battle you lose all your progress at Victory Summit and must start over at ' + (summitOpen() ? 'the first Elite Four battle' : 'the In-Laws') + '. Are you sure?', null,
       `<button class="btn primary" id="fYes">Yes, forfeit</button><button class="btn" id="fNo">Keep fighting</button>`);
     return;
   }
@@ -1537,6 +1537,54 @@ const E4_BROS = [
   ['tanner', 'You better thank me, this was my idea.'],
   ['tucker', 'Better take a screenshot. Proof must be provided to redeem.'],
 ];
+// ---- The open Victory Summit: not tied to any one family. Seven different gym leaders are drawn once, when the adventure begins:
+// Elite Four 1 and 2 are single battles, 3 is a doubles battle (two leaders), 4 is a triples battle (three leaders).
+// The Champion is a rival's mirror of the player's own team.
+const NEW_SUMMIT = 'open';   // what a brand-new adventure gets ('classic' keeps the Family summit)
+const OPEN_KEYS = ['open0', 'open1', 'open2', 'open3'];
+const OPEN_SHAPE = [{mode: 'singles', n: 1, picks: [6]}, {mode: 'singles', n: 1, picks: [6]}, {mode: 'doubles', n: 2, picks: [3, 3]}, {mode: 'triples', n: 3, picks: [2, 2, 2]}];
+const E4_WIN_OPEN = {
+  tyler: 'You shrugged off the venom again. Impressive.', trever: 'My model had you at four percent. Time to rebuild it.',
+  tucker: 'You held your ground like the mountain itself.', tanner: "That's game. Hustle like that wins championships.",
+  makenna: 'You saw me coming. Not many do.', charlotte: 'Eeee, that shocked me! You are SO good!',
+  lillian: 'My garden bowed to you. Lovely.', theo: 'My bugs got squished again! Next time, bigger bugs!',
+  rachel: "What a twist ending. I'll have to rewrite the chapter.", anna: 'A clean hit. Your aim is true.',
+  jack: 'Ha! That is the stuff. Respect, champ.', parker: "GG. I'm restarting my run, but you win this one.",
+  tali: 'The cards said you would win. I just did not believe them.', kaley: 'Hm. I suppose I saw this coming. Go on.',
+  oksana: "Doctor's orders: you pass the checkup. Keep going!", lynne: 'Solid as bedrock. Keep climbing.',
+  kent: 'Quality craftsmanship. Move on up.',
+};
+const OPEN_CHEER = ['Champion! I knew you could do it!', 'That was the battle of a lifetime, {n}!', 'The whole Summit is cheering for you, {n}!',
+  'You make the Neofield Region proud, {n}!', 'I will never forget that fight. Congratulations, {n}!', 'You really earned this, {n}. Well done!', 'All hail Champion {n}!'];
+const MIRROR_LINES = {
+  intro: ['You made it through the Elite Four. That leaves one challenger.', 'Every Mon you raised, I raised one better. Let us see whose bond is stronger.'],
+  win: ['Beaten by my own reflection... that is the best way to lose.', 'You earned the title. Wear it well, Champion.'],
+};
+const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
+const summitOpen = () => !!A && A.summit === 'open';
+function drawOpenSummit() {
+  const pool = ORDER.slice();
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  let at = 0;
+  return OPEN_SHAPE.map(sh => { const m = pool.slice(at, at + sh.n); at += sh.n; return m; });
+}
+function setupOpenSummit() {
+  const ok = Array.isArray(A.e4gen) && A.e4gen.length === 4 && A.e4gen.every((m, i) => Array.isArray(m) && m.length === OPEN_SHAPE[i].n && m.every(k => LEADERS[k])) && new Set(A.e4gen.flat()).size === 7;
+  if (!ok) A.e4gen = drawOpenSummit();   // drawn once; kept in the save so retrying never changes who you face
+  A.e4gen.forEach((members, i) => {
+    const key = OPEN_KEYS[i], sh = OPEN_SHAPE[i], L = members.map(k => LEADERS[k]);
+    const title = sh.n === 1 ? `Elite Four ${L[0].title}` : L.map(l => l.first).join(', ').replace(/, ([^,]*)$/, ' & $1');
+    const g = {title, members: members.slice(), picks: sh.picks.slice(), mode: sh.mode, must: {}, color: L[0].color, icon: L[0].icon};
+    g.label = `${modeName(g)} · ${members.length} ${members.length === 1 ? 'trainer' : 'trainers'}`;
+    E4_FIGHTS[key] = g;
+    E4_TALK[key] = {intro: members.map(k => [k, LINES[k].e4]), win: members.map(k => [k, E4_WIN_OPEN[k]])};
+  });
+  A.e4 = OPEN_KEYS.slice();
+}
+// the Champion mirrors the player's own party: same Mons and moves, a few levels higher
+function mirrorSets() {
+  return A.team.map(m => { const lv = Math.min(100, Math.max(champLv(), m.level + 3)); return E.setAtLevel(m.final, lv, {tutored: m.tutored, noItem: true}); });
+}
 const START_BAG = {hyperpotion: 10, fullrestore: 4, fullheal: 5, revive: 4, maxrevive: 1};
 const GYM_REWARD = {hyperpotion: 2, fullrestore: 1, revive: 1};
 const E4_REWARD = {hyperpotion: 2, fullrestore: 2, revive: 1};
@@ -2222,7 +2270,7 @@ function advFight(fight) {
   ctx.names = sets.map(s => { let n = s.species; seen[n] = (seen[n] || 0) + 1; if (seen[n] > 1) n += ' ' + seen[n]; s.name = n; return n; });
   startVsCpu(fight.sets, null, sets, A.playerName, fight.gameType);
   if (WILD_FIGHTS.includes(fight.type)) $('forfeit').textContent = 'Flee';   // wild Mons: you can just leave, no blackout
-  if (fight.type === 'champion') gloomOn();
+  if (fight.type === 'champion' && !fight.mirror) gloomOn();
   if (fight.type === 'e4') bgmStart('battle', {fade: 1.5, vol: .5});   // Gauntlet plays through every Elite Four fight
   if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
 }
@@ -2368,30 +2416,33 @@ async function advChallenge() {
     const g = {...E4_FIGHTS[st.key], key: st.key};
     lv = e4Lv(A.e4pos);
     const t = e4Team(g, lv);
-    await introScene({kicker: `Elite Four · ${A.e4pos + 1} of 4`, title: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} battle · ${g.members.length} trainers`, color: g.color,
+    await introScene({kicker: `Elite Four · ${A.e4pos + 1} of 4`, title: g.title, sub: `${modeName(g)} battle · ${g.members.length} ${g.members.length === 1 ? 'trainer' : 'trainers'}`, color: g.color,
       speakers: g.members.map(k => ({key: k, first: LEADERS[k].first, name: LEADERS[k].title, color: LEADERS[k].color, line: E4_TALK[g.key].intro.find(x => x[0] === k)[1]})),
       sets: t.sets, owners: t.owners});
     hallOff();   // the hall music fades out once the last trainer has finished talking
     advFight({type: 'e4', stage: st, level: lv, sets: t.sets, owners: t.owners, gameType: g.mode, speaker: speakerFor(st),
       foe: {name: g.title, key: g.members[0], color: g.color, icon: g.icon, title: g.title,
-        subtitle: `Elite Four ${A.e4pos + 1} of 4 · ${g.mode === 'triples' ? 'triples' : 'doubles'} · level ${lv}`}});
+        subtitle: `Elite Four ${A.e4pos + 1} of 4 · ${modeName(g).toLowerCase()} · level ${lv}`}});
     return;
   }
   else {
     lv = champLv();
-    A.champTeam = E.CHAMPION_TEXT;
-    sets = E.leaderSets(A.champTeam, lv);
+    if (summitOpen()) { sets = mirrorSets(); lv = Math.max(...sets.map(x => x.level)); }
+    else { A.champTeam = E.CHAMPION_TEXT; sets = E.leaderSets(A.champTeam, lv); }
   }
   const sp = speakerFor(st);
-  if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp); } finally { duskBusy = false; } }
+  if (st.kind === 'champion' && summitOpen()) await talk(sp, MIRROR_LINES.intro);
+  else if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp); } finally { duskBusy = false; } }
   else await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
   hallOff();
-  const f = st.kind === 'champion'
+  const f = st.kind === 'champion' && summitOpen()
+    ? {...CHAMP, key: null, subtitle: `Victory Summit · your mirror · level ${lv}`}
+    : st.kind === 'champion'
     ? {...CHAMP, name: 'Cancer', title: 'Cancer', key: null, subtitle: `Victory Summit · level ${lv}`}
     : {name: LEADERS[st.key].first, key: st.key, color: LEADERS[st.key].color, icon: LEADERS[st.key].icon,
        title: st.kind === 'e4' ? `Elite Four ${LEADERS[st.key].title}` : LEADERS[st.key].title,
        subtitle: st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `${TOWNS[st.key]} · ${LEADERS[st.key].badge} · level ${lv}`};
-  advFight({type: st.kind, stage: st, level: lv, sets, foe: f, speaker: sp});
+  advFight({type: st.kind, stage: st, level: lv, sets, foe: f, speaker: sp, mirror: st.kind === 'champion' && summitOpen()});
 }
 
 // --- moves, level-ups and evolution ---
@@ -2764,6 +2815,7 @@ async function advBattleOver(won) {
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { battleOff(); bgmStart('hall', {fade: 3, vol: .45});   // the hall music comes back while the trainers talk
     await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); }
+  else if (fight.type === 'champion' && fight.mirror) await talk(fight.speaker, MIRROR_LINES.win);
   else if (fight.type === 'champion') await championDefeat();
   else await talk(fight.speaker, LINES[fight.stage.key].win);
   if (fight.type === 'champion') { gloomOff(); await finale(); }
@@ -3075,6 +3127,7 @@ async function finale() {
     const pl = $('finPlaque'), n1 = $('pn1'), n2 = $('pn2'), n3 = $('pn3'), n2b = $('pn2b');
     [n1, n2, n2b, n3].forEach(n => n.classList.remove('in', 'go')); pl.classList.remove('on');
     title.style.transition = 'opacity .8s'; title.style.opacity = '0'; await sleep(900);
+    $('pn3').firstChild.textContent = summitOpen() ? who : 'Tyler Field x 2';
     pl.hidden = false; void pl.offsetWidth; pl.classList.add('on'); foley(196, 0, 1.4, 'triangle', .06);
     await sleep(1600); n1.classList.add('in'); foley(330, 0, .9, 'triangle', .05);
     await sleep(1500); n2.classList.add('in'); foley(392, 0, .9, 'triangle', .05);
@@ -3091,7 +3144,8 @@ async function finale() {
     title.style.opacity = '';
   };
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
-  crowd.innerHTML = E4_CHEER.map(([k]) => `<span class="fslot" style="--c:${LEADERS[k].color}">${portraitHTML(k, LEADERS[k].color)}</span>`).join('');
+  const cheer = summitOpen() ? A.e4gen.flat().map((k, i) => [k, OPEN_CHEER[i]]) : E4_CHEER;
+  crowd.innerHTML = cheer.map(([k]) => `<span class="fslot" style="--c:${LEADERS[k].color}">${portraitHTML(k, LEADERS[k].color)}</span>`).join('');
   team.innerHTML = ''; team.hidden = true; crowd.hidden = true; go.hidden = true;
   title.className = 'ftitle splash'; title.innerHTML = `<small>You are the</small><b>CHAMPION!</b>`;
   el.hidden = false; $('talk').style.zIndex = 55;
@@ -3124,12 +3178,12 @@ async function finale() {
   title.innerHTML = `<small>${esc(LEAGUE)}</small><b>Champion ${esc(who)}</b>`;
   crowd.hidden = false;
   const slots = crowd.children;
-  for (let i = 0; i < E4_CHEER.length && !skipped; i++) {
-    const [k, line] = E4_CHEER[i];
+  for (let i = 0; i < cheer.length && !skipped; i++) {
+    const [k, line] = cheer[i];
     slots[i].classList.add('in'); tone(660 + i * 40, 0, .18, 'triangle', .07);
     if (i % 3 === 0) fx.confetti(30);
     await talk({name: LEADERS[k].title, key: k, color: LEADERS[k].color}, [line.replace(/\{n\}/g, who)]);
-    if (k === 'trever' && !skipped) {
+    if (k === 'trever' && !skipped && !summitOpen()) {
       for (const [bk, bl] of E4_BROS) await talk({name: LEADERS[bk].title, key: bk, color: LEADERS[bk].color}, [bl]);
       await showCoupon();
     }
@@ -3266,7 +3320,7 @@ function questIdx() { return AREAS.findIndex(a => a.name === $('questName').text
 
 // --- Victory Summit: the Elite Four and the Champion on one straight path, like a side quest map ---
 function summitSteps() {
-  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${g.mode === 'triples' ? 'Triples' : 'Doubles'} · level ${e4Lv(i)}`, icon: g.icon, color: g.color}; });
+  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${modeName(g)} · level ${e4Lv(i)}`, icon: g.icon, color: g.color}; });
   steps.push({key: null, label: 'The Champion', sub: `Champion · level ${champLv()}`, icon: 'crown', color: CHAMP.color});
   return steps;
 }
@@ -3407,7 +3461,7 @@ function openSummit(opts = {}) {
     if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="${champ ? 30 : 26}" fill="none" stroke="${st.color}" stroke-width="2"/>`;
     svg += `<circle cx="${p.x}" cy="${p.y}" r="${champ ? 23 : 19}" fill="${isDone ? st.color : '#1d2633'}" stroke="${isDone || cur ? st.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
     svg += emblemAt(st.icon, isDone ? '#10131a' : cur ? st.color : '#56616f', p.x, p.y, champ ? 26 : 20);
-    svg += `<text x="${p.x + (champ ? 36 : 30)}" y="${p.y - 2}" font-size="12" font-weight="${cur ? 700 : 600}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(st.label)}</text><text x="${p.x + (champ ? 36 : 30)}" y="${p.y + 12}" font-size="10" fill="#7e8a9c">${isDone ? 'Beaten' : esc(st.sub)}</text>`;
+    svg += `<text x="${p.x + (champ ? 36 : 30)}" y="${p.y - 2}" font-size="${st.label.length > 18 ? 10 : 12}" font-weight="${cur ? 700 : 600}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(st.label)}</text><text x="${p.x + (champ ? 36 : 30)}" y="${p.y + 12}" font-size="10" fill="#7e8a9c">${isDone ? 'Beaten' : esc(st.sub)}</text>`;
   });
   const kd = Math.min(cleared + 1, pts.length - 1);   // the ball sits on the spot you are about to face
   const mk0 = opts.animate && cleared > 0 ? pts[kd - 1] : pts[kd];
@@ -3420,7 +3474,7 @@ function openSummit(opts = {}) {
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button><button class="btn" id="sDevNote">Replay the note</button></div>`);
-  if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at the In-Laws. Are you sure?</small></div></div>
+  if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at ${summitOpen() ? 'the first Elite Four battle' : 'the In-Laws'}. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
   show('summit');
   if (opts.animate && cleared > 0) {
@@ -3760,9 +3814,10 @@ function startRegionalAdventure(name, famKey) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
-    order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null,
+    order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: NEW_SUMMIT,
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
+  if (A.summit === 'open') setupOpenSummit();
   touchProfile({name});
   saveA();
   openAdvMap({msg: 'You are on Route 1. Beat one wild Mon to reach the next town.'});
@@ -3773,7 +3828,8 @@ function migrateA() {
   if (A.loc === undefined) A.loc = null;
   A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
   A.trail = A.trail || {t: []};
-  if (!Array.isArray(A.e4) || A.e4.length !== 4 || A.e4.some(k => !E4_FIGHTS[k])) A.e4 = E4_KEYS.slice();   // the Elite Four became the family fights
+  if (A.summit === 'open') setupOpenSummit();
+  else if (!Array.isArray(A.e4) || A.e4.length !== 4 || A.e4.some(k => !E4_FIGHTS[k])) A.e4 = E4_KEYS.slice();   // the Elite Four became the family fights
   if (!A.questsV3) {   // the Victory Road side quest was replaced by the Laurel Pass; legendary quests moved from 17..22 to 16..21
     const nq = {};
     for (const [k, v] of Object.entries(A.quests || {})) { const n = +k; if (n < 16) nq[n] = v; else if (n >= 17) nq[n - 1] = v; }
