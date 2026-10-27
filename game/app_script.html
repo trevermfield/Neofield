@@ -2109,6 +2109,10 @@ const SHAM_TEAMS = {
 const SHAM_ART = {'Shamburg Grunt Foster': 's-foster', 'Shamburg Grunt Miranda': 's-miranda', 'Shamburg Grunt Ivori': 's-ivori', 'Shamburg Grunt Harbor': 's-harbor',
   'Shamburg Lieutenant Addi': 's-addi', 'Shamburg Grunt Savannah': 's-savannah', 'Shamburg Grunt Merrit': 's-merrit', 'Shamburg Lieutenant Kathi': 's-kathi', 'Boss Greg': 's-greg'};
 const SHAM_GROUP = ['s-group1', 's-group2', null];
+// The side quest trainers' first names (from the portrait file names in the Quest Trainers folder)
+const TRAINER_NAMES = {'Bug Catcher': 'Kip', 'Spelunker': 'Cara', 'Hiker': 'Ron', 'Fisher': 'Mia', 'Desert Nomad': 'Aziz', 'Fire Breather': 'Troy', 'Swamp Guide': 'Hank', 'Skier': 'Jess',
+  'Ruin Maniac': 'Nick', 'Swimmer': 'Beth', 'Storm Chaser': 'Tabby', 'Night Watcher': 'Edward', 'Bird Keeper': 'Robin', 'Mechanic': 'Bo', 'Picnicker': 'Yvette', 'Dragon Tamer': 'Rayne'};
+const qName = q => q.legend || !TRAINER_NAMES[q.trainer] ? q.trainer : `${q.trainer} ${TRAINER_NAMES[q.trainer]}`;
 const TRAINER_ART = {'Bug Catcher': 't-bugcatcher', 'Spelunker': 't-spelunker', 'Hiker': 't-hiker', 'Fisher': 't-fisher', 'Desert Nomad': 't-desertnomad', 'Fire Breather': 't-firebreather',
   'Swamp Guide': 't-swampguide', 'Skier': 't-skier', 'Ruin Maniac': 't-ruinmaniac', 'Swimmer': 't-swimmer', 'Storm Chaser': 't-stormchaser', 'Night Watcher': 't-nightwatcher',
   'Bird Keeper': 't-birdkeeper', 'Mechanic': 't-mechanic', 'Picnicker': 't-picnicker', 'Dragon Tamer': 't-dragontamer', 'Ace Trainer Mira': 't-acetrainer',
@@ -2805,7 +2809,7 @@ async function advBattleOver(won) {
     A.money += prize;
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
     saveA();
-    await talk({name: q.trainer, key: TRAINER_ART[q.trainer] || null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, [`You're the real deal. Take these, you've earned them.`]);
+    await talk({name: qName(q), key: TRAINER_ART[q.trainer] || null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, [`You're the real deal. Take these, you've earned them.`]);
     const lines = await showGrowth(xpEvents);
     advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, `${AREAS[fight.quest].name} cleared`, `You won ${money(prize)}. ${esc(got)}.`, lines,
       `<button class="btn primary" id="aToMap">Back to map</button>`);
@@ -3260,7 +3264,7 @@ function openQuest(i, opts = {}) {
   svg += `<text x="${pts[0].x}" y="${pts[0].y + 26}" text-anchor="middle" font-size="11" fill="#b4bdcb">Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
   for (let k = 1; k <= nodes; k++) {
     const p = pts[k], cleared = q.step >= k, cur = !q.done && q.step === k - 1;
-    const label = k < nodes ? `Wild Mon ${k}` : q.trainer;
+    const label = k < nodes ? `Wild Mon ${k}` : qName(q);
     if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="24" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
     svg += `<circle cx="${p.x}" cy="${p.y}" r="17" fill="${cleared ? ar.color : '#1d2633'}" stroke="${cleared || cur ? ar.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
     svg += k < nodes ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
@@ -3271,13 +3275,13 @@ function openQuest(i, opts = {}) {
   svg += `<g id="qmarker" transform="translate(${mk0.x} ${mk0.y})"><circle r="12" fill="${ar.color}" opacity=".3"/><circle r="6.5" fill="#fff" stroke="#10131a" stroke-width="2"/></g>`;
   $('questSvg').innerHTML = svg;
   let card;
-  if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>${q.legend ? `You caught ${esc(q.trainer)} here.` : `You beat the ${esc(q.trainer)} here.`} Nothing left to do.</small></div></div>`;
+  if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>${q.legend ? `You caught ${esc(q.trainer)} here.` : `You beat ${esc(qName(q))} here.`} Nothing left to do.</small></div></div>`;
   else if (q.step < nWild) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Wild Mon ${q.step + 1} of ${nWild}</b><small>Something is rustling ahead · around level ${q.level} · HP carries over, so use your bag</small></div></div>
     <button class="btn primary" id="qGo">Keep going</button>`;
   else if (q.legend) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>A legendary Mon · level ${q.boss.level} · weaken it, then throw a Mon Ball · ${A.bag.pokeball || 0} left</small></div></div>
     <button class="btn primary" id="qGo">Approach ${esc(q.trainer)}</button>`;
-  else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>Three Mons around level ${q.level + 1} · prize ${money(trainerPrize(q.level))} and items</small></div></div>
-    <button class="btn primary" id="qGo">Challenge the ${esc(q.trainer)}</button>`;
+  else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(qName(q))}</b><small>Three Mons around level ${q.level + 1} · prize ${money(trainerPrize(q.level))} and items</small></div></div>
+    <button class="btn primary" id="qGo">Challenge ${esc(qName(q))}</button>`;
   $('questBar').innerHTML = card;
   show('quest');
   if (opts.animate && q.step > 0 && !q.done) {
@@ -3307,8 +3311,8 @@ function questContinue(i) {
     const mon = q.wild[q.step];
     advFight({type: 'questWild', quest: i, catchable: !!mon.family, sets: [JSON.parse(JSON.stringify(mon))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · ${q.step + 1} of ${nWild}`}});
   } else {
-    talk({name: q.trainer, key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: ar.icon}, [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
-      advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: q.trainer, key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: 'star', title: q.trainer, subtitle: `${ar.name} · level ${q.level + 1}`}});
+    talk({name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: ar.icon}, [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
+      advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: 'star', title: qName(q), subtitle: `${ar.name} · level ${q.level + 1}`}});
     });
   }
 }
