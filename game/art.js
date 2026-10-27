@@ -78,7 +78,7 @@ export const MON_PICS = Object.fromEntries([
 ].map(id => [id, `mons/${id}.png`]));
 
 // Lustrous (alternate-colour) pictures: www/mons/lustrous/<id>.png. Only Mons listed here can turn up Lustrous.
-export const LUSTROUS_PICS = new Set(['campyre']);
+export const LUSTROUS_PICS = new Set(["aerialyn", "banchief", "bellowtoise", "bizon", "bloogilp", "bonpyre", "broncho", "bulbazoid", "campyre", "chetswatch", "coldbra", "coltmare", "cryodon", "damerish", "eggyhen", "grrtle", "hexabeake", "icerpent", "ivyzoid", "leggyhen", "maraudoom", "maraudur", "marooner", "mugnbud", "nidomonk", "nivalux", "noterish", "okloyama", "pinedale", "poseigunk", "rensylk", "rimeocerus", "ripblok", "ripgool", "riptome", "roartortle", "shardizar", "shardmander", "shardmeleon", "storment", "sycamage", "sycasqeek", "venuzoid", "weldonrust", "werebizon", "wyrmega", "wyrmie", "wyrmpod", "yucrane", "zapybara"]);
 export const hasLustrous = id => LUSTROUS_PICS.has(id);
 export function monArt(id, cls = '', lus = false) {
   const st = SPECIES.find(s => s.id === id) || BOSS_SPECIES.find(s => s.id === id);

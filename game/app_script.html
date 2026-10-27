@@ -2316,7 +2316,7 @@ async function introScene(opt) {
   $('introSkip').onclick = e => { e.stopPropagation(); skipped = true; release(); };
   // the whole team, as glowing tiles behind the speaker
   teamEl.innerHTML = opt.sets.map((set, i) => {
-    const sp = E.Dex.species.get(set.species), art = artOf(sp.name);
+    const sp = E.Dex.species.get(set.species), art = artOf(sp.name, set.lustrous);
     return `<div class="itile" data-own="${esc(opt.owners[set.species] || '')}" style="--t:${TYPE_COLORS[sp.types[0]] || '#999'};--d:${(i * 0.7).toFixed(1)}s">
       <span class="orb2">${art || '#' + sp.num}</span><b>${esc(sp.name)}</b><small>Lv ${set.level}</small></div>`;
   }).join('');
@@ -2581,7 +2581,7 @@ async function evolveScene(m, ev) {
   el.hidden = false;
   if (!reduce) fx.raf = requestAnimationFrame(fxLoop);
   // 1. intro
-  stage.innerHTML = `<div class="orb"><span class="glyph">${artOf(ev.from) || '?'}</span></div><div class="ename" id="evoName">${esc(ev.from)}</div><div class="eline">What? ${esc(ev.from)} is evolving!</div><div class="row"><button class="btn primary" id="evoGo">Watch!</button></div>`;
+  stage.innerHTML = `<div class="orb"><span class="glyph">${artOf(ev.from, m.lustrous) || '?'}</span></div><div class="ename" id="evoName">${esc(ev.from)}</div><div class="eline">What? ${esc(ev.from)} is evolving!</div><div class="row"><button class="btn primary" id="evoGo">Watch!</button></div>`;
   $('evoSkip').hidden = true;
   await new Promise(r => { $('evoGo').onclick = r; $('evoGo').focus(); });
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
@@ -2601,7 +2601,7 @@ async function evolveScene(m, ev) {
         name.textContent = alt ? ev.to : ev.from;
         setEvoColors(alt ? after.types : before.types);
         el.style.setProperty('--beat', Math.max(.12, gap / 1000) + 's');
-        glyph.innerHTML = artOf(alt ? ev.to : ev.from) || (alt ? '!' : '?');
+        glyph.innerHTML = artOf(alt ? ev.to : ev.from, m.lustrous) || (alt ? '!' : '?');
         await wait(gap); t += gap; gap = Math.max(55, gap * .86);
       }
     })();
@@ -2617,7 +2617,7 @@ async function evolveScene(m, ev) {
   el.classList.remove('charging'); el.classList.add('reveal', 'quake');
   sfxReveal();
   const lbl = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed'};
-  stage.innerHTML = `<div class="banner">Congratulations!</div><div class="orb"><span class="glyph">${artOf(ev.to) || '★'}</span></div><div class="ename">${esc(ev.to)}</div>
+  stage.innerHTML = `<div class="banner">Congratulations!</div><div class="orb"><span class="glyph">${artOf(ev.to, m.lustrous) || '★'}</span></div><div class="ename">${esc(ev.to)}</div>
     <div class="eline">Your ${esc(ev.from)} evolved into ${esc(ev.to)}!</div>${typesHTML(after.types)}
     <div class="estats">${Object.keys(lbl).map(k => `<span>${lbl[k]} <b>${after.stats[k] - before.stats[k] > 0 ? '+' : ''}${after.stats[k] - before.stats[k]}</b></span>`).join('')}</div>
     <div class="row"><button class="btn primary" id="evoDone">Awesome!</button></div>`;
@@ -3166,7 +3166,7 @@ async function finale() {
   crowd.hidden = true; team.hidden = false;
   A.team.forEach((m, i) => {
     const sp = mset(m).species, ty = E.Dex.species.get(sp).types;
-    team.insertAdjacentHTML('beforeend', `<div class="ftile" style="--d:${i * .75}s;--c:${TYPE_COLORS[ty[0]] || '#999'}">${artOf(sp)}<b>${esc(sp)}</b><small>Lv ${m.level}</small>${typesHTML(ty)}</div>`);
+    team.insertAdjacentHTML('beforeend', `<div class="ftile" style="--d:${i * .75}s;--c:${TYPE_COLORS[ty[0]] || '#999'}">${artOf(sp, m.lustrous)}<b>${esc(sp)}</b><small>Lv ${m.level}</small>${typesHTML(ty)}</div>`);
   });
   const last = A.team.length * .75 + (skipped || reducedMotion() ? 0 : .8);
   A.team.forEach((_, i) => setTimeout(() => tone(523 * Math.pow(1.122, i * 2), 0, .4, 'triangle', .07), skipped ? 0 : i * 750));
@@ -3716,7 +3716,7 @@ function openTeamView(from) {
       const extra = hpBlock(m.frac, (m.frac <= 0 ? 'Fainted' : `${Math.round(m.frac * 100)}% HP`) + (infoReturn === 'battle' ? ' before this battle' : '')) + xpBlock(m)
         + `<div class="kv"><div class="lbl">Evolution</div><p class="evopath">${route}</p><p class="evopath">${next ? `Evolves into ${esc(next.species)} at level ${next.at}.` : 'Fully evolved.'}</p></div>`
         + `<div class="kv"><div class="lbl">Battle-set goal</div><p class="evopath">${(m.final.moves || []).map(esc).join(', ')}${tutor.length ? ` · The Move Tutor can teach ${tutor.map(esc).join(', ')} now.` : ''}</p></div>`;
-      const art = artOf(set.species);
+      const art = artOf(set.species, m.lustrous);
       const tools = A.regional && infoReturn !== 'battle' ? `<div class="teamtools">${i > 0 ? `<button class="btn" id="tofront-${i}" data-tofront="${i}">Make lead</button>` : '<span class="note">Leads your team</span>'}</div>` : '';
       return `<div class="teamslot">${teamCard(set, i, `Lv ${m.level}`, (art ? `<div style="width:120px;height:120px;margin:0 auto">${art}</div>` : '') + extra)}${tools}</div>`;
     });
@@ -4491,6 +4491,7 @@ function advHallSets() {
   const top = A.team.slice(0, 6);
   top.forEach(ensureMoves);
   const sets = E.playerSets(top), seen = {};
+  sets.forEach((st, k) => { if (top[k] && top[k].lustrous) st.lustrous = true; });
   for (const st of sets) { let nm = st.species; seen[nm] = (seen[nm] || 0) + 1; if (seen[nm] > 1) nm += ' ' + seen[nm]; st.name = nm; }
   return sets;
 }
