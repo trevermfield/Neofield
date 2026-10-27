@@ -3421,9 +3421,10 @@ $('tnoteGo').addEventListener('click', () => {
   }
   n.classList.remove('on'); setTimeout(() => { n.hidden = true; n.classList.remove('solid'); }, 1200);
 });
+const SUMMIT_TEST_OPEN = false;
 function openSummit(opts = {}) {
   if (!A || !A.regional) { openAdvMap({}); return; }
-  if (!(A.dev && /^\s*tyler\s*$/i.test(A.playerName || ''))) {   // testing: the League is only open on developer saves named Tyler
+  if (!(SUMMIT_TEST_OPEN && A.dev && /^\s*tyler\s*$/i.test(A.playerName || ''))) {   // the League is closed for now; flip SUMMIT_TEST_OPEN to true to let developer saves named Tyler in
     advResult('crown', CHAMP.color, 'Victory Hall', 'Sorry, Victory hall is currently under construction', null, `<button class="btn primary" id="aToMap">Return to the map</button>`);
     return;
   }
