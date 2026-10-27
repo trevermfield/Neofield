@@ -3943,6 +3943,19 @@ function openRoute(r) {
   A.loc = r;
   saveA();
   openAdvMap({});
+  if (r === 6 && A.regional && !A.cryoGift) oklaAide();
+}
+// Route 7: Prof. Okla's aide brings a revived fossil Mon to your Farm (once). The aide's picture comes later: for now they speak behind an emblem.
+const OKLA_AIDE = {name: "Prof. Okla's Aide", key: null, color: '#b8b29a', icon: 'star'};
+async function oklaAide() {
+  A.cryoGift = true;
+  const m = E.newMember('cryodon', 25);
+  (A.box = A.box || []).push(m);
+  syncDexFromTeam(); saveA();
+  await talk(OKLA_AIDE, ['Excuse me, trainer! I am Prof. Okla\'s aide. The Professor asked me to find you out here on Route 7.',
+    'Remember the fossil he found frozen in the ice? He thawed it out and brought it back to life!',
+    `It is a Cryodon, and it is happy to meet you. I sent it to your Farm. Swap it in when you are in a town.`]);
+  toast(`Cryodon (Lv 25) was sent to your Farm.`);
 }
 // ---------- Prof. Okla's Lab (opens once the Champion is beaten): Route 0 with the three starters, the lab town, Okla, and the Missingno quest ----------
 const LAB = {x: 296, y: 662};
@@ -4216,7 +4229,7 @@ function showDexEntry(name) {
   try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
   const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
   const status = adv && reg ? (A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : 'Seen') : '';
-  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
+  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.id === 'cryodon' ? 'A fossil Mon. It never appears in the wild: Prof. Okla\'s aide revives it and sends it to your Farm on Route 7.' : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
   const dexNames = [...$('dexList').querySelectorAll('[data-dex]:not([disabled])')].map(b => b.dataset.dex);
   const di = dexNames.indexOf(sp.name), prevN = di > 0 ? dexNames[di - 1] : '', nextN = di >= 0 && di < dexNames.length - 1 ? dexNames[di + 1] : '';
   const dexNav = `<div class="dexnav"><button class="btn ghost" data-dexgo="${esc(prevN)}" ${prevN ? '' : 'disabled'}>‹ Previous</button><button class="btn ghost" data-dexgo="${esc(nextN)}" ${nextN ? '' : 'disabled'}>Next ›</button></div>`;
