@@ -1513,8 +1513,8 @@ const E4_TALK = {
 };
 const E4_LAST = ["That's the whole Elite Four. The Champion is waiting at the top of Victory Summit."];
 const CHAMP_LINES = {
-  intro: ["So you're the one who beat every gym in the region, then the whole Elite Four.", "Some fights can't be won with strength alone. Meet the six I carry with me. This is the final battle."],
-  win: ['...Incredible. The title is yours.', 'From today, you are the Champion of the Neofield Region.'],
+  intro: ['I will consume you.'],
+  win: ['I cannot consume what has already been consumed by Christ.'],
 };
 // after the Champion falls, the whole Elite Four has a word ({n} is the player's name)
 const E4_CHEER = [
@@ -2907,7 +2907,7 @@ function showCoupon() {
   { const m = toneMuted; toneMuted = false; tone(880, 0, .25, 'triangle', .08); tone(1175, .12, .3, 'triangle', .07); toneMuted = m; }
   return new Promise(r => { $('couponGo').onclick = () => { c.classList.add('leaving'); setTimeout(() => { c.hidden = true; c.classList.remove('on', 'leaving'); r(); }, 950); }; });
 }
-async function championDefeat(said = 'You have defeated me.') {
+async function championDefeat(said = CHAMP_LINES.win[0]) {
   const el = $('champIntro'), stage = $('ciStage');
   let release = () => {};
   const tapP = new Promise(r => { release = r; });
