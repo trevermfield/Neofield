@@ -2266,7 +2266,8 @@ $('mapSvg').addEventListener('click', e => {
 // --- battles ---
 function advFight(fight) {
   if (A.team.every(m => m.frac <= 0)) advHealAll();
-  if (fight.catchable && fight.type !== 'labWild' && fight.sets[0].lustrous === undefined) fight.sets[0].lustrous = fight.type === 'questLegend' ? false : E.rollLustrous(toId(fight.sets[0].species), A.dex.seen[toId(fight.sets[0].species)]);
+  // rolled once, just before the battle starts, so the picture never changes mid-battle; a legendary re-rolls every time you enter its battle
+  if (fight.catchable && fight.type !== 'labWild') { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || A.dex.seen[id]); }
   ctx = {kind: 'adventure', fight};
   foe = fight.foe;
   const sets = advSets();
@@ -3228,7 +3229,7 @@ function ensureQuest(i) {
     let pool = E.FAMILIES.filter(f => !f.rare && f.stages[0].num >= 10 && f.stages[0].num <= 39).map(f => f.key);
     const pick = () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
     A.quests[i] = {level: lv, step: 0, done: false, legend: true, trainer: E.familyOf(ar.legend).stages[0].name,
-      wild: [E.regionalWild(17, lv, pick()), E.regionalWild(17, lv + 1, pick())], boss: Object.assign(E.regionalWild(17, ar.lv, ar.legend), {lustrous: E.rollLustrous(ar.legend, true)})};
+      wild: [E.regionalWild(17, lv, pick()), E.regionalWild(17, lv + 1, pick())], boss: E.regionalWild(17, ar.lv, ar.legend)};
     saveA();
     return A.quests[i];
   }
