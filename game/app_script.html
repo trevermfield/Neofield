@@ -1570,6 +1570,16 @@ const MIRROR_LINES = {
 };
 const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
 const summitOpen = () => !!A && A.summit === 'open';
+// any name containing "tyler" (any capitalization) gets Tyler Victory Summit; everyone else gets the Default one. The dev toggle overrides this.
+const isTylerName = n => /tyler/i.test(n || '');
+const summitForName = n => isTylerName(n) ? 'classic' : 'open';
+function applySummitByName() {
+  if (!A || A.summitDev) return;
+  const want = summitForName(A.playerName);
+  if (A.summit === want || A.done) return;   // a finished game keeps the version it was won in
+  A.summit = want; A.e4pos = 0; A.champTeam = null; A.summitIntro = 0; A.summitNote = 0;
+  if (want === 'classic') A.e4 = E4_KEYS.slice();
+}
 function drawOpenSummit() {
   const pool = ORDER.slice();
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
@@ -3440,13 +3450,9 @@ $('tnoteGo').addEventListener('click', () => {
   }
   n.classList.remove('on'); setTimeout(() => { n.hidden = true; n.classList.remove('solid'); }, 1200);
 });
-const SUMMIT_TEST_OPEN = true;
 function openSummit(opts = {}) {
   if (!A || !A.regional) { openAdvMap({}); return; }
-  if (!(SUMMIT_TEST_OPEN && A.dev && /^\s*tyler\s*$/i.test(A.playerName || ''))) {   // the League is closed for now; flip SUMMIT_TEST_OPEN to true to let developer saves named Tyler in
-    advResult('crown', CHAMP.color, 'Victory Hall', 'Sorry, Victory hall is currently under construction', null, `<button class="btn primary" id="aToMap">Return to the map</button>`);
-    return;
-  }
+  applySummitByName(); if (summitOpen()) setupOpenSummit();
   mapMode = 'adventure';
   if (!opts.keepAsk && !A.summitIntro && summitOpen()) {   // Default Victory Summit: no note, straight to the walk up to the gate
     A.summitIntro = 1; A.summitNote = 1; saveA();
@@ -3846,7 +3852,7 @@ function startRegionalAdventure(name, famKey) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
     team: [E.newMember(famKey, REG_START_LV, E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]))], box: [], dex: {seen: {}, caught: {}}, loc: null,
-    order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: NEW_SUMMIT,
+    order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: summitForName(name),
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
   if (A.summit === 'open') setupOpenSummit();
@@ -3860,6 +3866,7 @@ function migrateA() {
   if (A.loc === undefined) A.loc = null;
   A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
   A.trail = A.trail || {t: []};
+  applySummitByName();
   if (A.summit === 'open') setupOpenSummit();
   else if (!Array.isArray(A.e4) || A.e4.length !== 4 || A.e4.some(k => !E4_FIGHTS[k])) A.e4 = E4_KEYS.slice();   // the Elite Four became the family fights
   if (!A.questsV3) {   // the Victory Road side quest was replaced by the Laurel Pass; legendary quests moved from 17..22 to 16..21
@@ -4353,7 +4360,7 @@ $('devBody').addEventListener('click', e => {
   else if (act === 'shamreset') { A.shamburg = {step: [0, 0, 0], done: [false, false, false]}; msg = 'Team Shamburg reset.'; }
   else if (act === 'trailreset') { A.trail = {t: []}; msg = 'Laurel Pass trainers reset.'; }
   else if (act === 'summitclassic' || act === 'summitopen') {
-    A.summit = act === 'summitopen' ? 'open' : 'classic';
+    A.summit = act === 'summitopen' ? 'open' : 'classic'; A.summitDev = true;
     if (A.summit === 'open') setupOpenSummit(); else A.e4 = E4_KEYS.slice();
     A.e4pos = 0; A.done = false; A.champTeam = null; A.summitIntro = 0; A.summitNote = 0;
     msg = `Switched to the ${A.summit === 'open' ? 'Default' : 'Tyler'} Victory Summit and reset it.`; }
@@ -5176,7 +5183,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
