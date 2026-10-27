@@ -353,8 +353,8 @@ export const FAMILIES = [
     stages: [{name: 'Chemo', types: ['Poison', 'Steel'], stats: S(100, 110, 120, 80, 100, 60), abilities: ['Corrosion'], h: 2.0, w: 80, entry: 'A skeleton in a tattered hospital gown, pushing an IV stand full of glowing green poison.'}],
     moves: [[1, 'Poison Sting'], [30, 'Iron Head'], [50, 'Gunk Shot'], [60, 'Toxic']], evoMoves: {},
     final: {ability: 'Corrosion', item: '', nature: 'Impish', evs: {hp: 252, def: 252, atk: 4}, moves: ['Gunk Shot', 'Iron Head', 'Toxic', 'Recover']}},
-  {key: 'fatigue', boss: true, rare: true, color: '#6b6fa8', catchRate: 0,
-    stages: [{name: 'Fatigue', types: ['Normal', 'Dark'], stats: S(140, 120, 90, 50, 90, 40), abilities: ['Thick Fat'], h: 1.4, w: 300, entry: 'A huge sloth that is always half asleep. Faint ghosts drift off its heavy fur.'}],
+  {key: 'weariness', boss: true, rare: true, color: '#6b6fa8', catchRate: 0,
+    stages: [{name: 'Weariness', types: ['Normal', 'Dark'], stats: S(140, 120, 90, 50, 90, 40), abilities: ['Thick Fat'], h: 1.4, w: 300, entry: 'A huge sloth that is always half asleep. Faint ghosts drift off its heavy fur.'}],
     moves: [[1, 'Tackle'], [30, 'Crunch'], [50, 'Body Slam'], [60, 'Yawn']], evoMoves: {},
     final: {ability: 'Thick Fat', item: '', nature: 'Adamant', evs: {hp: 252, atk: 252, spd: 4}, moves: ['Yawn', 'Body Slam', 'Crunch', 'Slack Off']}},
   {key: 'fear', boss: true, rare: true, color: '#7a4fd6', catchRate: 0,
@@ -369,8 +369,8 @@ export const FAMILIES = [
     stages: [{name: 'Loneliness', types: ['Ice', 'Psychic'], stats: S(95, 55, 110, 125, 115, 70), abilities: ['Snow Cloak'], h: 1.2, w: 30, entry: 'A lonely child curled up inside a sphere of ice, circled by pale ghosts.'}],
     moves: [[1, 'Icy Wind'], [30, 'Psychic'], [50, 'Freeze-Dry'], [60, 'Calm Mind']], evoMoves: {},
     final: {ability: 'Snow Cloak', item: '', nature: 'Calm', evs: {hp: 252, spa: 252, spd: 4}, moves: ['Freeze-Dry', 'Psychic', 'Calm Mind', 'Recover']}},
-  {key: 'relapse', boss: true, rare: true, color: '#4a2a5a', catchRate: 0,
-    stages: [{name: 'Relapse', types: ['Dragon', 'Dark'], stats: S(95, 110, 95, 115, 95, 90), abilities: ['Regenerator'], h: 3.0, w: 250, entry: 'Seven heads of black scale and violet flame. Cut one off and it grows back, stronger than before.'}],
+  {key: 'uncertainty', boss: true, rare: true, color: '#4a2a5a', catchRate: 0,
+    stages: [{name: 'Uncertainty', types: ['Dragon', 'Dark'], stats: S(95, 110, 95, 115, 95, 90), abilities: ['Regenerator'], h: 3.0, w: 250, entry: 'Seven heads of black scale and violet flame. Cut one off and it grows back, stronger than before.'}],
     moves: [[1, 'Bite'], [30, 'Dragon Pulse'], [50, 'Dark Pulse'], [60, 'Draco Meteor']], evoMoves: {},
     final: {ability: 'Regenerator', item: '', nature: 'Naive', evs: {atk: 128, spa: 128, spe: 252}, moves: ['Draco Meteor', 'Dark Pulse', 'Flamethrower', 'Recover']}},
 ];
@@ -512,7 +512,7 @@ export const STARTERS = FAMILIES.filter(f => f.starter);
 
 // The Champion's team (Victory Summit), as set text
 const SHORT = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
-export const CHAMPION_ORDER = ['fatigue', 'loneliness', 'pain', 'chemo', 'fear', 'relapse'];
+export const CHAMPION_ORDER = ['weariness', 'loneliness', 'pain', 'chemo', 'fear', 'uncertainty'];
 export const CHAMPION_TEXT = CHAMPION_ORDER.map(k => {
   const f = FAMILIES.find(x => x.key === k), fs = f.final, n = f.stages[0].name;
   return `${n}\nAbility: ${fs.ability}\nEVs: ${Object.entries(fs.evs).map(([a, v]) => v + ' ' + SHORT[a]).join(' / ')}\n${fs.nature} Nature\n${fs.moves.map(m => '- ' + m).join('\n')}`;
