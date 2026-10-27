@@ -3423,7 +3423,7 @@ $('tnoteGo').addEventListener('click', () => {
 });
 function openSummit(opts = {}) {
   if (!A || !A.regional) { openAdvMap({}); return; }
-  if (!A.dev) {   // the League isn't open to players yet
+  if (!(A.dev && /^\s*tyler\s*$/i.test(A.playerName || ''))) {   // testing: the League is only open on developer saves named Tyler
     advResult('crown', CHAMP.color, 'Victory Hall', 'Sorry, Victory hall is currently under construction', null, `<button class="btn primary" id="aToMap">Return to the map</button>`);
     return;
   }
