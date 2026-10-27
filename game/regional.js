@@ -361,6 +361,10 @@ export const FAMILIES = [
     stages: [{name: 'Fear', types: ['Ghost', 'Psychic'], stats: S(80, 60, 75, 130, 105, 110), abilities: ['Pressure'], h: 2.2, w: 1, entry: 'A tall shadow with huge claws, wrapped in screaming faces.'}],
     moves: [[1, 'Astonish'], [30, 'Shadow Ball'], [50, 'Psychic'], [60, 'Nasty Plot']], evoMoves: {},
     final: {ability: 'Pressure', item: '', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Shadow Ball', 'Psychic', 'Nasty Plot', 'Dark Pulse']}},
+  {key: 'death', boss: true, rare: true, color: '#9aa0ad', catchRate: 0,
+    stages: [{name: 'Death', types: ['Ghost', 'Dark'], stats: S(85, 125, 105, 60, 110, 85), abilities: ['Cursed Body'], h: 2.4, w: 1, entry: 'A hooded figure in a bird-skull mask that drifts without feet. Its lantern burns pale, and it never hurries, because it never has to.'}],
+    moves: [[1, 'Astonish'], [30, 'Shadow Sneak'], [45, 'Phantom Force'], [55, 'Knock Off'], [60, 'Swords Dance']], evoMoves: {},
+    final: {ability: 'Cursed Body', item: '', nature: 'Adamant', evs: {hp: 252, atk: 252, spd: 4}, moves: ['Swords Dance', 'Phantom Force', 'Knock Off', 'Shadow Sneak']}},
   {key: 'pain', boss: true, rare: true, color: '#d6283a', catchRate: 0,
     stages: [{name: 'Pain', types: ['Rock', 'Fighting'], stats: S(85, 140, 100, 60, 70, 105), abilities: ['Sturdy'], h: 1.8, w: 400, entry: 'A wolf made of jagged red crystal. Every step cracks the ground.'}],
     moves: [[1, 'Rock Throw'], [30, 'Stone Edge'], [50, 'Close Combat'], [60, 'Swords Dance']], evoMoves: {},
@@ -512,7 +516,7 @@ export const STARTERS = FAMILIES.filter(f => f.starter);
 
 // The Champion's team (Victory Summit), as set text
 const SHORT = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
-export const CHAMPION_ORDER = ['weariness', 'loneliness', 'pain', 'chemo', 'fear', 'uncertainty'];
+export const CHAMPION_ORDER = ['weariness', 'loneliness', 'pain', 'death', 'fear', 'uncertainty']   // Death took Chemo's place;
 export const CHAMPION_TEXT = CHAMPION_ORDER.map(k => {
   const f = FAMILIES.find(x => x.key === k), fs = f.final, n = f.stages[0].name;
   return `${n}\nAbility: ${fs.ability}\nEVs: ${Object.entries(fs.evs).map(([a, v]) => v + ' ' + SHORT[a]).join(' / ')}\n${fs.nature} Nature\n${fs.moves.map(m => '- ' + m).join('\n')}`;

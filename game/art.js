@@ -74,7 +74,7 @@ export const MON_PICS = Object.fromEntries([
   'hexabeake',
   'aerialyn',
   'missingno',
-  'chemo', 'weariness', 'fear', 'pain', 'loneliness', 'uncertainty',
+  'chemo', 'death', 'weariness', 'fear', 'pain', 'loneliness', 'uncertainty',
 ].map(id => [id, `mons/${id}.png`]));
 
 // Lustrous (alternate-colour) pictures: www/mons/lustrous/<id>.png. Only Mons listed here can turn up Lustrous.
