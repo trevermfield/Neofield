@@ -130,7 +130,7 @@ let matches = [];           // lobby snapshot
 let match = null;           // {id, data}
 let choices = {p1: [], p2: []}, applied = {p1: 0, p2: 0};
 let unsubMoves = null, unsubMatch = null;
-let refreshing = false, refreshAgain = false;
+let refreshing = false, refreshAgain = false, battleGen = 0;   // battleGen changes whenever a battle starts or ends, so a slow playback from an old battle can never touch a new one
 
 // ---------- setup screen ----------
 function renderBadges() {
@@ -189,6 +189,7 @@ function setAccent(color) { document.documentElement.style.setProperty('--accent
 // ---------- shared battle start ----------
 function beginBattle(p1, p2, seed, gameType) {
   $('forfeit').textContent = 'Forfeit';
+  battleGen++; refreshing = false; refreshAgain = false; playing = false; skip = false;
   battle = E.createBattle(p1, p2, seed, gameType);
   logIdx = battle.log.length;
   view = {p1: blankMon(), p2: blankMon()};
@@ -349,6 +350,7 @@ async function refresh() {
   if (!battle) return;
   if (refreshing) { refreshAgain = true; return; }
   refreshing = true;
+  const gen = battleGen;
   try {
     do {
       refreshAgain = false;
@@ -362,9 +364,10 @@ async function refresh() {
         }
       }
       await play();
+      if (gen !== battleGen) return;
     } while (refreshAgain && battle);
-  } finally { refreshing = false; }
-  if (!battle) return;
+  } finally { if (gen === battleGen) refreshing = false; }
+  if (!battle || gen !== battleGen) return;
   syncFromState();
   const req = battle[ME].activeRequest;
   if (!battle.ended && req && req.teamPreview && !battle[ME].isChoiceDone()) { showLeadScreen(); return; }
@@ -387,17 +390,22 @@ async function play() {
   const lines = battle.log.slice(logIdx);
   logIdx = battle.log.length;
   const events = translate(lines);
+  const gen = battleGen;
   playing = true;
   if (!events.length) { playing = false; return; }
   for (const ev of events) {
+    if (gen !== battleGen) return;
     if (ev.before) await ev.before();
+    if (gen !== battleGen) return;
     if (ev.apply) ev.apply();
     if (ev.text) addLine(ev.text, ev.cls);
     renderCards();
     if (ev.fx) applyFx(ev.fx);
     if (ev.after) await ev.after();
+    if (gen !== battleGen) return;
     if (ev.text && !skip) await sleep(ev.wait || (ev.cls === 'turn' ? 150 : 520));
   }
+  if (gen !== battleGen) return;
   playing = false;
   skip = false;
 }
@@ -1065,7 +1073,7 @@ function endBattleQuietly() {
   if (match && match.link) linkEnd();
   if (unsubMoves) { unsubMoves(); unsubMoves = null; }
   if (unsubMatch) { unsubMatch(); unsubMatch = null; }
-  battle = null; match = null;
+  battle = null; match = null; battleGen++; refreshing = false; refreshAgain = false; playing = false;
   if (typeof gloomOff === 'function') gloomOff();
   $('overlay').hidden = true;
   $('battleMap').hidden = true;
@@ -2264,10 +2272,12 @@ $('mapSvg').addEventListener('click', e => {
 });
 
 // --- battles ---
+const LUS_RATES = {easy: 0.05, normal: 0.10, hard: 0.15};
+const lusRate = () => LUS_RATES[A && A.difficulty] || 0.05;
 function advFight(fight) {
   if (A.team.every(m => m.frac <= 0)) advHealAll();
   // rolled once, just before the battle starts, so the picture never changes mid-battle; a legendary re-rolls every time you enter its battle
-  if (fight.catchable) { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || fight.type === 'labWild' || A.dex.seen[id]); }
+  if (fight.catchable) { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || fight.type === 'labWild' || A.dex.seen[id], lusRate()); }
   ctx = {kind: 'adventure', fight};
   foe = fight.foe;
   const sets = advSets();
@@ -3828,7 +3838,7 @@ $('introStage').addEventListener('click', async e => {
 function startRegionalAdventure(name, famKey) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
-    team: [E.newMember(famKey, REG_START_LV, E.rollLustrous(E.familyOf(famKey).stages[0].id, true))], box: [], dex: {seen: {}, caught: {}}, loc: null,
+    team: [E.newMember(famKey, REG_START_LV, E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]))], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: NEW_SUMMIT,
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };

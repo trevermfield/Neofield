@@ -317,8 +317,8 @@ function pickFamily(keys) {
 }
 // 5% of the time a wild Mon is Lustrous (needs a Lustrous picture, and that Mon must have been seen before; legendaries pass seen = true)
 export const LUSTROUS_RATE = 0.05;
-export function rollLustrous(speciesId, seen) {
-  return LUSTROUS_PICS.has(speciesId) && !!seen && Math.random() < LUSTROUS_RATE;
+export function rollLustrous(speciesId, seen, rate = LUSTROUS_RATE) {
+  return LUSTROUS_PICS.has(speciesId) && !!seen && Math.random() < rate;
 }
 export function regionalWild(routeIdx, level, famKey) {
   const r = ROUTES[Math.max(0, Math.min(ROUTES.length - 1, routeIdx))];
