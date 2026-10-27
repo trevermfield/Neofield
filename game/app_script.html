@@ -2926,11 +2926,17 @@ async function championDefeat(said = CHAMP_LINES.win[0]) {
   const tapP = new Promise(r => { release = r; });
   $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
   stage.innerHTML = ciLayout('');
-  $('ciImg').classList.add('on');   // no name under him now that he is beaten
+  // a slow fade: the battle buttons melt away first, then the dark settles in, then he appears
+  const slow = !reducedMotion(), ctl = $('controls');
+  if (slow && ctl) { ctl.style.transition = 'opacity .5s ease'; ctl.style.opacity = '0'; ctl.style.pointerEvents = 'none'; }
+  const imgBox = $('ciImg'); if (slow) imgBox.style.transition = 'opacity 4.5s ease 1.6s';
+  imgBox.classList.add('on');   // no name under him now that he is beaten
+  if (slow) el.style.transition = 'opacity 2.4s ease .3s';
   el.style.opacity = '0'; el.hidden = false; void el.offsetWidth; el.style.opacity = '1';
+  setTimeout(() => { el.style.transition = ''; if (ctl) { ctl.style.transition = ''; ctl.style.opacity = ''; ctl.style.pointerEvents = ''; } }, 3000);
   const fx = gloomFX($('ciCanvas'));
   tone(52, 0, .3, 'sine', .3); tone(48, .26, .35, 'sine', .22);
-  await new Promise(r => setTimeout(r, reducedMotion() ? 200 : 2600));
+  await new Promise(r => setTimeout(r, reducedMotion() ? 200 : 4200));
   // his words stay on screen for as long as you like; tap to go on
   const line = $('ciLine'); line.textContent = said; line.classList.remove('say'); void line.offsetWidth; line.classList.add('stay');
   setTimeout(() => { $('ciHint').hidden = false; el.addEventListener('click', release, {once: true}); }, 1800);
