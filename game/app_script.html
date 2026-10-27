@@ -3915,8 +3915,12 @@ function syncDexFromTeam() {
   // owning a Mon also registers the forms it grew from (a wild Mon found past its evolution level still completes the line)
   for (const m of [...A.team, ...(A.box || [])]) {
     let sp = E.Dex.species.get(mset(m).species);
-    if (m.lustrous) (A.dex.lus = A.dex.lus || {})[toId(sp.name)] = 1;
-    for (let i = 0; sp && sp.exists && i < 4; i++) { const id = toId(sp.name); A.dex.seen[id] = 1; A.dex.caught[id] = 1; sp = sp.prevo ? E.Dex.species.get(sp.prevo) : null; }
+    for (let i = 0; sp && sp.exists && i < 4; i++) {
+      const id = toId(sp.name); A.dex.seen[id] = 1;
+      // a Lustrous Mon earns the yellow diamond; only a normal one earns the red dot
+      if (m.lustrous) { (A.dex.lus = A.dex.lus || {})[id] = 1; (A.dex.lusCaught = A.dex.lusCaught || {})[id] = 1; } else A.dex.caught[id] = 1;
+      sp = sp.prevo ? E.Dex.species.get(sp.prevo) : null;
+    }
   }
 }
 
@@ -4195,7 +4199,7 @@ function renderDexList() {
   const adv = dexMode === 'adventure';
   $('dexTitle').textContent = adv ? `${A.playerName}'s MonDex` : 'MonDex';
   if (adv) {
-    const reg = E.SPECIES.filter(s => s.id !== 'missingno'), seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id]).length;
+    const reg = E.SPECIES.filter(s => s.id !== 'missingno'), seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id] || (A.dex.lusCaught && A.dex.lusCaught[s.id])).length;
     $('dexSub').textContent = `Neofield Mons: ${seen} of ${reg.length} seen, ${caught} caught. Tap one you've seen for everything about it.`;
   } else $('dexSub').textContent = `${E.SPECIES.filter(s => s.id !== 'missingno').length} Neofield Mons and ${nationalList().length} Mons from the main games.`;
   $('dexTabs').innerHTML = [['regional', 'Neofield'], ['national', adv ? 'Others you have seen' : 'National']].map(([k, l]) => `<button class="chip" id="dextab-${k}" data-dextab="${k}" aria-pressed="${dexTab === k}">${l}</button>`).join('');
@@ -4205,7 +4209,7 @@ function renderDexList() {
     rows = E.SPECIES.filter(s => s.id !== 'missingno' && match(s.name, s.num, s.types)).map(s => {
       const known = !adv || A.dex.seen[s.id];
       const c = E.regionalInfo(s.name).color;
-      return `<button class="dexrow ${known ? '' : 'unseen'}" style="--c:${c}" data-dex="${esc(s.name)}" ${known ? '' : 'disabled'}><span class="thumb">${E.monArt(s.id)}</span><span><small>#${pad3(s.num)}${adv && A.dex.caught[s.id] ? ' <span class="caughtdot">●</span>' : ''}</small><b>${known ? esc(s.name) : '???'}</b>${known ? typesHTML(s.types) : '<small>Not seen yet</small>'}</span></button>`;
+      return `<button class="dexrow ${known ? '' : 'unseen'}" style="--c:${c}" data-dex="${esc(s.name)}" ${known ? '' : 'disabled'}><span class="thumb">${E.monArt(s.id)}</span><span><small>#${pad3(s.num)}${adv && A.dex.caught[s.id] ? ' <span class="caughtdot">●</span>' : ''}${adv && A.dex.lusCaught && A.dex.lusCaught[s.id] ? ' <span class="lusdot">◆</span>' : ''}</small><b>${known ? esc(s.name) : '???'}</b>${known ? typesHTML(s.types) : '<small>Not seen yet</small>'}</span></button>`;
     });
   } else {
     let list = nationalList();
@@ -4254,7 +4258,7 @@ function showDexEntry(name, lus) {
   let moves = [];
   try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
   const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
-  const status = adv && reg ? (A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : 'Seen') : '';
+  const status = adv && reg ? [A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : '', A.dex.lusCaught && A.dex.lusCaught[reg.id] ? '<span class="lusdot">◆</span> Lustrous caught' : ''].filter(Boolean).join(' · ') || 'Seen' : '';
   const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.id === 'cryodon' ? 'A fossil Mon. It never appears in the wild: Prof. Okla\'s aide revives it and sends it to your Farm on Route 7.' : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
   const dexNames = [...$('dexList').querySelectorAll('[data-dex]:not([disabled])')].map(b => b.dataset.dex);
   const di = dexNames.indexOf(sp.name), prevN = di > 0 ? dexNames[di - 1] : '', nextN = di >= 0 && di < dexNames.length - 1 ? dexNames[di + 1] : '';
