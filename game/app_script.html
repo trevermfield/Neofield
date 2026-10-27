@@ -2267,7 +2267,7 @@ $('mapSvg').addEventListener('click', e => {
 function advFight(fight) {
   if (A.team.every(m => m.frac <= 0)) advHealAll();
   // rolled once, just before the battle starts, so the picture never changes mid-battle; a legendary re-rolls every time you enter its battle
-  if (fight.catchable && fight.type !== 'labWild') { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || A.dex.seen[id]); }
+  if (fight.catchable) { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || fight.type === 'labWild' || A.dex.seen[id]); }
   ctx = {kind: 'adventure', fight};
   foe = fight.foe;
   const sets = advSets();
@@ -3828,7 +3828,7 @@ $('introStage').addEventListener('click', async e => {
 function startRegionalAdventure(name, famKey) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
-    team: [E.newMember(famKey, REG_START_LV)], box: [], dex: {seen: {}, caught: {}}, loc: null,
+    team: [E.newMember(famKey, REG_START_LV, E.rollLustrous(E.familyOf(famKey).stages[0].id, true))], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: NEW_SUMMIT,
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
