@@ -2,6 +2,7 @@
 // All evolution levels and level-up moves come from Showdown's data, which mirrors the games.
 import {Dex, Teams} from '@pkmn/sim';
 import {ROUTES, familyOf, FAMILIES} from './regional.js';
+import {LUSTROUS_PICS} from './art.js';
 import {XP, xpForKO, xpNeed} from './progress.js';
 
 const dex = Dex.forFormat('gen9nationaldexubers');
@@ -314,6 +315,11 @@ function pickFamily(keys) {
   for (let i = 0; i < keys.length; i++) { x -= w[i]; if (x < 0) return keys[i]; }
   return keys[0];
 }
+// 5% of the time a wild Mon is Lustrous (needs a Lustrous picture, and that Mon must have been seen before; legendaries pass seen = true)
+export const LUSTROUS_RATE = 0.05;
+export function rollLustrous(speciesId, seen) {
+  return LUSTROUS_PICS.has(speciesId) && !!seen && Math.random() < LUSTROUS_RATE;
+}
 export function regionalWild(routeIdx, level, famKey) {
   const r = ROUTES[Math.max(0, Math.min(ROUTES.length - 1, routeIdx))];
   const fam = familyOf(famKey || pickFamily(r.families));
@@ -323,10 +329,10 @@ export function regionalWild(routeIdx, level, famKey) {
   return set;
 }
 // A new team member (starter or caught Mons) that grows toward its family's battle set.
-export function newMember(famKey, level) {
+export function newMember(famKey, level, lustrous) {
   const fam = familyOf(famKey);
   const final = JSON.parse(JSON.stringify(fam.finalSet));
-  return {final, level, frac: 1, tutored: [], moves: setAtLevel(final, level).moves};
+  return {final, level, frac: 1, tutored: [], moves: setAtLevel(final, level).moves, ...(lustrous ? {lustrous: true} : {})};
 }
 // Chance one Mon Ball works. hpFrac 0..1, status like 'slp'. Friendlier than the main games.
 export function catchChance(catchRate, hpFrac, status, boost = 1) {

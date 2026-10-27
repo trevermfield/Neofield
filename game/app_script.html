@@ -451,7 +451,7 @@ function translate(lines) {
       case 'switch': case 'drag': {
         const species = parts[2].split(',')[0];
         const hp = parseHP(parts[3], s);
-        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, after: championRevealEnd, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
+        out.push({fx: {side: s, kind: 'clear'}, before: (sd !== ME && ctx && ctx.fight && ctx.fight.type === 'champion') ? () => championReveal(species) : null, after: championRevealEnd, apply() { if (ctx && ctx.kind === 'adventure') markSeen(species, lusSide(s, species)); view[s] = {ident: id, species, hp: hp.hp, maxhp: hp.maxhp, status: hp.status === 'fnt' ? '' : hp.status, boosts: {}}; },
           text: cmd === 'drag' ? `${Nm(id)} was dragged out!` : sd === ME ? `Go! <span class="key">${esc(nick(id))}</span>!` : foe.wild ? `A wild <span class="key">${esc(nick(id))}</span> appeared!` : `${esc(ownerOf(id))} sent out <span class="key">${esc(nick(id))}</span>!`});
         break;
       }
@@ -619,7 +619,7 @@ function cardHTML(side) {
     return `<span class="hazard">${esc(name)}${c.layers > 1 ? ' ×' + c.layers : ''}</span>`;
   }).join('');
   const balls = sideObj.pokemon.map(p => `<i class="${p.fainted || p.hp <= 0 ? 'out' : p.hp < p.maxhp / 2 ? 'hurt' : ''} ${p.isActive ? 'active' : ''}"></i>`).join('');
-  const art = artOf(sp.name);
+  const art = artOf(sp.name, lusSide(side, sp.name));
   return `${art ? `<span class="cardart">${art}<span class="stfx"></span>${v.status ? `<span class="stbadge">${statusPill(v.status)}</span>` : ''}</span>` : (v.status ? `<span class="stbadge">${statusPill(v.status)}</span>` : '')}
     <div class="head"><span class="name"><span class="nm${(sp.isMega ? 5 : 0) + (sp.isMega ? sp.baseSpecies : sp.name).length > 11 ? ' long' : ''}">${sp.isMega ? 'Mega ' : ''}${esc(sp.isMega ? sp.baseSpecies : sp.name)}</span>${battle[side].active[0] && battle[side].active[0].level !== 100 ? ` <small class="lvl">Lv ${battle[side].active[0].level}</small>` : ''}</span><span class="owner">${side === ME ? 'You' : esc(foe.name)}</span></div>
     <div class="row" style="justify-content:space-between">${typesHTML(sp.types)}<span class="balls" aria-label="Team status">${balls}</span></div>
@@ -676,7 +676,7 @@ function cellHTML(slot) {
   const sp = E.Dex.species.get(v.species), mine = slot.slice(0, 2) === ME;
   const pct = hpTrack(slot, v.ident, Math.max(0, pctOf(slot)));
   const name = sp.isMega ? 'Mega ' + sp.baseSpecies : sp.name;
-  const art = artOf(sp.name);
+  const art = artOf(sp.name, lusSide(mine ? ME : FOE, sp.name));
   const real = battle[slot.slice(0, 2)].active['abc'.indexOf(slot[2])];
   const boosts = Object.entries(v.boosts).filter(([, n]) => n).map(([k, n]) => `<span class="boost ${n > 0 ? 'up' : 'down'}">${STAT_SHORT[k] || k} ${n > 0 ? '+' : ''}${n}</span>`).join('');
   return `<div class="mcell${v.hp <= 0 ? ' down' : ''}${STATUS[v.status] && v.hp > 0 ? ' st-' + v.status : ''}${mc && mc.slot === slot ? ' picking' : ''}" data-slot="${slot}">
@@ -2266,6 +2266,7 @@ $('mapSvg').addEventListener('click', e => {
 // --- battles ---
 function advFight(fight) {
   if (A.team.every(m => m.frac <= 0)) advHealAll();
+  if (fight.catchable && fight.type !== 'labWild' && fight.sets[0].lustrous === undefined) fight.sets[0].lustrous = fight.type === 'questLegend' ? false : E.rollLustrous(toId(fight.sets[0].species), A.dex.seen[toId(fight.sets[0].species)]);
   ctx = {kind: 'adventure', fight};
   foe = fight.foe;
   const sets = advSets();
@@ -3227,7 +3228,7 @@ function ensureQuest(i) {
     let pool = E.FAMILIES.filter(f => !f.rare && f.stages[0].num >= 10 && f.stages[0].num <= 39).map(f => f.key);
     const pick = () => pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
     A.quests[i] = {level: lv, step: 0, done: false, legend: true, trainer: E.familyOf(ar.legend).stages[0].name,
-      wild: [E.regionalWild(17, lv, pick()), E.regionalWild(17, lv + 1, pick())], boss: E.regionalWild(17, ar.lv, ar.legend)};
+      wild: [E.regionalWild(17, lv, pick()), E.regionalWild(17, lv + 1, pick())], boss: Object.assign(E.regionalWild(17, ar.lv, ar.legend), {lustrous: E.rollLustrous(ar.legend, true)})};
     saveA();
     return A.quests[i];
   }
@@ -3742,7 +3743,13 @@ const REG_START_LV = 6;
 // National Dex picture: dex/<4-digit number>.webp (base form art, shared by that number's other forms)
 // a form (Mega, regional, ...) with its own picture uses dex/f/<id>.webp; every other form shares its base Mon's picture
 const natArt = (num, id) => num > 0 && num <= 1025 ? `<img class="monart monpic" src="${id && E && E.FORM_ART && E.FORM_ART.has(id) ? `dex/f/${id}.webp` : `dex/${String(num).padStart(4, '0')}.webp`}" alt="" aria-hidden="true" draggable="false" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'numtile',textContent:'#${num}'}))">` : '';
-const artOf = name => (E && E.isRegional(name)) ? E.monArt(toId(name)) : (E ? (sp => natArt(sp.num, sp.id))(E.Dex.species.get(name)) : '');
+// is this side's active Mon a Lustrous one? (wild foes and your own team only)
+function lusSide(side, name) {
+  if (!A || !ctx || ctx.kind !== 'adventure' || !E.isRegional(name)) return false;
+  if (side === ME) return A.team.some(m => m.lustrous && mset(m).species === name);
+  return !!(ctx.fight && ctx.fight.catchable && ctx.fight.sets && ctx.fight.sets.some(x => x.lustrous && x.species === name));
+}
+const artOf = (name, lus) => (E && E.isRegional(name)) ? E.monArt(toId(name), '', lus) : (E ? (sp => natArt(sp.num, sp.id))(E.Dex.species.get(name)) : '');
 const BALL_SVG = `<svg class="ballicon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/><path d="M1.5 10a8.5 8.5 0 0 1 17 0Z" fill="#e25b4f" stroke="#1b1f2a" stroke-width="1.6"/><circle cx="10" cy="10" r="2.6" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/></svg>`;
 
 // --- the professor (an original character) ---
@@ -3891,12 +3898,13 @@ function migrateMoveRev() {
   A.moveRev = MOVE_REV;
   saveA();
 }
-function markSeen(species) { if (A && A.dex && species) A.dex.seen[toId(species)] = 1; }
+function markSeen(species, lus) { if (A && A.dex && species) { A.dex.seen[toId(species)] = 1; if (lus) (A.dex.lus = A.dex.lus || {})[toId(species)] = 1; } }
 function syncDexFromTeam() {
   if (!A || !A.dex) return;
   // owning a Mon also registers the forms it grew from (a wild Mon found past its evolution level still completes the line)
   for (const m of [...A.team, ...(A.box || [])]) {
     let sp = E.Dex.species.get(mset(m).species);
+    if (m.lustrous) (A.dex.lus = A.dex.lus || {})[toId(sp.name)] = 1;
     for (let i = 0; sp && sp.exists && i < 4; i++) { const id = toId(sp.name); A.dex.seen[id] = 1; A.dex.caught[id] = 1; sp = sp.prevo ? E.Dex.species.get(sp.prevo) : null; }
   }
 }
@@ -4090,7 +4098,7 @@ function routeBattle(r) {
   advFight({type: 'route', route: r, catchable: true, sets: [set], foe: {name: 'Wild', wild: true, key: null, color: f.color, icon: 'leaf', title: `Wild ${set.species}`, subtitle: `${E.ROUTES[r].name} · level ${lv}`}});
 }
 function addCaught(c) {
-  const m = E.newMember(c.family, c.level);
+  const m = E.newMember(c.family, c.level, c.lustrous);
   m.frac = Math.max(0.01, c.frac);
   const name = mset(m).species;
   if (A.team.length < 6) { A.team.push(m); syncDexFromTeam(); return `${name} joined your team!`; }
@@ -4127,7 +4135,7 @@ async function throwBall() {
   }
   if (ok) {
     addLine(`Gotcha! The wild <span class="key">${esc(mon.species.name)}</span> was caught!`, 'good');
-    fight.caught = {family: fight.sets[0].family, level: mon.level, frac: mon.hp / mon.maxhp, species: mon.species.name};
+    fight.caught = {family: fight.sets[0].family, level: mon.level, frac: mon.hp / mon.maxhp, species: mon.species.name, lustrous: !!fight.sets[0].lustrous};
     playing = false;
     battle.forceWin('p1');
     await refresh();
@@ -4222,7 +4230,9 @@ function matchupRows(types) {
   const lbl = {4: ['×4', 'w'], 2: ['×2', 'w'], 0.5: ['×½', 'r'], 0.25: ['×¼', 'r'], 0: ['×0', 'i']};
   return [4, 2, 0.5, 0.25, 0].filter(k => groups[k].length).map(k => `<div><span class="k ${lbl[k][1]}">${lbl[k][0]}</span>${typesHTML(groups[k])}</div>`).join('');
 }
-function showDexEntry(name) {
+let dexLus = false;
+function showDexEntry(name, lus) {
+  dexLus = !!lus;
   const sp = E.Dex.species.get(name), reg = E.regionalInfo(name);
   const color = reg ? reg.color : TYPE_COLORS[sp.types[0]] || '#999';
   const adv = dexMode === 'adventure';
@@ -4240,7 +4250,8 @@ function showDexEntry(name) {
   const dexNav = `<div class="dexnav"><button class="btn ghost" data-dexgo="${esc(prevN)}" ${prevN ? '' : 'disabled'}>‹ Previous</button><button class="btn ghost" data-dexgo="${esc(nextN)}" ${nextN ? '' : 'disabled'}>Next ›</button></div>`;
   $('dexEntryView').innerHTML = `<div class="dexentry">
     ${dexNav}
-    <div class="dexhero" style="--c:${color}"><div class="pic">${reg ? E.monArt(reg.id) : natArt(sp.num, sp.id) || '#' + sp.num}</div><div>
+    ${adv && reg && A.dex.lus && A.dex.lus[reg.id] && E.LUSTROUS_PICS.has(reg.id) ? `<div class="dexlus"><button class="btn ${dexLus ? 'ghost' : 'primary'}" data-dexlus="0">Normal</button><button class="btn ${dexLus ? 'primary' : 'ghost'}" data-dexlus="1">Lustrous</button></div>` : ''}
+    <div class="dexhero" style="--c:${color}"><div class="pic" id="dexPic">${reg ? E.monArt(reg.id, '', dexLus) : natArt(sp.num, sp.id) || '#' + sp.num}</div><div>
       <div class="num">${reg ? `Neofield #${pad3(reg.num)}` : `National #${pad3(sp.num)}`}${status ? ' · ' + status : ''}</div><h2>${esc(sp.name)}</h2>${reg && reg.cat ? `<div class="dexcat">${esc(reg.cat)}</div>` : ''}${typesHTML(sp.types)}</div></div>
     ${reg ? `<p class="flavor">${esc(reg.entry)}</p>` : ''}
     <div class="kv"><div class="lbl">Facts</div><p>Height <b>${sp.heightm} m</b> · Weight <b>${sp.weightkg} kg</b>${reg ? ` · Catch rate <b>${reg.catchRate}</b>` : ''}</p><p>Abilities: ${abil}</p></div>
@@ -4254,7 +4265,7 @@ function showDexEntry(name) {
   setAccent(color);
   $('dexScroll').scrollTop = 0;
 }
-$('dexEntryView').addEventListener('click', e => { const b = e.target.closest('[data-dexgo]'); if (b && !b.disabled && b.dataset.dexgo) showDexEntry(b.dataset.dexgo); });
+$('dexEntryView').addEventListener('click', e => { const l = e.target.closest('[data-dexlus]'); if (l) { const nm = $('dexEntryView').querySelector('h2').textContent; showDexEntry(nm, l.dataset.dexlus === '1'); return; } const b = e.target.closest('[data-dexgo]'); if (b && !b.disabled && b.dataset.dexgo) showDexEntry(b.dataset.dexgo); });
 $('openDexMain').addEventListener('click', () => { if (E) openDex('main', 'setup'); });
 $('mapDex').addEventListener('click', () => { if (A) openDex('adventure', 'map'); });
 
@@ -4341,7 +4352,7 @@ function openFarm() {
     const btn = kind === 'team'
       ? `<button class="btn" id="tofarm-${i}" data-tofarm="${i}" ${A.team.length <= 1 ? 'disabled' : ''}>Send to Farm</button>`
       : `<button class="btn" id="tomteam-${i}" data-toteam="${i}" ${A.team.length >= 6 ? 'disabled' : ''}>Add to team</button>`;
-    return `<div class="boxmon">${artOf(set.species)}<b>${esc(set.species)} <span class="lvl">Lv ${m.level}</span></b>${typesHTML(E.Dex.species.get(set.species).types)}<small class="note">${m.frac <= 0 ? 'Fainted' : `${pct}% HP`}</small>${btn}</div>`;
+    return `<div class="boxmon">${artOf(set.species, m.lustrous)}<b>${esc(set.species)} <span class="lvl">Lv ${m.level}</span></b>${typesHTML(E.Dex.species.get(set.species).types)}<small class="note">${m.frac <= 0 ? 'Fainted' : `${pct}% HP`}</small>${btn}</div>`;
   };
   $('farmBody').innerHTML = `<p class="note">Mons on the Farm rest and do not gain levels. Only your team grows, so swap in the Mons you want to train.</p>
     <div class="section"><h2>Your team · ${A.team.length} of 6</h2><div class="boxgrid">${A.team.map((m, i) => row(m, i, 'team')).join('')}</div></div>
@@ -5142,7 +5153,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close()};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);

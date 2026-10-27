@@ -77,10 +77,13 @@ export const MON_PICS = Object.fromEntries([
   'chemo', 'fatigue', 'fear', 'pain', 'loneliness', 'relapse',
 ].map(id => [id, `mons/${id}.png`]));
 
-export function monArt(id, cls = '') {
+// Lustrous (alternate-colour) pictures: www/mons/lustrous/<id>.png. Only Mons listed here can turn up Lustrous.
+export const LUSTROUS_PICS = new Set(['campyre']);
+export const hasLustrous = id => LUSTROUS_PICS.has(id);
+export function monArt(id, cls = '', lus = false) {
   const st = SPECIES.find(s => s.id === id) || BOSS_SPECIES.find(s => s.id === id);
   if (!st) return '';
-  const pic = MON_PICS[id];
+  const pic = lus && LUSTROUS_PICS.has(id) ? `mons/lustrous/${id}.png` : MON_PICS[id];
   if (pic) return `<img class="monart monpic ${cls}" src="${pic}" alt="" aria-hidden="true" draggable="false">`;
   return `<svg class="monart ${cls}" viewBox="0 0 120 120" aria-hidden="true">${placeholder(st)}</svg>`;
 }
