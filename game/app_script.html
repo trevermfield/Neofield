@@ -183,7 +183,7 @@ function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'
 
 const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'trophy', 'farm', 'dev', 'intro', 'dex'];
 let curScreen = null;
-function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+function show(id) { if (id !== 'battle' && typeof wxStop === 'function') wxStop(); curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
 
 // ---------- shared battle start ----------
@@ -541,11 +541,17 @@ function translate(lines) {
         const w = parts[1];
         if (line.includes('[upkeep]')) break;
         const msg = {Snowscape: 'It started to snow!', Snow: 'It started to snow!', Hail: 'It started to hail!', SandStorm: 'A sandstorm kicked up!', Sandstorm: 'A sandstorm kicked up!', RainDance: 'It started to rain!', SunnyDay: 'The sunlight turned harsh!', none: 'The weather cleared up.'}[w] || '';
+        const ab = (parts.find(x => x && x.startsWith('[from] ability:')) || '').replace('[from] ability:', '').trim();
+        const of = parts.find(x => x && x.startsWith('[of]'));
+        if (ab && of) out.push({text: `<span class="info">[${Nm(of.slice(5).trim())}'s ${esc(ab)}]</span>`});
         if (msg) out.push({text: msg, cls: 'info'});
         break;
       }
       case '-fieldstart': {
         const cond = (parts[1] || '').replace('move: ', '');
+        const ab = (parts.find(x => x && x.startsWith('[from] ability:')) || '').replace('[from] ability:', '').trim();
+        const of = parts.find(x => x && x.startsWith('[of]'));
+        if (ab && of) out.push({text: `<span class="info">[${Nm(of.slice(5).trim())}'s ${esc(ab)}]</span>`});
         const msg = {'Electric Terrain': 'Electric current ran across the battlefield!', 'Grassy Terrain': 'Grass grew to cover the battlefield!', 'Misty Terrain': 'Mist swirled around the battlefield!', 'Psychic Terrain': 'The battlefield got weird!', 'Trick Room': 'The dimensions were twisted!', 'Gravity': 'Gravity intensified!'}[cond] || `${esc(cond)} started.`;
         out.push({text: msg, cls: 'info'});
         break;
@@ -734,15 +740,61 @@ function renderCards() {
   $('myCard').classList.toggle('hasart', !!(view[ME].species && artOf(view[ME].species)));
   renderField();
 }
+
+// ---------- weather and terrain effects: the whole battle screen changes with the ability that set it ----------
+let wxFx = null, wxKey = '';
+function wxStop() { if (wxFx) { wxFx.stop(); wxFx = null; } wxKey = ''; const c = $('wxfx'); if (c) c.hidden = true; }
+function wxStart(kinds, announce) {
+  const c = $('wxfx'); c.hidden = false;
+  const cx = c.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
+  let W = 0, H = 0, alive = true, t0 = performance.now();
+  const size = () => { W = c.clientWidth; H = c.clientHeight; c.width = W * dpr; c.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size();
+  const R = Math.random, parts = [];
+  const spec = {
+    sunnyday: {n: 38, mk: () => ({x: R() * W, y: R() * H, r: 1.5 + R() * 3, v: .15 + R() * .35, ph: R() * 6.3}), draw(p, t) { p.y -= p.v; p.x += Math.sin(t / 1400 + p.ph) * .3; if (p.y < -5) { p.y = H + 5; p.x = R() * W; } cx.fillStyle = `rgba(255,${200 + 40 * R() | 0},110,${.25 + .25 * Math.sin(t / 700 + p.ph)})`; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.3); cx.fill(); }, under(t) { const g = cx.createRadialGradient(W * .85, -20, 10, W * .85, -20, H * .9); g.addColorStop(0, `rgba(255,220,120,${.5 + .08 * Math.sin(t / 900)})`); g.addColorStop(.5, 'rgba(255,170,60,.12)'); g.addColorStop(1, 'rgba(255,170,60,0)'); cx.fillStyle = g; cx.fillRect(0, 0, W, H); }},
+    raindance: {n: 150, mk: () => ({x: R() * (W + 120), y: R() * H, v: 16 + R() * 12, l: 14 + R() * 18, a: .25 + R() * .35}), draw(p) { cx.strokeStyle = `rgba(150,190,255,${p.a})`; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - p.l * .25, p.y + p.l); cx.stroke(); p.y += p.v; p.x -= p.v * .25; if (p.y > H) { p.y = -30; p.x = R() * (W + 120); } }, under() { cx.fillStyle = 'rgba(20,40,90,.14)'; cx.fillRect(0, 0, W, H); }},
+    sandstorm: {n: 130, mk: () => ({x: R() * W, y: R() * H, v: 9 + R() * 12, r: .8 + R() * 1.8, a: .25 + R() * .4}), draw(p, t) { cx.fillStyle = `rgba(214,172,96,${p.a})`; cx.fillRect(p.x, p.y, p.r * 5, p.r); p.x += p.v; p.y += Math.sin(t / 500 + p.x) * .6; if (p.x > W + 10) { p.x = -10; p.y = R() * H; } }, under() { cx.fillStyle = 'rgba(190,140,60,.16)'; cx.fillRect(0, 0, W, H); }},
+    snowscape: {n: 90, mk: () => ({x: R() * W, y: R() * H, v: 1 + R() * 2, r: 1.2 + R() * 2.6, ph: R() * 6.3}), draw(p, t) { cx.fillStyle = 'rgba(255,255,255,.8)'; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.3); cx.fill(); p.y += p.v; p.x += Math.sin(t / 900 + p.ph) * .8; if (p.y > H + 5) { p.y = -5; p.x = R() * W; } }, under() { cx.fillStyle = 'rgba(200,225,255,.1)'; cx.fillRect(0, 0, W, H); }},
+    psychicterrain: {n: 26, mk: () => ({x: R() * W, y: R() * H, r: 4 + R() * 24, ph: R() * 6.3, s: .4 + R()}), draw(p, t) { const k = (Math.sin(t / 1100 * p.s + p.ph) + 1) / 2; cx.strokeStyle = `rgba(240,110,215,${.1 + .35 * k})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(p.x, p.y, p.r * (.5 + k), 0, 6.3); cx.stroke(); }, under(t) { cx.fillStyle = `rgba(200,60,190,${.07 + .04 * Math.sin(t / 800)})`; cx.fillRect(0, 0, W, H); }},
+    electricterrain: {n: 14, mk: () => ({x: R() * W, y: R() * H, life: R() * 40}), draw(p) { if (--p.life > 0) return; if (p.life > -6) { cx.strokeStyle = 'rgba(255,235,80,.85)'; cx.lineWidth = 1.5; cx.beginPath(); let x = p.x, y = p.y; cx.moveTo(x, y); for (let i = 0; i < 5; i++) { x += (R() - .5) * 30; y += 14 + R() * 10; cx.lineTo(x, y); } cx.stroke(); } else { p.x = R() * W; p.y = R() * H * .8; p.life = 20 + R() * 60; } }, under() { cx.fillStyle = 'rgba(255,225,60,.05)'; cx.fillRect(0, 0, W, H); }},
+    grassyterrain: {n: 40, mk: () => ({x: R() * W, y: R() * H, v: .3 + R() * .6, r: 1.5 + R() * 2.5, ph: R() * 6.3}), draw(p, t) { cx.fillStyle = `rgba(120,225,110,${.35 + .25 * Math.sin(t / 600 + p.ph)})`; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.3); cx.fill(); p.y -= p.v; p.x += Math.sin(t / 1000 + p.ph) * .4; if (p.y < -5) { p.y = H + 5; p.x = R() * W; } }, under() { cx.fillStyle = 'rgba(60,170,70,.06)'; cx.fillRect(0, 0, W, H); }},
+    mistyterrain: {n: 8, mk: () => ({x: R() * W, y: R() * H, r: 80 + R() * 80, v: .2 + R() * .3}), draw(p) { const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r); g.addColorStop(0, 'rgba(255,190,230,.22)'); g.addColorStop(1, 'rgba(255,190,230,0)'); cx.fillStyle = g; cx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2); p.x += p.v; if (p.x - p.r > W) p.x = -p.r; }, under() { cx.fillStyle = 'rgba(255,170,220,.05)'; cx.fillRect(0, 0, W, H); }},
+  };
+  const use = kinds.map(k => spec[k === 'hail' ? 'snowscape' : k === 'desolateland' ? 'sunnyday' : k === 'primordialsea' ? 'raindance' : k]).filter(Boolean);
+  for (const sp of use) for (let i = 0; i < sp.n; i++) parts.push({sp, p: sp.mk()});
+  const loop = now => {
+    if (!alive) return;
+    const t = now - t0; cx.clearRect(0, 0, W, H);
+    for (const sp of use) if (sp.under) sp.under(t);
+    for (const {sp, p} of parts) sp.draw(p, t);
+    requestAnimationFrame(loop);
+  };
+  if (!reducedMotion()) requestAnimationFrame(loop); else for (const sp of use) if (sp.under) sp.under(0);
+  if (announce && evoSound) {   // a short sound that fits the weather
+    const k = kinds[0];
+    if (k === 'sunnyday' || k === 'desolateland') { tone(392, 0, .5, 'sine', .08); tone(523, .15, .6, 'sine', .08); tone(659, .3, .8, 'sine', .08); }
+    else if (k === 'raindance' || k === 'primordialsea') { for (let i = 0; i < 14; i++) tone(1800 + R() * 1500, i * .07, .05, 'square', .015); tone(110, 0, .9, 'sine', .08); }
+    else if (k === 'sandstorm') { tone(90, 0, 1.1, 'sawtooth', .05); tone(140, .1, .9, 'sawtooth', .03); }
+    else if (k === 'snowscape' || k === 'hail') { tone(1318, 0, .5, 'sine', .05); tone(1568, .2, .6, 'sine', .05); }
+    else if (k === 'psychicterrain') { tone(330, 0, .8, 'sine', .08); tone(349, .05, .8, 'sine', .06); tone(220, .3, .9, 'sine', .06); }
+    else if (k === 'electricterrain') { tone(880, 0, .08, 'square', .05); tone(1320, .09, .08, 'square', .05); tone(660, .18, .12, 'square', .05); }
+    else if (k === 'grassyterrain') { tone(392, 0, .4, 'sine', .07); tone(494, .15, .5, 'sine', .07); }
+    else if (k === 'mistyterrain') { tone(523, 0, .9, 'sine', .05); tone(659, .2, .9, 'sine', .05); }
+  }
+  wxFx = {stop() { alive = false; cx.clearRect(0, 0, W, H); }};
+}
 // Weather and terrain: a label under the foe, and a tint on the whole battle screen.
 function renderField() {
   const f = battle.field, bits = [];
   const w = f.weather, tr = f.terrain;
-  if (w) { const n = E.Dex.conditions.get(w).name || w; bits.push(`${n === 'Snowscape' ? 'Snow' : n} · ${f.weatherState.duration || ''} turns left`); }
+  if (w) { const n = ({sunnyday: 'Harsh Sun', raindance: 'Rain', desolateland: 'Harsh Sun', primordialsea: 'Heavy Rain', snowscape: 'Snow', sandstorm: 'Sandstorm', hail: 'Hail'})[w] || E.Dex.conditions.get(w).name || w; bits.push(`${n} · ${f.weatherState.duration || ''} turns left`); }
   if (tr) { const n = (E.Dex.conditions.get(tr).name || tr).replace(/ Terrain$/, ''); bits.push(`${n} Terrain · ${f.terrainState.duration || ''} turns left`); }
   $('weather').textContent = bits.join('  |  ');
   const b = $('battle');
   b.dataset.wx = w || ''; b.dataset.tr = tr || '';
+  const key = (w || '') + '|' + (tr || '');
+  if (key !== wxKey) { const first = !wxKey || wxKey === '|'; wxStop(); wxKey = key; if (w || tr) wxStart([w, tr].filter(Boolean), true); }
 }
 
 function applyFx(fx) {
@@ -3841,9 +3893,10 @@ function labSceneHTML() {
   return `<div class="labscene" aria-hidden="true"><span class="shelf" style="left:16px"></span>${jars}<span class="shelf" style="right:16px;width:80px"></span>
     <div class="prof"><img src="portraits/okla-full.png" alt=""></div><div class="ballrow">${BALL_SVG.repeat(3).replace(/ballicon/g, 'ballicon" style="width:26px;height:26px')}</div></div>`;
 }
-let introName = '', introPick = null;
+let introName = '', introPick = null, introLus = {};
 async function openProfessor() {
   introPick = null; introName = '';
+  introLus = {}; for (const f of E.STARTERS) introLus[f.key] = E.rollLustrous(f.stages[0].id, true, LUS_RATES[newAdvDiff]);   // rolled now, so you can see it before you choose
   setAccent(PROF.color);
   $('introStage').innerHTML = labSceneHTML();
   show('intro');
@@ -3880,12 +3933,12 @@ $('introStage').addEventListener('submit', async e => {
 function showStarters() {
   const cards = E.STARTERS.map(f => {
     const st = f.stages[0];
-    return `<button class="starter" id="starter-${f.key}" data-starter="${f.key}" style="--c:${f.color}" aria-pressed="${introPick === f.key}">${E.monArt(st.id)}<b>${esc(st.name)}</b>${typesHTML(st.types)}</button>`;
+    return `<button class="starter" id="starter-${f.key}" data-starter="${f.key}" style="--c:${f.color}" aria-pressed="${introPick === f.key}">${E.monArt(st.id, '', !!introLus[f.key])}<b>${esc(st.name)}</b>${introLus[f.key] ? '<span class="lusnote">◆ Lustrous</span>' : ''}${typesHTML(st.types)}</button>`;
   }).join('');
   let info = '<p class="starterinfo">Tap a Mon to learn about it.</p>';
   if (introPick) {
     const f = E.familyOf(introPick), st = f.stages[0];
-    info = `<p class="starterinfo"><b style="color:var(--fg)">${esc(st.name)}</b>: ${esc(st.entry)}</p>
+    info = `<p class="starterinfo"><b style="color:var(--fg)">${esc(st.name)}</b>${introLus[f.key] ? ' <b style="color:#e8b53a">◆ Lustrous</b>' : ''}: ${esc(st.entry)}</p>
       <p class="starterinfo">Evolves into ${f.stages.slice(1).map(s => `${esc(s.name)} at level ${s.at}`).join(', then ')}.</p>
       <div class="row"><button class="btn primary" id="starterGo" style="--accent:${f.color}">Choose ${esc(st.name)}</button></div>`;
   }
@@ -3900,13 +3953,13 @@ $('introStage').addEventListener('click', async e => {
     await talk(PROF, [`So you've chosen ${st.name}! It already looks happy to be with you.`,
       'Take these too: five Mon Balls for catching wild Mons, and your very own MonDex.',
       `Your adventure starts now, ${introName}. Go make the Neofield Region proud!`]);
-    startRegionalAdventure(introName, introPick);
+    startRegionalAdventure(introName, introPick, !!introLus[introPick]);
   }
 });
-function startRegionalAdventure(name, famKey) {
+function startRegionalAdventure(name, famKey, lus) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
-    team: [E.newMember(famKey, REG_START_LV, E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]))], box: [], dex: {seen: {}, caught: {}}, loc: null,
+    team: [E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus)], box: [], dex: {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: summitForName(name),
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
@@ -5238,7 +5291,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);

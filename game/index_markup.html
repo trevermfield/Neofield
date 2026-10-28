@@ -628,6 +628,13 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 #battle[data-tr="electricterrain"] { box-shadow: inset 0 0 140px rgba(255,220,40,.36); }
 #battle[data-tr="grassyterrain"] { box-shadow: inset 0 0 140px rgba(80,200,80,.36); }
 #battle[data-tr="mistyterrain"] { box-shadow: inset 0 0 140px rgba(255,170,220,.34); }
+.lusnote { display: block; color: #e8b53a; font-size: 11px; font-weight: 800; letter-spacing: .06em; }
+.wxfx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; }
+#battle[data-wx="sunnyday"], #battle[data-wx="desolateland"] { filter: saturate(1.2) brightness(1.07) contrast(1.03); }
+#battle[data-wx="raindance"], #battle[data-wx="primordialsea"] { filter: saturate(.85) brightness(.88) hue-rotate(-6deg); }
+#battle[data-wx="sandstorm"] { filter: sepia(.35) saturate(.9) brightness(.95); }
+#battle[data-wx="snowscape"], #battle[data-wx="hail"] { filter: saturate(.8) brightness(1.04) hue-rotate(8deg); }
+#battle.gloomy[data-wx] { filter: saturate(.55) brightness(.82) contrast(1.05); }
 #battle.gloomy { filter: saturate(.55) brightness(.82) contrast(1.05); }
 .fog { position: absolute; top: 18%; left: -70%; width: 70%; height: 55%; opacity: 0; background: radial-gradient(ellipse at 50% 50%, rgba(190,200,225,.34), rgba(190,200,225,.12) 45%, transparent 70%); filter: blur(18px); }
 .fog.fog2 { top: 45%; height: 45%; }
@@ -1164,6 +1171,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <button class="skip" id="evoSkip" type="button">Skip</button>
 </div>
 
+<canvas class="wxfx" id="wxfx" hidden></canvas>
 <div class="gloom" id="gloom" hidden><div class="fog fog1"></div><div class="fog fog2"></div><canvas id="gloomCanvas"></canvas></div>
 <div class="dusk" id="dusk" hidden><div class="dim"></div><div class="fog fog1"></div><div class="fog fog2"></div><div class="fog fog3"></div></div>
 <div class="champintro" id="champIntro" hidden>
