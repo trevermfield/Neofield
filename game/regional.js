@@ -406,6 +406,7 @@ const MOVE_EDITS = {
 };
 // The two legendaries below know exactly these four moves and nothing else.
 const ONLY_MOVES = {
+  missingno: ['Fly', 'Surf', 'Transform', 'Future Sight'],
   okloyama: ['Play Rough', 'Swords Dance', 'Earthquake', 'Diamond Storm'],
   hexabeake: ['Fire Blast', 'Nasty Plot', 'Sludge Wave', 'Draco Meteor'],
 };
@@ -417,7 +418,10 @@ const ABILITY_EDITS = [
   ['storment', 0, ['Drizzle', 'Strong Jaw']],
   ['rensylk', 0, ['Drought', 'Flash Fire']],
   ['hexabeake', 0, ['Levitate', 'Flame Body']],
+  ['missingno', 0, ['Download', 'Cursed Body']],
 ];
+// These Mons are built around their first ability (the weather / terrain setter), so their battle sets use it.
+const PRIMARY_ABILITY = ['nidomonk', 'storment', 'rensylk', 'missingno'];
 for (const f of FAMILIES) {
   const edits = MOVE_EDITS[f.key];
   if (edits) {
@@ -444,6 +448,7 @@ for (const [key, si, ab] of ABILITY_EDITS) {
   f.stages[si].abilities = ab;
   const last = f.stages[f.stages.length - 1];
   if (!last.abilities.includes(f.final.ability)) f.final.ability = last.abilities[0];
+  if (PRIMARY_ABILITY.includes(key)) f.final.ability = last.abilities[0];
 }
 
 // Routes: index i joins map point i and i+1 (0 = home town, 18 = Victory Summit).

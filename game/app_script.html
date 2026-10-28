@@ -181,7 +181,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'farm', 'dev', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'trophy', 'farm', 'dev', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -544,6 +544,18 @@ function translate(lines) {
         if (msg) out.push({text: msg, cls: 'info'});
         break;
       }
+      case '-fieldstart': {
+        const cond = (parts[1] || '').replace('move: ', '');
+        const msg = {'Electric Terrain': 'Electric current ran across the battlefield!', 'Grassy Terrain': 'Grass grew to cover the battlefield!', 'Misty Terrain': 'Mist swirled around the battlefield!', 'Psychic Terrain': 'The battlefield got weird!', 'Trick Room': 'The dimensions were twisted!', 'Gravity': 'Gravity intensified!'}[cond] || `${esc(cond)} started.`;
+        out.push({text: msg, cls: 'info'});
+        break;
+      }
+      case '-fieldend': {
+        const cond = (parts[1] || '').replace('move: ', '');
+        const msg = {'Electric Terrain': 'The electricity disappeared from the battlefield.', 'Grassy Terrain': 'The grass disappeared from the battlefield.', 'Misty Terrain': 'The mist disappeared from the battlefield.', 'Psychic Terrain': 'The weirdness disappeared from the battlefield.', 'Trick Room': 'The twisted dimensions returned to normal.'}[cond] || `${esc(cond)} ended.`;
+        out.push({text: msg, cls: 'info'});
+        break;
+      }
       case '-sidestart': {
         const cond = parts[2].replace('move: ', '');
         const team = teamOf(parts[1]);
@@ -707,8 +719,7 @@ function renderMultiCards() {
 function renderCards() {
   if (isMulti()) {
     renderMultiCards();
-    const w = battle.field.weather, wname = w ? (E.Dex.conditions.get(w).name || w) : '';
-    $('weather').textContent = wname ? `${wname === 'Snowscape' ? 'Snow' : wname} · ${battle.field.weatherState.duration || ''} turns left` : '';
+    renderField();
     return;
   }
   $('foeCard').classList.remove('multi'); $('myCard').classList.remove('multi');
@@ -721,9 +732,17 @@ function renderCards() {
   }
   $('foeCard').classList.toggle('hasart', !!(view[FOE].species && artOf(view[FOE].species)));
   $('myCard').classList.toggle('hasart', !!(view[ME].species && artOf(view[ME].species)));
-  const w = battle.field.weather;
-  const wname = w ? (E.Dex.conditions.get(w).name || w) : '';
-  $('weather').textContent = wname ? `${wname === 'Snowscape' ? 'Snow' : wname} · ${battle.field.weatherState.duration || ''} turns left` : '';
+  renderField();
+}
+// Weather and terrain: a label under the foe, and a tint on the whole battle screen.
+function renderField() {
+  const f = battle.field, bits = [];
+  const w = f.weather, tr = f.terrain;
+  if (w) { const n = E.Dex.conditions.get(w).name || w; bits.push(`${n === 'Snowscape' ? 'Snow' : n} · ${f.weatherState.duration || ''} turns left`); }
+  if (tr) { const n = (E.Dex.conditions.get(tr).name || tr).replace(/ Terrain$/, ''); bits.push(`${n} Terrain · ${f.terrainState.duration || ''} turns left`); }
+  $('weather').textContent = bits.join('  |  ');
+  const b = $('battle');
+  b.dataset.wx = w || ''; b.dataset.tr = tr || '';
 }
 
 function applyFx(fx) {
@@ -2864,6 +2883,7 @@ async function advBattleOver(won) {
     advResult(E4_FIGHTS[fight.stage.key].icon, E4_FIGHTS[fight.stage.key].color, `${E4_FIGHTS[fight.stage.key].title} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button>`);
   } else {
     A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
+    recordWin();
     champions[A.difficulty] = true; store.set('champions', champions);
     saveA();
     advResult('crown', CHAMP.color, 'Hall of Fame', `You beat the level ${fight.level} Champion and won ${money(CHAMP_PRIZE)}. Your team: ${A.team.map(m => esc(mset(m).species) + ' Lv ' + m.level).join(', ')}.`, null, `<button class="btn primary" id="aToMap">See the map</button>`);
@@ -3093,6 +3113,25 @@ function gloomOff() {
   gloomFx.stop(); gloomFx = null; clearTimeout(gloomFogT); clearInterval(gloomBeat);
   $('gloom').hidden = true; $('battle').classList.remove('gloomy');
 }
+// Victor's Trophy Case: every win at the Summit keeps the team that did it.
+function recordWin() {
+  if (!A.trophies) A.trophies = [];
+  A.trophies.push({t: Date.now(), diff: A.difficulty, summit: A.summit, rematch: A.rematch || 0, team: A.team.map(m => ({s: mset(m).species, l: m.level, lus: !!m.lustrous}))});
+}
+function openTrophies() {
+  const list = (A.trophies || []).slice().reverse(), total = A.trophies ? A.trophies.length : 0;
+  $('trophySub').textContent = `${Math.max(total, A.hof || 0)} win${Math.max(total, A.hof || 0) === 1 ? '' : 's'}`;
+  const lost = Math.max(0, (A.hof || 0) - total);
+  $('trophyBody').innerHTML = (list.length ? list.map((w, i) => {
+    const n = Math.max(0, (A.hof || 0) - total) + total - i, d = new Date(w.t).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+    return `<article class="trophy"><div class="tt"><b>Win #${n}${w.rematch ? ' · rematch' : ''}</b><small>${esc(d)}${w.diff ? ' · ' + esc(w.diff) : ''}</small></div>
+      <div class="tm">${w.team.map(m => `<div class="tmon">${artOf(m.s, m.lus)}<div>${esc(m.s)}${m.lus ? ' <i>◆</i>' : ''}</div><div>Lv ${m.l}</div></div>`).join('')}</div></article>`;
+  }).join('') : '<p class="note">Win the Victory Summit and the team you did it with is kept here.</p>')
+    + (lost && list.length ? `<p class="note">${lost} earlier win${lost === 1 ? ' was' : 's were'} before the case existed, so ${lost === 1 ? 'its team was' : 'their teams were'} not saved.</p>` : '');
+  show('trophy');
+}
+$('trophyBack').addEventListener('click', () => openSummit({keepAsk: true}));
+$('summitTrophy').addEventListener('click', openTrophies);
 async function devSummitWin() {
   A.e4pos = 4; A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
   champions[A.difficulty] = true; store.set('champions', champions);
@@ -3478,6 +3517,7 @@ function openSummit(opts = {}) {
   } else if (!opts.keepAsk && !A.summitNote && !summitOpen()) { A.summitNote = 1; saveA(); showTylerNote(); }
   const steps = summitSteps();
   if (!opts.keepAsk) summitAsk = false;
+  $('summitTrophy').hidden = !((A.trophies && A.trophies.length) || A.hof);
   $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
   const cleared = A.done ? 5 : A.e4pos < 4 ? A.e4pos : 4;
   // fights you can't reach yet stay a mystery until it's your turn
@@ -5198,7 +5238,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);

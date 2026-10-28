@@ -610,7 +610,24 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 
 .gloom { position: fixed; inset: 0; z-index: 9; pointer-events: none; overflow: hidden; background: radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(2,3,10,.72) 100%); }
 .gloom canvas, .champintro canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.trophy { background: var(--panel); border-radius: var(--r); padding: 12px; margin-bottom: 10px; border-left: 4px solid #e8b53a; }
+.trophy .tt { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.trophy .tt small { color: var(--muted); font-size: 12px; }
+.trophy .tm { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.trophy .tmon { background: var(--panel-2); border-radius: 10px; padding: 6px 4px; text-align: center; font-size: 11px; line-height: 1.2; }
+.trophy .tmon img, .trophy .tmon svg { width: 100%; max-width: 64px; height: 64px; object-fit: contain; }
+.trophy .tmon i { color: #e8b53a; font-style: normal; }
 #battle.gloomy .mon.fx-faint { opacity: .06; transform: translateY(16px) scale(.96); filter: blur(3px); transition: opacity 1.6s ease, transform 1.6s ease, filter 1.6s ease; }
+/* weather and terrain tint the whole battle screen */
+#battle { transition: box-shadow .6s ease; }
+#battle[data-wx="sunnyday"], #battle[data-wx="desolateland"] { box-shadow: inset 0 0 140px rgba(255,150,40,.38); }
+#battle[data-wx="raindance"], #battle[data-wx="primordialsea"] { box-shadow: inset 0 0 140px rgba(60,120,255,.38); }
+#battle[data-wx="sandstorm"] { box-shadow: inset 0 0 140px rgba(200,160,70,.4); }
+#battle[data-wx="snowscape"], #battle[data-wx="hail"], #battle[data-wx="snowscape"] { box-shadow: inset 0 0 140px rgba(200,235,255,.4); }
+#battle[data-tr="psychicterrain"] { box-shadow: inset 0 0 140px rgba(230,90,200,.36); }
+#battle[data-tr="electricterrain"] { box-shadow: inset 0 0 140px rgba(255,220,40,.36); }
+#battle[data-tr="grassyterrain"] { box-shadow: inset 0 0 140px rgba(80,200,80,.36); }
+#battle[data-tr="mistyterrain"] { box-shadow: inset 0 0 140px rgba(255,170,220,.34); }
 #battle.gloomy { filter: saturate(.55) brightness(.82) contrast(1.05); }
 .fog { position: absolute; top: 18%; left: -70%; width: 70%; height: 55%; opacity: 0; background: radial-gradient(ellipse at 50% 50%, rgba(190,200,225,.34), rgba(190,200,225,.12) 45%, transparent 70%); filter: blur(18px); }
 .fog.fog2 { top: 45%; height: 45%; }
@@ -1054,10 +1071,19 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <section class="screen" id="summit" hidden>
     <div class="maphead">
       <div class="mapttl"><small id="summitSub"></small><span>Victory Summit</span></div>
-      <div class="row"><button class="ghost" id="summitTeam">Team</button><button class="ghost" id="summitLeave">Leave</button></div>
+      <div class="row"><button class="ghost" id="summitTrophy" hidden>Trophies</button><button class="ghost" id="summitTeam">Team</button><button class="ghost" id="summitLeave">Leave</button></div>
     </div>
     <div class="mapwrap"><svg id="summitSvg" viewBox="0 0 360 420" role="img" aria-label="Victory Summit map"></svg></div>
     <div class="nextbar" id="summitBar"></div>
+  </section>
+
+  <!-- VICTOR'S TROPHY CASE -->
+  <section class="screen" id="trophy" hidden>
+    <div class="maphead">
+      <div class="mapttl"><small id="trophySub"></small><span>Victor's Trophy Case</span></div>
+      <div class="row"><button class="ghost" id="trophyBack">Back</button></div>
+    </div>
+    <div class="scroll"><div class="trailbody" id="trophyBody"></div></div>
   </section>
 
   <!-- ADVENTURE: DEVELOPER TOOLS -->
