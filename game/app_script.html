@@ -2312,7 +2312,7 @@ function renderAdvNextBarMain() {
     return;
   }
   const sp = speakerFor(st);
-  const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? e4Lv(A.e4pos) : champLv();
+  const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? e4Lv(A.e4pos) : ((window.__neoTest && window.__neoTest.champLv) || champLv());
   const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `Victory Summit · level ${lv}`;
   const label = st.kind === 'gym' ? `Challenge ${LEADERS[st.key].first}` : '';   // gyms only: the Summit has its own button
   if (st.kind !== 'gym') {   // the Elite Four and the Champion are fought on the Victory Summit map
