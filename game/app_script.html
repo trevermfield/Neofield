@@ -403,7 +403,7 @@ async function play() {
     if (ev.fx) applyFx(ev.fx);
     if (ev.after) await ev.after();
     if (gen !== battleGen) return;
-    if (ev.text && !skip) await sleep(ev.wait || (ev.cls === 'turn' ? 150 : 520));
+    if (ev.text && !skip && !(window.__neoTest && window.__neoTest.fast)) await sleep(ev.wait || (ev.cls === 'turn' ? 150 : 520));
   }
   if (gen !== battleGen) return;
   playing = false;
@@ -2958,6 +2958,7 @@ async function championRevealEnd() {
   if (!ciClose) return;
   const c = ciClose; ciClose = null; await c();
 }
+let lastRevealClose = 0;   // when the last reveal finished fading out
 async function championReveal(species) {
   const f = ctx && ctx.fight;
   if (!f || f.type !== 'champion') return;
@@ -2971,7 +2972,8 @@ async function championReveal(species) {
   const col = TYPE_COLORS[E.Dex.species.get(species).types[0]] || '#999';
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
   $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
-  await sleep(sleepBefore);
+  const T = window.__neoTest;   // test mode only: the video recorder asks for an exact pause between reveals
+  if (T && T.revealGap) await sleep(Math.max(0, lastRevealClose + T.revealGap - Date.now())); else await sleep(sleepBefore);
   el.style.opacity = '0'; el.hidden = false; el.classList.remove('out'); void el.offsetWidth; el.style.opacity = '1';
   const fx = gloomFX($('ciCanvas'));
   stage.innerHTML = `<div class="ciMon" style="--c:${col}"><span class="ciArt${last ? ' dark' : ''}">${artOf(species)}</span><b>${last ? '? ? ?' : esc(species)}</b><small>${last ? 'It is always there.' : esc(CI_LINES[id])}</small></div>`;
@@ -2979,12 +2981,12 @@ async function championReveal(species) {
   requestAnimationFrame(() => requestAnimationFrame(() => { const a = stage.querySelector('.ciArt'); if (a && !last) a.classList.add('lit'); }));
   await new Promise(r => {
     release = r;
-    const tm = setTimeout(r, reducedMotion() ? 600 : 7500);
+    const tm = setTimeout(r, reducedMotion() ? 600 : 8500);
     setTimeout(() => el.addEventListener('click', () => { clearTimeout(tm); r(); }, {once: true}), 900);
   });
   ciClose = async () => {
     el.style.opacity = '0'; await sleep(reducedMotion() ? 0 : 900);
-    fx.stop(); el.hidden = true; el.style.opacity = ''; stage.innerHTML = '';
+    fx.stop(); el.hidden = true; el.style.opacity = ''; stage.innerHTML = ''; lastRevealClose = Date.now();
     await sleep(400);
   };
 }
