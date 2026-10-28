@@ -2181,12 +2181,13 @@ function questOverlay() {
   return svg;
 }
 // Once the Elite Four challenge has begun, the only way off the Victory Summit is to forfeit it.
-const summitLocked = () => !!(A && A.dev && A.regional && !A.done && A.pos >= 17 && A.e4pos > 0);
+const summitLocked = () => !!(A && A.regional && !A.done && A.pos >= 17 && A.e4pos > 0);
 let summitAsk = false;
 function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
   if (summitLocked() && !force) { openSummit(); return; }
   hallOff();
+  if (A.regional && A.pos >= 16) { bgmPreload('rising'); bgmPreload('hall'); }   // the Victory Summit walk and hall music are ready before you get there
   mapMode = 'adventure';
   mapFromBattle = !!fromBattle;
   const st = aStage();
@@ -3026,17 +3027,31 @@ function gloomFX(canvas, ash) {
 }
 // background music: a looping track decoded once and looped without a gap (follows the Sound setting)
 let bgm = null; const bgmBuf = {};
+// Decode a music track ahead of time so a slow connection can never leave the Summit walk silent
+function bgmLoad(name) {
+  if (!bgmBuf[name]) {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    bgmBuf[name] = fetch(`music/${name}.mp3`).then(r => { if (!r.ok) throw new Error('music ' + r.status); return r.arrayBuffer(); }).then(a => audio.decodeAudioData(a));
+    bgmBuf[name].catch(() => { delete bgmBuf[name]; });   // a failed download is tried again next time
+  }
+  return bgmBuf[name];
+}
+function bgmPreload(name) { if (evoSound) try { bgmLoad(name).catch(() => {}); } catch (e) {} }
+// phones keep the audio engine asleep until a tap: wake it on the first touch, so music started by the game itself is never stuck silent
+['pointerdown', 'touchend', 'keydown'].forEach(ev => addEventListener(ev, () => { try { if (audio && audio.state !== 'running') audio.resume(); } catch (e) {} }, {passive: true, capture: true}));
 async function bgmStart(name, o = {}) {
   if (!evoSound || bgm) return;
   const token = bgm = {name};
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume();
-    if (!bgmBuf[name]) bgmBuf[name] = await fetch(`music/${name}.mp3`).then(r => r.arrayBuffer()).then(a => audio.decodeAudioData(a));
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') { try { await Promise.race([audio.resume(), new Promise(r => setTimeout(r, 400))]); } catch (e) {} }
+    let buf;
+    try { buf = await bgmLoad(name); } catch (e) { buf = await bgmLoad(name); }   // one more try if the first download failed
     if (bgm !== token) return;
     const src = audio.createBufferSource(), g = audio.createGain();
-    src.buffer = bgmBuf[name]; src.loop = o.loop !== false;
+    src.buffer = buf; src.loop = o.loop !== false;
     g.gain.setValueAtTime(0, audio.currentTime); g.gain.linearRampToValueAtTime(o.vol || .6, audio.currentTime + (o.fade || 3));
-    src.connect(g).connect(audio.destination); src.start();
+    src.connect(g).connect(audio.destination); src.start();   // if the engine is still asleep it starts the moment the first tap wakes it
     token.src = src; token.gain = g;
   } catch (e) { if (bgm === token) bgm = null; }
 }
@@ -5183,7 +5198,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
