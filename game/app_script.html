@@ -2256,6 +2256,7 @@ const summitLocked = () => !!(A && A.regional && !A.done && A.pos >= 17 && A.e4p
 let summitAsk = false;
 function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
+  fixAbilities();
   if (summitLocked() && !force) { openSummit(); return; }
   hallOff();
   if (A.regional && A.pos >= 16) { bgmPreload('rising'); bgmPreload('hall'); }   // the Victory Summit walk and hall music are ready before you get there
@@ -3970,15 +3971,17 @@ function startRegionalAdventure(name, famKey, lus) {
   saveA();
   openAdvMap({msg: 'You are on Route 1. Beat one wild Mon to reach the next town.'});
 }
+function fixAbilities() {   // Mons that were built around a weather / terrain ability use it (older saves kept the second ability)
+  if (!A || !E || A.abilFix === 1 || !A.team) return;   // E is the game engine: it may not be loaded yet when a save first opens
+  for (const m of [...A.team, ...(A.box || [])]) {
+    const k = ['nidomonk', 'storment', 'rensylk', 'missingno'].find(k => m.final && E.familyOf(k).finalSet.species === m.final.species);
+    if (k) m.final.ability = E.familyOf(k).finalSet.ability;
+  }
+  A.abilFix = 1; saveA();
+}
 function migrateA() {
   if (!A) return;
-  if (A.abilFix !== 1 && A.team) {   // Mons that were built around a weather / terrain ability use it (older saves kept the second ability)
-    for (const m of [...A.team, ...(A.box || [])]) {
-      const k = ['nidomonk', 'storment', 'rensylk', 'missingno'].find(k => m.final && E.familyOf(k).finalSet.species === m.final.species);
-      if (k) m.final.ability = E.familyOf(k).finalSet.ability;
-    }
-    A.abilFix = 1;
-  }
+  fixAbilities();
   A.box = A.box || []; A.dex = A.dex || {seen: {}, caught: {}};
   if (A.loc === undefined) A.loc = null;
   A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
