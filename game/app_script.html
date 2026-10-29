@@ -1333,6 +1333,11 @@ function statBlock(set, sp, title) {
   return `<div><div class="lbl">${esc(title)}</div><div class="statgrid">${rows}</div><div class="statnote">Base stats: ${base} (total ${STAT_ORDER.reduce((a, s) => a + sp.baseStats[s], 0)})</div></div>`;
 }
 
+// every ability the Mon can have, the hidden one last; the one it has now is bright
+function abilityLine(sp, current) {
+  const names = [sp.abilities[0], sp.abilities[1], sp.abilities.H].filter(Boolean);
+  return names.map(n => n === current ? `<span style="color:var(--fg)">${esc(n)}</span>` : esc(n)).join(', ');
+}
 function dexCard(set, idx) {
   const sp = E.Dex.species.get(set.species);
   const item = set.item ? E.Dex.items.get(set.item) : null;
@@ -1364,7 +1369,7 @@ function dexCard(set, idx) {
   }).join('');
   return `<details class="dex" ${idx === 0 ? 'open' : ''}>
     <summary><span class="nm">${esc(sp.name)}</span><span class="chev"></span>
-      <span class="sub">${typesHTML(sp.types)} ${item ? '· ' + esc(item.name) : ''} · ${esc(ab.name)}</span></summary>
+      <span class="sub">${typesHTML(sp.types)} ${item ? '· ' + esc(item.name) : ''} · ${abilityLine(sp, ab.name)}</span></summary>
     <div class="dexbody">
       <div class="kv"><div class="lbl">Held item</div><p><b>${item ? esc(item.name) : 'None'}</b>${item ? ': <span>' + esc(item.shortDesc || item.desc) + '</span>' : ''}</p></div>
       <div class="kv"><div class="lbl">Ability</div><p><b>${esc(ab.name)}:</b> <span>${esc(ab.shortDesc || ab.desc)}</span></p></div>
@@ -2256,7 +2261,7 @@ const summitLocked = () => !!(A && A.regional && !A.done && A.pos >= 17 && A.e4p
 let summitAsk = false;
 function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
-  fixAbilities();
+  fixAbilities(); if (E) syncDexFromTeam();
   if (summitLocked() && !force) { openSummit(); return; }
   hallOff();
   if (A.regional && A.pos >= 16) { bgmPreload('rising'); bgmPreload('hall'); }   // the Victory Summit walk and hall music are ready before you get there
@@ -4052,10 +4057,13 @@ function syncDexFromTeam() {
     for (let i = 0; sp && sp.exists && i < 4; i++) {
       const id = toId(sp.name); A.dex.seen[id] = 1;
       // a Lustrous Mon earns the yellow diamond; only a normal one earns the red dot
-      if (m.lustrous) { (A.dex.lus = A.dex.lus || {})[id] = 1; (A.dex.lusCaught = A.dex.lusCaught || {})[id] = 1; } else A.dex.caught[id] = 1;
+      // a Lustrous catch counts as a catch too: it earns the red dot as well as the yellow diamond
+      if (m.lustrous) { (A.dex.lus = A.dex.lus || {})[id] = 1; (A.dex.lusCaught = A.dex.lusCaught || {})[id] = 1; }
+      A.dex.caught[id] = 1;
       sp = sp.prevo ? E.Dex.species.get(sp.prevo) : null;
     }
   }
+  for (const id of Object.keys(A.dex.lusCaught || {})) A.dex.caught[id] = 1;   // saves from before: a Lustrous catch alone now counts as caught
 }
 
 // --- routes ---
