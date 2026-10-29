@@ -4115,8 +4115,8 @@ function openRoute(r) {
   openAdvMap({});
   if (r === 6 && A.regional && !A.cryoGift) oklaAide();
 }
-// Route 7: Prof. Okla's aide brings a revived fossil Mon to your Farm (once). The aide's picture comes later: for now they speak behind an emblem.
-const OKLA_AIDE = {name: "Prof. Okla's Aide", key: null, color: '#b8b29a', icon: 'star'};
+// Route 7: Prof. Okla's aide brings a revived fossil Mon to your Farm (once).
+const OKLA_AIDE = {name: "Prof. Okla's Aide", key: null, color: '#b8b29a', icon: 'star', svg: '<img src="portraits/okla-aide.jpg" alt="">'};
 async function oklaAide() {
   A.cryoGift = true;
   const m = E.newMember('cryodon', 25);
@@ -5313,7 +5313,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
