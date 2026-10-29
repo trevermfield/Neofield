@@ -3972,6 +3972,13 @@ function startRegionalAdventure(name, famKey, lus) {
 }
 function migrateA() {
   if (!A) return;
+  if (A.abilFix !== 1 && A.team) {   // Mons that were built around a weather / terrain ability use it (older saves kept the second ability)
+    for (const m of [...A.team, ...(A.box || [])]) {
+      const k = ['nidomonk', 'storment', 'rensylk', 'missingno'].find(k => m.final && E.familyOf(k).finalSet.species === m.final.species);
+      if (k) m.final.ability = E.familyOf(k).finalSet.ability;
+    }
+    A.abilFix = 1;
+  }
   A.box = A.box || []; A.dex = A.dex || {seen: {}, caught: {}};
   if (A.loc === undefined) A.loc = null;
   A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
@@ -4049,7 +4056,7 @@ function syncDexFromTeam() {
 }
 
 // --- routes ---
-const routeOpen = r => A && A.regional && (A.done || r <= Math.min(A.pos, 17));
+const routeOpen = r => A && A.regional && (A.done || A.hof > 0 || r <= Math.min(A.pos, 17));
 const routeLevel = r => r === 0 ? 5 : r >= 17 ? 58 : GYM_LV[r - 1];
 const placeName = i => i === 0 ? HOME : i <= 17 ? TOWNS[A.order[i - 1]] : LEAGUE;
 function routeOverlay() {
@@ -4120,7 +4127,9 @@ const OKLA_LINES = {
   win: ['Incredible... beaten by my own student. I could not be prouder.', "Take this prize. And one more thing: the shore near my lab has started to glitch, and strange blocks of light float over the water. Something that belongs to no type at all lives there. Be careful if you go looking."],
   winAgain: ['Ha! Beaten again. You truly are the best there is. Come back whenever you like.'],
 };
-const labOn = () => !!(A && A.regional && A.done);
+// once the Champion has been beaten, Route 0, the lab and every route stay open for good (a Summit rematch or a forfeit never closes them)
+const beatenOnce = () => !!(A && A.regional && (A.done || A.hof > 0 || (A.lab && A.lab.beat)));
+const labOn = () => beatenOnce();
 const labS = () => A.lab || (A.lab = {});
 function labPlace() { const l = labOn() ? labS() : null; return l && l.at; }
 function labRoad() { const a = mapPoints()[0], c = {x: (a.x + LAB.x) / 2, y: Math.min(a.y, LAB.y) - 26}; return {a, c, d: `M${a.x} ${a.y} Q${c.x} ${c.y} ${LAB.x} ${LAB.y}`, mid: {x: .25 * a.x + .5 * c.x + .25 * LAB.x, y: .25 * a.y + .5 * c.y + .25 * LAB.y}}; }
@@ -5293,7 +5302,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
