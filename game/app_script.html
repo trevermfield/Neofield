@@ -752,7 +752,18 @@ function wxStart(kinds, announce) {
   size();
   const R = Math.random, parts = [];
   const spec = {
-    sunnyday: {n: 38, mk: () => ({x: R() * W, y: R() * H, r: 1.5 + R() * 3, v: .15 + R() * .35, ph: R() * 6.3}), draw(p, t) { p.y -= p.v; p.x += Math.sin(t / 1400 + p.ph) * .3; if (p.y < -5) { p.y = H + 5; p.x = R() * W; } cx.fillStyle = `rgba(255,${200 + 40 * R() | 0},110,${.25 + .25 * Math.sin(t / 700 + p.ph)})`; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.3); cx.fill(); }, under(t) { const g = cx.createRadialGradient(W * .85, -20, 10, W * .85, -20, H * .9); g.addColorStop(0, `rgba(255,220,120,${.5 + .08 * Math.sin(t / 900)})`); g.addColorStop(.5, 'rgba(255,170,60,.12)'); g.addColorStop(1, 'rgba(255,170,60,0)'); cx.fillStyle = g; cx.fillRect(0, 0, W, H); }},
+    sunnyday: {n: 0, mk: () => ({}), draw() {}, under(t) {   // a soft glow in the top corner and a few sun rays that shine and shift
+      const ox = W * .88, oy = -30, g = cx.createRadialGradient(ox, oy, 10, ox, oy, H * .8);
+      g.addColorStop(0, `rgba(255,220,120,${.32 + .05 * Math.sin(t / 1200)})`); g.addColorStop(.5, 'rgba(255,175,70,.07)'); g.addColorStop(1, 'rgba(255,175,70,0)');
+      cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+      for (let k = 0; k < 5; k++) {
+        const a = 1.95 + k * .17 + Math.sin(t / 5000 + k * 1.7) * .05, w = .05 + .02 * Math.sin(t / 3500 + k), len = H * 1.4;
+        const al = .07 + .08 * (Math.sin(t / 2200 + k * 2.1) + 1) / 2;
+        const lg = cx.createLinearGradient(ox, oy, ox + Math.cos(a) * len, oy + Math.sin(a) * len);
+        lg.addColorStop(0, `rgba(255,236,160,${al})`); lg.addColorStop(1, 'rgba(255,236,160,0)');
+        cx.fillStyle = lg; cx.beginPath(); cx.moveTo(ox, oy); cx.lineTo(ox + Math.cos(a - w) * len, oy + Math.sin(a - w) * len); cx.lineTo(ox + Math.cos(a + w) * len, oy + Math.sin(a + w) * len); cx.closePath(); cx.fill();
+      }
+    }},
     raindance: {n: 150, mk: () => ({x: R() * (W + 120), y: R() * H, v: 16 + R() * 12, l: 14 + R() * 18, a: .25 + R() * .35}), draw(p) { cx.strokeStyle = `rgba(150,190,255,${p.a})`; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - p.l * .25, p.y + p.l); cx.stroke(); p.y += p.v; p.x -= p.v * .25; if (p.y > H) { p.y = -30; p.x = R() * (W + 120); } }, under() { cx.fillStyle = 'rgba(20,40,90,.14)'; cx.fillRect(0, 0, W, H); }},
     sandstorm: {n: 130, mk: () => ({x: R() * W, y: R() * H, v: 9 + R() * 12, r: .8 + R() * 1.8, a: .25 + R() * .4}), draw(p, t) { cx.fillStyle = `rgba(214,172,96,${p.a})`; cx.fillRect(p.x, p.y, p.r * 5, p.r); p.x += p.v; p.y += Math.sin(t / 500 + p.x) * .6; if (p.x > W + 10) { p.x = -10; p.y = R() * H; } }, under() { cx.fillStyle = 'rgba(190,140,60,.16)'; cx.fillRect(0, 0, W, H); }},
     snowscape: {n: 90, mk: () => ({x: R() * W, y: R() * H, v: 1 + R() * 2, r: 1.2 + R() * 2.6, ph: R() * 6.3}), draw(p, t) { cx.fillStyle = 'rgba(255,255,255,.8)'; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.3); cx.fill(); p.y += p.v; p.x += Math.sin(t / 900 + p.ph) * .8; if (p.y > H + 5) { p.y = -5; p.x = R() * W; } }, under() { cx.fillStyle = 'rgba(200,225,255,.1)'; cx.fillRect(0, 0, W, H); }},
