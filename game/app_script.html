@@ -2270,7 +2270,7 @@ function questOverlay() {
 }
 // Once the Elite Four challenge has begun, the only way off the Victory Summit is to forfeit it.
 const summitLocked = () => !!(A && A.regional && !A.done && A.pos >= 17 && A.e4pos > 0);
-let summitAsk = false;
+let summitAsk = false, ngAsk = false;
 function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
   fixAbilities(); if (E) syncDexFromTeam();
@@ -3607,7 +3607,7 @@ function openSummit(opts = {}) {
     introNext = true; showTylerNote(true);
   } else if (!opts.keepAsk && !A.summitNote && !summitOpen()) { A.summitNote = 1; saveA(); showTylerNote(); }
   const steps = summitSteps();
-  if (!opts.keepAsk) summitAsk = false;
+  if (!opts.keepAsk) { summitAsk = false; ngAsk = false; }
   $('summitTrophy').hidden = !((A.trophies && A.trophies.length) || A.hof);
   $('summitHall').hidden = !(A.done || A.hof);
   $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
@@ -3649,7 +3649,8 @@ function openSummit(opts = {}) {
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
     <button class="btn primary" id="sRematch">Rematch the Summit</button>
-    <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>`;
+    <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>
+    ${ngAsk ? `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Start New Game+?</b><small>Your team, items and money are replaced by a fresh start with one Mon. Your MonDex (red dots, gold diamonds and blue stars) and your Victory Hall times come with you.</small></div></div><div class="row"><button class="btn primary" id="sNgYes">Yes, start over</button><button class="btn" id="sNgNo">Not now</button></div>` : `<button class="btn" id="sNewPlus">New Game+</button>`}`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
@@ -3675,6 +3676,13 @@ $('summitBar').addEventListener('click', e => {
   else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sDevNote') showTylerNote();
   else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA(); openSummit(); }
+  else if (e.target.id === 'sNewPlus') { ngAsk = true; openSummit({keepAsk: true}); }
+  else if (e.target.id === 'sNgNo') { ngAsk = false; openSummit({keepAsk: true}); }
+  else if (e.target.id === 'sNgYes') {
+    ngAsk = false; syncDexFromTeam();
+    ngCarry = {dex: JSON.parse(JSON.stringify(A.dex)), ng: (A.ng || 0) + 1, name: A.playerName, trophies: A.trophies || [], hof: A.hof || 0};
+    newAdvDiff = A.difficulty; hallOff(); openProfessor();
+  }
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
     summitAsk = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA();
@@ -3934,12 +3942,19 @@ function labSceneHTML() {
     <div class="prof"><img src="portraits/okla-full.png" alt=""></div><div class="ballrow">${BALL_SVG.repeat(3).replace(/ballicon/g, 'ballicon" style="width:26px;height:26px')}</div></div>`;
 }
 let introName = '', introPick = null, introLus = {};
+let ngCarry = null;   // New Game+: what comes with you into the next adventure (the MonDex progress)
 async function openProfessor() {
   introPick = null; introName = '';
-  introLus = {}; for (const f of E.STARTERS) introLus[f.key] = E.rollLustrous(f.stages[0].id, true, LUS_RATES[newAdvDiff]);   // rolled now, so you can see it before you choose
+  introLus = {}; for (const f of E.STARTERS) introLus[f.key] = E.rollLustrous(f.stages[0].id, true, LUS_RATES[newAdvDiff] + (ngCarry ? ngCarry.ng * .01 : 0));   // rolled now, so you can see it before you choose
   setAccent(PROF.color);
   $('introStage').innerHTML = labSceneHTML();
   show('intro');
+  if (ngCarry) {   // New Game+: a short welcome, then straight to the starters
+    introName = ngCarry.name;
+    await talk(PROF, [`${introName}! You are back! Ready for another journey?`, 'You start over with just one Mon. But your MonDex remembers everything: every Mon you caught, every Lustrous, every level 100.', 'Choose your partner!']);
+    showStarters();
+    return;
+  }
   await talk(PROF, [
     'Hello there! Welcome to the world of Mons!',
     "My name is Okla. Everyone around here calls me the Mon Professor.",
@@ -3999,10 +4014,11 @@ $('introStage').addEventListener('click', async e => {
 function startRegionalAdventure(name, famKey, lus) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
-    team: [E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus)], box: [], dex: {seen: {}, caught: {}}, loc: null,
+    team: [E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus)], box: [], dex: ngCarry ? ngCarry.dex : {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: summitForName(name),
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
+  if (ngCarry) { A.ng = ngCarry.ng; A.trophies = ngCarry.trophies; A.hof = ngCarry.hof; ngCarry = null; }
   if (A.summit === 'open') setupOpenSummit();
   touchProfile({name});
   saveA();
