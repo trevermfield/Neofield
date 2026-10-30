@@ -3361,7 +3361,7 @@ $('result').addEventListener('click', e => {
   const id = e.target.id;
   if (id === 'fNo') { $('overlay').hidden = true; return; }
   if (id === 'fYes' && ctx) { $('overlay').hidden = true; ctx.forfeitOk = true; forfeitArmed = true; $('forfeit').click(); return; }
-  if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aTrailAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain'].includes(id)) return;
+  if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aTrailAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain', 'aLabAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
   endBattleQuietly(); ctx = null;
