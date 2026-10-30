@@ -2860,6 +2860,7 @@ async function advBattleOver(won) {
       return;
     }
     A.shamburg.done[fight.sham] = true; A.shamburg.step[fight.sham] = 0;
+    if (fight.sham === 2) await talk({name: S.trainers[k][0], key: SHAM_ART[S.trainers[k][0]] || null, color: SHAM_COLOR, icon: 'star'}, [`You have the strongest Mons I've ever faced. They would have been a great army for me. My team had discovered a dark force that replicated strong Mons. But it sought a stronger power of its own. I see now the power is in you, but I sense a darkness as well. We shall meet again.`]);
     const arrived = A.regional && A.travelled < advDest() && S.route === advDest() - 1;
     if (arrived) A.travelled = advDest();
     saveA();
@@ -2874,6 +2875,7 @@ async function advBattleOver(won) {
     const through = TRAIL_TRAINERS.every((_, i) => A.trail.t[i]) && A.travelled < advDest();
     if (through) A.travelled = advDest();
     saveA();
+    if (fight.idx === TRAIL_TRAINERS.length - 1) await talk({name: TRAIL_TRAINERS[fight.idx], key: TRAINER_ART[TRAIL_TRAINERS[fight.idx]] || null, color: '#e8c76a', icon: 'crown'}, [`That was some fight! You're ruthless. Mons are only as strong as their trainer. I hear the new Champion is ruthless too. Dig deep inside you and find the light to win! You're ready.`]);
     const lines = await showGrowth(xpEvents);
     advResult('crown', '#e8c76a', `${TRAIL_TRAINERS[fight.idx]} defeated`, `You won ${money(prize)}.${through ? ` That was the last trainer. You can now go to ${esc(LEAGUE)}.` : ''}`, lines,
       `${through ? `<button class="btn primary" id="aToMapTown">Go to ${esc(LEAGUE)}</button>` : ''}<button class="btn ${through ? '' : 'primary'}" id="aToTrail">Back to the ${TRAIL}</button>`);
@@ -4269,6 +4271,8 @@ async function shamFight(k) {
   const boss = n === S.trainers.length - 1 && k === 2;
   await talk(speaker, n === 0
     ? [`Hold it right there! We are Team Shamburg, and we take Mons from trainers who are not strong enough to keep them.`, `Your Mons look strong. Hand them over, or beat all ${S.trainers.length} of us!`]
+    : t[0] === 'Shamburg Lieutenant Addi' ? [`You think you're special? My boss has top secret plans for your Mons. Hand them over!`]
+    : t[0] === 'Shamburg Lieutenant Kathi' ? [`You'll pay for spoiling our plans. The Boss had everything lined up, the ultimate power! Now you'll never know what he discovered!`]
     : boss ? [`So you got past my team. I am the boss of Team Shamburg. No trainer has ever kept their Mons after facing me!`]
     : [`You beat my partner? Then you still have to get past me. No healing, no breaks!`]);
   const sets = SHAM_TEAMS[t[0]].map(n => E.monOf(n, lv));
