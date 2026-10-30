@@ -405,6 +405,13 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .routemon small { color: var(--muted); font-size: 11px; }
 .caughtdot { color: #e25b4f; font-weight: 800; }
 .lusdot { color: #ffd60a; font-weight: 800; }
+.stardot { color: #4a8cff; font-weight: 800; }
+.vhrow { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; background: var(--panel); border-radius: var(--r); padding: 10px 12px; margin-bottom: 8px; border-left: 4px solid #e8b53a; }
+.vhrow .rk { font-size: 22px; font-weight: 800; color: #e8b53a; text-align: center; }
+.vhrow .tm { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.vhrow small { color: var(--muted); display: block; font-size: 12px; }
+.vhrow .mini { display: flex; gap: 2px; margin-top: 4px; }
+.vhrow .mini img, .vhrow .mini svg { width: 26px; height: 26px; object-fit: contain; }
 /* ---------- catching ---------- */
 .catchbox { display: flex; flex-direction: column; gap: 10px; align-items: stretch; text-align: center; padding: 6px 0; }
 .catchbox p { margin: 0; font-size: 15px; }
@@ -1078,7 +1085,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <section class="screen" id="summit" hidden>
     <div class="maphead">
       <div class="mapttl"><small id="summitSub"></small><span>Victory Summit</span></div>
-      <div class="row"><button class="ghost" id="summitTrophy" hidden>Trophies</button><button class="ghost" id="summitTeam">Team</button><button class="ghost" id="summitLeave">Leave</button></div>
+      <div class="row"><button class="ghost" id="summitHall" hidden>Victory Hall</button><button class="ghost" id="summitTrophy" hidden>Trophies</button><button class="ghost" id="summitBag">Bag</button><button class="ghost" id="summitTeam">Team</button><button class="ghost" id="summitLeave">Leave</button></div>
     </div>
     <div class="mapwrap"><svg id="summitSvg" viewBox="0 0 360 420" role="img" aria-label="Victory Summit map"></svg></div>
     <div class="nextbar" id="summitBar"></div>
@@ -1091,6 +1098,15 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       <div class="row"><button class="ghost" id="trophyBack">Back</button></div>
     </div>
     <div class="scroll"><div class="trailbody" id="trophyBody"></div></div>
+  </section>
+
+  <!-- VICTORY HALL: the five fastest wins -->
+  <section class="screen" id="vhall" hidden>
+    <div class="maphead">
+      <div class="mapttl"><small id="vhallSub"></small><span>Victory Hall</span></div>
+      <div class="row"><button class="ghost" id="vhallBack">Back</button></div>
+    </div>
+    <div class="scroll"><div class="trailbody" id="vhallBody"></div></div>
   </section>
 
   <!-- ADVENTURE: DEVELOPER TOOLS -->

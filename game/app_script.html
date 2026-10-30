@@ -181,7 +181,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'trophy', 'farm', 'dev', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'trophy', 'vhall', 'farm', 'dev', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { if (id !== 'battle' && typeof wxStop === 'function') wxStop(); curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -1333,10 +1333,9 @@ function statBlock(set, sp, title) {
   return `<div><div class="lbl">${esc(title)}</div><div class="statgrid">${rows}</div><div class="statnote">Base stats: ${base} (total ${STAT_ORDER.reduce((a, s) => a + sp.baseStats[s], 0)})</div></div>`;
 }
 
-// every ability the Mon can have, the hidden one last; the one it has now is bright
+// the ability the Mon has now
 function abilityLine(sp, current) {
-  const names = [sp.abilities[0], sp.abilities[1], sp.abilities.H].filter(Boolean);
-  return names.map(n => n === current ? `<span style="color:var(--fg)">${esc(n)}</span>` : esc(n)).join(', ');
+  return esc(current || sp.abilities[0]);   // a Mon shows only the ability it has
 }
 function dexCard(set, idx) {
   const sp = E.Dex.species.get(set.species);
@@ -2204,9 +2203,10 @@ const SHAM_ART = {'Shamburg Grunt Foster': 's-foster', 'Shamburg Grunt Miranda':
   'Shamburg Lieutenant Addi': 's-addi', 'Shamburg Grunt Savannah': 's-savannah', 'Shamburg Grunt Merrit': 's-merrit', 'Shamburg Lieutenant Kathi': 's-kathi', 'Boss Greg': 's-greg'};
 const SHAM_GROUP = ['s-group1', 's-group2', null];
 // The side quest trainers' first names (from the portrait file names in the Quest Trainers folder)
-const TRAINER_NAMES = {'Bug Catcher': 'Kip', 'Spelunker': 'Cara', 'Hiker': 'Ron', 'Fisher': 'Mia', 'Desert Nomad': 'Aziz', 'Fire Breather': 'Troy', 'Swamp Guide': 'Hank', 'Skier': 'Jess',
+const TRAINER_NAMES = {'Bug Catcher': 'Kendall', 'Spelunker': 'Elsie', 'Hiker': 'Will', 'Fisher': 'Katie', 'Desert Nomad': 'Drew', 'Fire Breather': 'Adam', 'Swamp Guide': 'Hank', 'Skier': 'Jess',
   'Ruin Maniac': 'Nick', 'Swimmer': 'Beth', 'Storm Chaser': 'Tabby', 'Night Watcher': 'Edward', 'Bird Keeper': 'Robin', 'Mechanic': 'Bo', 'Picnicker': 'Yvette', 'Dragon Tamer': 'Rayne'};
-const qName = q => q.legend || !TRAINER_NAMES[q.trainer] ? q.trainer : `${q.trainer} ${TRAINER_NAMES[q.trainer]}`;
+const TRAINER_TITLE = {'Desert Nomad': 'Biker'};   // shown name only; saves keep the old key
+const qName = q => q.legend || !TRAINER_NAMES[q.trainer] ? q.trainer : `${TRAINER_TITLE[q.trainer] || q.trainer} ${TRAINER_NAMES[q.trainer]}`;
 const TRAINER_ART = {'Bug Catcher': 't-bugcatcher', 'Spelunker': 't-spelunker', 'Hiker': 't-hiker', 'Fisher': 't-fisher', 'Desert Nomad': 't-desertnomad', 'Fire Breather': 't-firebreather',
   'Swamp Guide': 't-swampguide', 'Skier': 't-skier', 'Ruin Maniac': 't-ruinmaniac', 'Swimmer': 't-swimmer', 'Storm Chaser': 't-stormchaser', 'Night Watcher': 't-nightwatcher',
   'Bird Keeper': 't-birdkeeper', 'Mechanic': 't-mechanic', 'Picnicker': 't-picnicker', 'Dragon Tamer': 't-dragontamer', 'Ace Trainer Mira': 't-acetrainer',
@@ -2366,6 +2366,7 @@ function advFight(fight) {
   if (A.team.every(m => m.frac <= 0)) advHealAll();
   // rolled once, just before the battle starts, so the picture never changes mid-battle; a legendary re-rolls every time you enter its battle
   if (fight.catchable) { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || fight.type === 'labWild' || A.dex.seen[id], lusRate()); }
+  if (fight.type === 'e4' || fight.type === 'champion') fight.t0 = performance.now();   // the Victory Hall clock only runs while a Summit battle is on
   ctx = {kind: 'adventure', fight};
   foe = fight.foe;
   const sets = advSets();
@@ -2786,11 +2787,12 @@ function advResult(icon, color, title, text, lines, buttons) {
 
 async function advBattleOver(won) {
   const fight = ctx.fight;
+  if (fight.t0) { A.runMs = (A.runMs || 0) + Math.round(performance.now() - fight.t0); fight.t0 = 0; }
   readAdvHP();
   saveA();
   if (!won) {
     advHealAll(); A.loc = null; A.townAt = null;
-    if (fight.type === 'e4' || fight.type === 'champion') A.e4pos = 0;
+    if (fight.type === 'e4' || fight.type === 'champion') { A.e4pos = 0; A.runMs = 0; }
     if (fight.quest != null) A.quests[fight.quest].step = 0;
     if (fight.sham != null) A.shamburg.step[fight.sham] = 0;
     saveA();
@@ -2941,7 +2943,7 @@ async function advBattleOver(won) {
     advResult(E4_FIGHTS[fight.stage.key].icon, E4_FIGHTS[fight.stage.key].color, `${E4_FIGHTS[fight.stage.key].title} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button>`);
   } else {
     A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
-    recordWin();
+    recordWin(); A.runMs = 0;
     champions[A.difficulty] = true; store.set('champions', champions);
     saveA();
     advResult('crown', CHAMP.color, 'Hall of Fame', `You beat the level ${fight.level} Champion and won ${money(CHAMP_PRIZE)}. Your team: ${A.team.map(m => esc(mset(m).species) + ' Lv ' + m.level).join(', ')}.`, null, `<button class="btn primary" id="aToMap">See the map</button>`);
@@ -3176,7 +3178,7 @@ function gloomOff() {
 // Victor's Trophy Case: every win at the Summit keeps the team that did it.
 function recordWin() {
   if (!A.trophies) A.trophies = [];
-  A.trophies.push({t: Date.now(), diff: A.difficulty, summit: A.summit, rematch: A.rematch || 0, team: A.team.map(m => ({s: mset(m).species, l: m.level, lus: !!m.lustrous}))});
+  A.trophies.push({t: Date.now(), diff: A.difficulty, summit: A.summit, rematch: A.rematch || 0, ms: A.runMs || 0, team: A.team.map(m => ({s: mset(m).species, l: m.level, lus: !!m.lustrous}))});
 }
 function openTrophies() {
   const list = (A.trophies || []).slice().reverse(), total = A.trophies ? A.trophies.length : 0;
@@ -3191,6 +3193,19 @@ function openTrophies() {
   show('trophy');
 }
 $('trophyBack').addEventListener('click', () => openSummit({keepAsk: true}));
+// Victory Hall: the five fastest wins. Only time spent inside Summit battles counts.
+const fmtClock = ms => { const t = Math.round(ms / 1000), m = Math.floor(t / 60), sec = t % 60; return `${m}:${String(sec).padStart(2, '0')}`; };
+function openVHall() {
+  const runs = (A.trophies || []).filter(w => w.ms > 0).sort((a, b) => a.ms - b.ms).slice(0, 5);
+  $('vhallSub').textContent = `${A.playerName || ''} · top ${Math.max(runs.length, 0)} of 5`;
+  $('vhallBody').innerHTML = '<p class="note">The five fastest times that beat the whole Summit. Only the time spent in battle counts: not the walks, the talking or the bag.</p>'
+    + (runs.length ? runs.map((w, i) => `<div class="vhrow"><span class="rk">${i + 1}</span><div><b>${esc(new Date(w.t).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}))}${w.rematch ? ' · rematch' : ''}</b><small>${w.diff ? esc(w.diff) : ''}</small><div class="mini">${w.team.map(m => artOf(m.s, m.lus)).join('')}</div></div><span class="tm">${fmtClock(w.ms)}</span></div>`).join('')
+      : '<p class="note">No timed wins yet. Beat the Summit again and your battle time will be kept here.</p>');
+  show('vhall');
+}
+$('vhallBack').addEventListener('click', () => openSummit({keepAsk: true}));
+$('summitHall').addEventListener('click', openVHall);
+$('summitBag').addEventListener('click', () => openAdvBag('summit'));
 $('summitTrophy').addEventListener('click', openTrophies);
 async function devSummitWin() {
   A.e4pos = 4; A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
@@ -3580,6 +3595,7 @@ function openSummit(opts = {}) {
   const steps = summitSteps();
   if (!opts.keepAsk) summitAsk = false;
   $('summitTrophy').hidden = !((A.trophies && A.trophies.length) || A.hof);
+  $('summitHall').hidden = !(A.done || A.hof);
   $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
   const cleared = A.done ? 5 : A.e4pos < 4 ? A.e4pos : 4;
   // fights you can't reach yet stay a mystery until it's your turn
@@ -3644,10 +3660,10 @@ $('summitBar').addEventListener('click', e => {
   else if (e.target.id === 'sDevSkip') { A.e4pos = 4; saveA(); openSummit({animate: true}); }
   else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sDevNote') showTylerNote();
-  else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.champTeam = null; saveA(); openSummit(); }
+  else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA(); openSummit(); }
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
-    summitAsk = false; A.e4pos = 0; A.champTeam = null; saveA();
+    summitAsk = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA();
     openAdvMap({force: true, msg: 'You forfeited the Elite Four. Your progress at Victory Summit was lost.'});
   }
 });
@@ -4065,6 +4081,12 @@ function syncDexFromTeam() {
       sp = sp.prevo ? E.Dex.species.get(sp.prevo) : null;
     }
   }
+  // a Mon at level 100 marks its whole evolution line with the blue star
+  for (const m of [...A.team, ...(A.box || [])]) {
+    if (m.level < 100) continue;
+    const sn = mset(m).species, fam = E.FAMILIES.find(f => f.stages.some(x => x.name === sn));
+    if (fam) for (const x of fam.stages) (A.dex.lv100 = A.dex.lv100 || {})[toId(x.name)] = 1;
+  }
   for (const id of Object.keys(A.dex.lusCaught || {})) A.dex.caught[id] = 1;   // saves from before: a Lustrous catch alone now counts as caught
 }
 
@@ -4332,6 +4354,7 @@ function nationalList() {
   return natList;
 }
 function openDex(mode, from) {
+  if (A && A.regional && E) syncDexFromTeam();
   dexMode = mode; dexFrom = from; dexTab = 'regional';
   $('dexSearch').value = '';
   setAccent('#e25b4f');
@@ -4355,7 +4378,7 @@ function renderDexList() {
     rows = E.SPECIES.filter(s => s.id !== 'missingno' && match(s.name, s.num, s.types)).map(s => {
       const known = !adv || A.dex.seen[s.id];
       const c = E.regionalInfo(s.name).color;
-      return `<button class="dexrow ${known ? '' : 'unseen'}" style="--c:${c}" data-dex="${esc(s.name)}" ${known ? '' : 'disabled'}><span class="thumb">${E.monArt(s.id)}</span><span><small>#${pad3(s.num)}${adv && A.dex.caught[s.id] ? ' <span class="caughtdot">●</span>' : ''}${adv && A.dex.lusCaught && A.dex.lusCaught[s.id] ? ' <span class="lusdot">◆</span>' : ''}</small><b>${known ? esc(s.name) : '???'}</b>${known ? typesHTML(s.types) : '<small>Not seen yet</small>'}</span></button>`;
+      return `<button class="dexrow ${known ? '' : 'unseen'}" style="--c:${c}" data-dex="${esc(s.name)}" ${known ? '' : 'disabled'}><span class="thumb">${E.monArt(s.id)}</span><span><small>#${pad3(s.num)}${adv && A.dex.caught[s.id] ? ' <span class="caughtdot">●</span>' : ''}${adv && A.dex.lusCaught && A.dex.lusCaught[s.id] ? ' <span class="lusdot">◆</span>' : ''}${adv && A.dex.lv100 && A.dex.lv100[s.id] ? ' <span class="stardot">★</span>' : ''}</small><b>${known ? esc(s.name) : '???'}</b>${known ? typesHTML(s.types) : '<small>Not seen yet</small>'}</span></button>`;
     });
   } else {
     let list = nationalList();
@@ -4400,11 +4423,12 @@ function showDexEntry(name, lus) {
   const stats = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'], lbl = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'SpA', spd: 'SpD', spe: 'Spe'};
   const total = stats.reduce((a, k) => a + sp.baseStats[k], 0);
   const statHTML = stats.map(k => `<span class="s">${lbl[k]}</span><span class="v">${sp.baseStats[k]}</span><span class="bar"><i style="width:${Math.min(100, sp.baseStats[k] / 1.6)}%;background:${sp.baseStats[k] >= 100 ? 'var(--hp-good)' : sp.baseStats[k] >= 60 ? 'var(--hp-mid)' : 'var(--hp-low)'}"></i></span>`).join('');
-  const abil = Object.entries(sp.abilities).map(([k, a]) => `${esc(a)}${k === 'H' ? ' <span>(hidden)</span>' : ''}`).join(', ');
+  let abil = esc(sp.abilities[0]);
+  if (adv) { const fam = E.FAMILIES.find(f => f.stages.some(x => x.name === name)); if (fam && fam.stages[fam.stages.length - 1].name === name && fam.final && fam.final.ability) abil = esc(fam.final.ability); }
   let moves = [];
   try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
   const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
-  const status = adv && reg ? [A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : '', A.dex.lusCaught && A.dex.lusCaught[reg.id] ? '<span class="lusdot">◆</span> Lustrous caught' : ''].filter(Boolean).join(' · ') || 'Seen' : '';
+  const status = adv && reg ? [A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : '', A.dex.lusCaught && A.dex.lusCaught[reg.id] ? '<span class="lusdot">◆</span> Lustrous caught' : '', A.dex.lv100 && A.dex.lv100[reg.id] ? '<span class="stardot">★</span> Lvl 100 reached' : ''].filter(Boolean).join(' · ') || 'Seen' : '';
   const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.id === 'cryodon' ? 'A fossil Mon. It never appears in the wild: Prof. Okla\'s aide revives it and sends it to your Farm on Route 7.' : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
   const dexNames = [...$('dexList').querySelectorAll('[data-dex]:not([disabled])')].map(b => b.dataset.dex);
   const di = dexNames.indexOf(sp.name), prevN = di > 0 ? dexNames[di - 1] : '', nextN = di >= 0 && di < dexNames.length - 1 ? dexNames[di + 1] : '';
