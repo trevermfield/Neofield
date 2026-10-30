@@ -626,21 +626,17 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .trophy .tmon i { color: #e8b53a; font-style: normal; }
 #battle.gloomy .mon.fx-faint { opacity: .06; transform: translateY(16px) scale(.96); filter: blur(3px); transition: opacity 1.6s ease, transform 1.6s ease, filter 1.6s ease; }
 /* weather and terrain tint the whole battle screen */
-#battle { transition: box-shadow .6s ease; }
-#battle[data-wx="sunnyday"], #battle[data-wx="desolateland"] { box-shadow: inset 0 0 140px rgba(255,150,40,.38); }
-#battle[data-wx="raindance"], #battle[data-wx="primordialsea"] { box-shadow: inset 0 0 140px rgba(60,120,255,.38); }
-#battle[data-wx="sandstorm"] { box-shadow: inset 0 0 140px rgba(200,160,70,.4); }
-#battle[data-wx="snowscape"], #battle[data-wx="hail"], #battle[data-wx="snowscape"] { box-shadow: inset 0 0 140px rgba(200,235,255,.4); }
-#battle[data-tr="psychicterrain"] { box-shadow: inset 0 0 140px rgba(230,90,200,.36); }
-#battle[data-tr="electricterrain"] { box-shadow: inset 0 0 140px rgba(255,220,40,.36); }
-#battle[data-tr="grassyterrain"] { box-shadow: inset 0 0 140px rgba(80,200,80,.36); }
-#battle[data-tr="mistyterrain"] { box-shadow: inset 0 0 140px rgba(255,170,220,.34); }
+.wxfx { transition: box-shadow .6s ease; }
+.wxfx[data-wx="sunnyday"], .wxfx[data-wx="desolateland"] { box-shadow: inset 0 0 160px rgba(255,150,40,.17); }
+.wxfx[data-wx="raindance"], .wxfx[data-wx="primordialsea"] { box-shadow: inset 0 0 160px rgba(60,120,255,.17); }
+.wxfx[data-wx="sandstorm"] { box-shadow: inset 0 0 160px rgba(200,160,70,.18); }
+.wxfx[data-wx="snowscape"], .wxfx[data-wx="hail"], .wxfx[data-wx="snowscape"] { box-shadow: inset 0 0 160px rgba(200,235,255,.18); }
+.wxfx[data-tr="psychicterrain"] { box-shadow: inset 0 0 160px rgba(230,90,200,.16); }
+.wxfx[data-tr="electricterrain"] { box-shadow: inset 0 0 160px rgba(255,220,40,.16); }
+.wxfx[data-tr="grassyterrain"] { box-shadow: inset 0 0 160px rgba(80,200,80,.16); }
+.wxfx[data-tr="mistyterrain"] { box-shadow: inset 0 0 160px rgba(255,170,220,.15); }
 .lusnote { display: block; color: #e8b53a; font-size: 11px; font-weight: 800; letter-spacing: .06em; }
-.wxfx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; }
-#battle[data-wx="sunnyday"], #battle[data-wx="desolateland"] { filter: saturate(1.2) brightness(1.07) contrast(1.03); }
-#battle[data-wx="raindance"], #battle[data-wx="primordialsea"] { filter: saturate(.85) brightness(.88) hue-rotate(-6deg); }
-#battle[data-wx="sandstorm"] { filter: sepia(.35) saturate(.9) brightness(.95); }
-#battle[data-wx="snowscape"], #battle[data-wx="hail"] { filter: saturate(.8) brightness(1.04) hue-rotate(8deg); }
+.wxfx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 8; pointer-events: none; opacity: .6; }
 #battle.gloomy[data-wx] { filter: saturate(.55) brightness(.82) contrast(1.05); }
 #battle.gloomy { filter: saturate(.55) brightness(.82) contrast(1.05); }
 .fog { position: absolute; top: 18%; left: -70%; width: 70%; height: 55%; opacity: 0; background: radial-gradient(ellipse at 50% 50%, rgba(190,200,225,.34), rgba(190,200,225,.12) 45%, transparent 70%); filter: blur(18px); }

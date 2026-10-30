@@ -793,6 +793,7 @@ function renderField() {
   $('weather').textContent = bits.join('  |  ');
   const b = $('battle');
   b.dataset.wx = w || ''; b.dataset.tr = tr || '';
+  const fxc = $('wxfx'); fxc.dataset.wx = w || ''; fxc.dataset.tr = tr || '';
   const key = (w || '') + '|' + (tr || '');
   if (key !== wxKey) { const first = !wxKey || wxKey === '|'; wxStop(); wxKey = key; if (w || tr) wxStart([w, tr].filter(Boolean), true); }
 }
