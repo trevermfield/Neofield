@@ -7,9 +7,9 @@ export const XP = {
   perLevel: 100,                                   // XP needed for one level
   base: {wild: 40, trainer: 55, gym: 45, legend: 200},
   benchShare: 0.5,                                 // team Mons that did not fight
-  // Foe level minus your Mon's level: +5 or more is an underdog bonus, within 4 below is normal,
+  // Foe level minus your Mon's level: +5 or more is an underdog bonus (x1.5 at +5, then +.25 for every further 5 levels), within 4 below is normal,
   // then it falls away. Points are [gap, multiplier]; gaps in between are blended.
-  bonusGap: 5, bonusMult: 1.5,
+  bonusGap: 5, bonusMult: 1.5, bonusStep: 0.25,
   fullDownTo: -4,
   falloff: [[-5, 0.6], [-10, 0.3], [-15, 0.1], [-20, 0]],
 };
@@ -21,7 +21,7 @@ export function xpNeed(level, cfg = XP) {
 
 export function xpMultiplier(foeLevel, myLevel, cfg = XP) {
   const gap = foeLevel - myLevel;
-  if (gap >= cfg.bonusGap) return cfg.bonusMult;
+  if (gap >= cfg.bonusGap) return cfg.bonusMult + cfg.bonusStep * (Math.floor(gap / cfg.bonusGap) - 1);   // +5 is x1.5, then +.25 for every further 5 levels
   if (gap >= cfg.fullDownTo) return 1;
   const pts = cfg.falloff;
   if (gap >= pts[0][0]) return pts[0][1];
