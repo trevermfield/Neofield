@@ -3657,7 +3657,7 @@ function openSummit(opts = {}) {
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
     <button class="btn primary" id="sRematch">Rematch the Summit</button>
     <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>
-    ${ngAsk ? `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Start New Game+?</b><small>Your team, items and money are replaced by a fresh start with one Mon. Your MonDex (red dots, gold diamonds and blue stars) and your Victory Hall times come with you.</small></div></div><div class="row"><button class="btn primary" id="sNgYes">Yes, start over</button><button class="btn" id="sNgNo">Not now</button></div>` : `<button class="btn" id="sNewPlus">New Game+</button>`}`;
+    ${ngAsk ? `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Start New Game+?</b><small>${ngInfoHTML()}</small></div></div><div class="row"><button class="btn primary" id="sNgYes">Yes, start over</button><button class="btn" id="sNgNo">Not now</button></div>` : `<button class="btn" id="sNewPlus">New Game+</button>`}`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
@@ -3685,11 +3685,7 @@ $('summitBar').addEventListener('click', e => {
   else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA(); openSummit(); }
   else if (e.target.id === 'sNewPlus') { ngAsk = true; openSummit({keepAsk: true}); }
   else if (e.target.id === 'sNgNo') { ngAsk = false; openSummit({keepAsk: true}); }
-  else if (e.target.id === 'sNgYes') {
-    ngAsk = false; syncDexFromTeam();
-    ngCarry = {dex: JSON.parse(JSON.stringify(A.dex)), ng: (A.ng || 0) + 1, name: A.playerName, trophies: A.trophies || [], hof: A.hof || 0};
-    newAdvDiff = A.difficulty; hallOff(); openProfessor();
-  }
+  else if (e.target.id === 'sNgYes') startNewGamePlus();
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
     summitAsk = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA();
@@ -3956,6 +3952,15 @@ function labSceneHTML() {
     <div class="prof"><img src="portraits/okla-full.png" alt=""></div><div class="ballrow">${BALL_SVG.repeat(3).replace(/ballicon/g, 'ballicon" style="width:26px;height:26px')}</div></div>`;
 }
 let introName = '', introPick = null, introLus = {};
+const NG_INFO = ['You lose: your team and everything on your Farm, your items and money, your badges and your side quest progress. You start over on Route 1 with one new starter, like a normal game.',
+  'You keep: your MonDex (every red dot, gold diamond and blue star), your Victory Hall times and your trophies.',
+  'You gain: Lustrous Mons get a little easier to find each time you start a New Game+ (+1% for wild Mons, +0.5% for legendaries, and it stacks).'];
+const ngInfoHTML = () => NG_INFO.map(t => `<p>${esc(t)}</p>`).join('');
+function startNewGamePlus() {   // A is the finished adventure that was just loaded
+  ngAsk = false; syncDexFromTeam();
+  ngCarry = {dex: JSON.parse(JSON.stringify(A.dex)), ng: (A.ng || 0) + 1, name: A.playerName, trophies: A.trophies || [], hof: A.hof || 0};
+  newAdvDiff = A.difficulty; hallOff(); openProfessor();
+}
 let ngCarry = null;   // New Game+: what comes with you into the next adventure (the MonDex progress)
 async function openProfessor() {
   introPick = null; introName = ''; tannerPhase = 0; tannerSeen = {}; tannerRe = false; starterList = null;
@@ -4919,11 +4924,11 @@ $('optionsBack').addEventListener('click', () => openTitle());
 $('optSound').addEventListener('change', e => { evoSound = e.target.checked; store.set('evoSound', evoSound); if (!evoSound) bgmStop(); });
 
 // ---------- save slots screen ----------
-let slotsMode = 'adv', slotAsk = null; // slotAsk: {n, diff}
+let slotsMode = 'adv', slotAsk = null, slotNg = null; // slotAsk: {n, diff}; slotNg: the slot that is asking about New Game+
 let newAdvDiff = 'normal';
 let tannerPhase = 0, tannerSeen = {}, tannerBusy = false, tannerRe = false, starterList = null;   // Tanner's story: 1 = his brothers took the starters, 2 = Okla gives him Eggyhen
 function openSlots(m) {
-  slotsMode = m; slotAsk = null;
+  slotsMode = m; slotAsk = null; slotNg = null;
   renderSlots(); setAccent('#e8c76a'); show('slots');
 }
 $('slotsBack').addEventListener('click', () => openTitle());
@@ -4981,8 +4986,12 @@ function renderSlots() {
           <div class="acts"><button class="btn ${warn ? 'danger' : 'gold'}" type="button" data-act="start" data-n="${x.n}">${warn ? 'Erase and start' : 'Start'}</button><button class="btn ghostbtn" type="button" data-act="cancel">${warn ? 'Keep it' : 'Cancel'}</button></div>
         </div>`;
       }
+    } else if (adv && x.adv && (x.adv.done || x.adv.hof > 0) && slotNg === x.n) {
+      acts = `<div class="askbox"><p><b style="color:var(--fg)">Start New Game+ in Slot ${x.n}?</b></p><div class="nginfo">${ngInfoHTML()}</div>
+        <div class="acts"><button class="btn gold" type="button" data-act="ngyes" data-n="${x.n}">Start New Game+</button><button class="btn ghostbtn" type="button" data-act="ngno">Not now</button></div></div>`;
     } else if (has) {
-      acts = `<div class="acts"><button class="btn" type="button" data-act="cont" data-n="${x.n}">${adv ? 'Continue' : 'Open'}</button><button class="btn ghostbtn" type="button" data-act="new" data-n="${x.n}">${adv ? 'New game' : 'Start over'}</button></div>`;
+      const ngBtn = adv && x.adv && (x.adv.done || x.adv.hof > 0) ? `<button class="btn" type="button" data-act="ng" data-n="${x.n}">New Game+</button>` : '';
+      acts = `<div class="acts"><button class="btn" type="button" data-act="cont" data-n="${x.n}">${adv ? 'Continue' : 'Open'}</button>${ngBtn}<button class="btn ghostbtn" type="button" data-act="new" data-n="${x.n}">${adv ? 'New game' : 'Start over'}</button></div>`;
     } else {
       acts = `<div class="acts"><button class="btn" type="button" data-act="new" data-n="${x.n}">${adv ? (empty ? 'New game' : 'Start an adventure') : (empty ? 'New game' : 'Start the Battle Hall')}</button></div>`;
     }
@@ -4999,7 +5008,10 @@ $('slotsBody').addEventListener('click', e => {
   if (act === 'cont') {
     loadSlot(n); touchProfile();
     if (slotsMode === 'adv') openAdvMap({}); else openHall();
-  } else if (act === 'new') { slotAsk = {n, diff: 'normal'}; renderSlots(); }
+  } else if (act === 'new') { slotAsk = {n, diff: 'normal'}; slotNg = null; renderSlots(); }
+  else if (act === 'ng') { slotNg = n; slotAsk = null; renderSlots(); }
+  else if (act === 'ngno') { slotNg = null; renderSlots(); }
+  else if (act === 'ngyes') { slotNg = null; loadSlot(n); touchProfile(); startNewGamePlus(); }
   else if (act === 'cancel') { slotAsk = null; renderSlots(); }
   else if (act === 'diff') { slotAsk.diff = b.dataset.v; renderSlots(); }
   else if (act === 'start') {
