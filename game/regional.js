@@ -14,11 +14,11 @@ export const FAMILIES = [
   // ---------- starters ----------
   {key: 'starter1', starter: true, color: '#72c25a', catchRate: 45,
     stages: [
-      {name: 'Bulbazoid', types: ['Grass', 'Electric'], stats: S(45, 52, 50, 50, 50, 45), abilities: ['Overgrow', 'Static'], h: .4, w: 6.1,
+      {name: 'Bulbazoid', types: ['Grass', 'Electric'], stats: S(46, 54, 50, 52, 50, 51), abilities: ['Overgrow', 'Static'], h: .4, w: 6.1,
         entry: 'Lightning-bolt marks run down its green hide, and a glowing bulb sprouts from its back with two plug-tipped vines. Designed by Tyler.'},
-      {name: 'Ivyzoid', at: 16, types: ['Grass', 'Electric'], stats: S(62, 75, 68, 62, 64, 64), abilities: ['Overgrow', 'Static'], h: 1.1, w: 34,
+      {name: 'Ivyzoid', at: 16, types: ['Grass', 'Electric'], stats: S(63, 76, 69, 63, 65, 69), abilities: ['Overgrow', 'Static'], h: 1.1, w: 34,
         entry: 'Its bulb has grown into a brass floodlight, and solar panels spread from its back to soak up the sun. Designed by Tyler.'},
-      {name: 'Venuzoid', at: 36, types: ['Grass', 'Electric'], stats: S(85, 115, 90, 70, 85, 85), abilities: ['Overgrow', 'Lightning Rod'], h: 1.8, w: 112,
+      {name: 'Venuzoid', at: 36, types: ['Grass', 'Electric'], stats: S(85, 115, 90, 70, 85, 86), abilities: ['Overgrow', 'Lightning Rod'], h: 1.8, w: 112,
         entry: 'A huge dish on its back crackles with stored power, and its solar wings never stop charging. Designed by Tyler.'},
     ],
     moves: [[1, 'Tackle'], [1, 'Growl'], [4, 'Vine Whip'], [8, 'Thunder Shock'], [12, 'Razor Leaf'], [16, 'Spark'], [20, 'Bullet Seed'],
@@ -28,11 +28,11 @@ export const FAMILIES = [
 
   {key: 'starter2', starter: true, color: '#f0857a', catchRate: 45,
     stages: [
-      {name: 'Shardmander', types: ['Fire', 'Fairy'], stats: S(42, 50, 45, 60, 52, 64), abilities: ['Blaze', 'Cute Charm'], h: .6, w: 8.5,
+      {name: 'Shardmander', types: ['Fire', 'Fairy'], stats: S(40, 48, 43, 58, 50, 64), abilities: ['Blaze', 'Cute Charm'], h: .6, w: 8.5,
         entry: 'Its tail holds a glowing crystal egg wrapped in gold, and it wears a matching gem. Designed by Tyler.'},
-      {name: 'Shardmeleon', at: 16, types: ['Fire', 'Fairy'], stats: S(58, 66, 60, 82, 68, 82), abilities: ['Blaze', 'Cute Charm'], h: 1.1, w: 19,
+      {name: 'Shardmeleon', at: 16, types: ['Fire', 'Fairy'], stats: S(56, 64, 58, 80, 66, 81), abilities: ['Blaze', 'Cute Charm'], h: 1.1, w: 19,
         entry: 'Crystal shards grow from its tail, and thin glassy wings shimmer on its back. Designed by Tyler.'},
-      {name: 'Shardizar', at: 36, types: ['Fire', 'Fairy'], stats: S(78, 84, 78, 112, 90, 100), abilities: ['Blaze', 'Magic Guard'], h: 1.7, w: 90,
+      {name: 'Shardizar', at: 36, types: ['Fire', 'Fairy'], stats: S(76, 82, 76, 108, 88, 101), abilities: ['Blaze', 'Magic Guard'], h: 1.7, w: 90,
         entry: 'Its crystal claws burn with pink flame, and its rainbow wings carry it above the clouds. Designed by Tyler.'},
     ],
     moves: [[1, 'Scratch'], [1, 'Growl'], [4, 'Ember'], [8, 'Fairy Wind'], [12, 'Draining Kiss'], [16, 'Flame Charge'], [20, 'Fire Fang'],
@@ -42,11 +42,11 @@ export const FAMILIES = [
 
   {key: 'starter3', starter: true, color: '#3f5f9c', catchRate: 45,
     stages: [
-      {name: 'Grrtle', types: ['Water', 'Dark'], stats: S(48, 54, 60, 44, 56, 42), abilities: ['Torrent', 'Shell Armor'], h: .5, w: 9,
+      {name: 'Grrtle', types: ['Water', 'Dark'], stats: S(48, 54, 60, 44, 55, 42), abilities: ['Torrent', 'Shell Armor'], h: .5, w: 9,
         entry: 'A fierce little turtle with red eyes and a black spiked shell. It curls its tail when it is ready to fight. Designed by Tyler.'},
-      {name: 'Roartortle', at: 16, types: ['Water', 'Dark'], stats: S(64, 72, 80, 58, 72, 58), abilities: ['Torrent', 'Shell Armor'], h: 1.0, w: 24,
+      {name: 'Roartortle', at: 16, types: ['Water', 'Dark'], stats: S(64, 72, 80, 58, 72, 59), abilities: ['Torrent', 'Shell Armor'], h: 1.0, w: 24,
         entry: 'Bone-white horns and spikes cover its black shell, and it roars to scare off anything that comes near. Designed by Tyler.'},
-      {name: 'Bellowtoise', at: 36, types: ['Water', 'Dark'], stats: S(85, 105, 105, 65, 85, 75), abilities: ['Torrent', 'Intimidate'], h: 1.6, w: 90,
+      {name: 'Bellowtoise', at: 36, types: ['Water', 'Dark'], stats: S(86, 106, 107, 66, 86, 80), abilities: ['Torrent', 'Intimidate'], h: 1.6, w: 90,
         entry: 'A heavy cannon juts from its spiked shell and fires blasts of water hard enough to split stone. Designed by Tyler.'},
     ],
     moves: [[1, 'Tackle'], [1, 'Tail Whip'], [4, 'Water Gun'], [8, 'Withdraw'], [12, 'Bite'], [16, 'Aqua Jet'], [20, 'Water Pulse'],

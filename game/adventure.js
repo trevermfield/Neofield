@@ -293,12 +293,16 @@ export function levelUp(team, n) {
   return lines;
 }
 
-// Moves from the final battle set that the Move Tutor can teach this Mon right now
+// Moves the Move Tutor can teach this Mon right now: battle-set moves it can learn, plus any move it
+// would have learned by level-up (this stage or an earlier one) but is not using any more.
 export function tutorOptions(member) {
   const chain = chainOf(member.final.species);
   const idx = stageAt(chain, member.level);
   const now = (member.moves || setAtLevel(member.final, member.level, {tutored: member.tutored}).moves).map(toID);
-  return (member.final.moves || []).map(toID).filter(id => !now.includes(id) && canLearn(chain, idx, id)).map(id => dex.moves.get(id).name);
+  const ids = (member.final.moves || []).map(toID).filter(id => canLearn(chain, idx, id));
+  for (const p of pool(chain, idx, member.level)) ids.push(p.id);
+  const seen = new Set();
+  return ids.filter(id => !now.includes(id) && !seen.has(id) && seen.add(id)).map(id => dex.moves.get(id).name);
 }
 
 // Evolution path summary for the team guide: [{species, at}]

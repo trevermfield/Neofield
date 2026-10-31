@@ -3904,7 +3904,7 @@ function openTeamView(from) {
       const tutor = E.tutorOptions(m);
       const extra = hpBlock(m.frac, (m.frac <= 0 ? 'Fainted' : `${Math.round(m.frac * 100)}% HP`) + (infoReturn === 'battle' ? ' before this battle' : '')) + xpBlock(m)
         + `<div class="kv"><div class="lbl">Evolution</div><p class="evopath">${route}</p><p class="evopath">${next ? `Evolves into ${esc(next.species)} at level ${next.at}.` : 'Fully evolved.'}</p></div>`
-        + `<div class="kv"><div class="lbl">Battle-set goal</div><p class="evopath">${(m.final.moves || []).map(esc).join(', ')}${tutor.length ? ` · The Move Tutor can teach ${tutor.map(esc).join(', ')} now.` : ''}</p></div>`;
+        + `<div class="kv"><div class="lbl">Battle-set goal</div><p class="evopath">${(m.final.moves || []).map(esc).join(', ')}${tutor.length ? ` · The Move Tutor can teach ${tutor.slice(0, 6).map(esc).join(', ')}${tutor.length > 6 ? ` and ${tutor.length - 6} more` : ''} now.` : ''}</p></div>`;
       const art = artOf(set.species, m.lustrous);
       const tools = A.regional && infoReturn !== 'battle' ? `<div class="teamtools">${i > 0 ? `<button class="btn" id="tofront-${i}" data-tofront="${i}">Make lead</button>` : '<span class="note">Leads your team</span>'}</div>` : '';
       return `<div class="teamslot">${teamCard(set, i, `Lv ${m.level}`, (art ? `<div style="width:120px;height:120px;margin:0 auto">${art}</div>` : '') + extra, metaHTML(m))}${tools}</div>`;
