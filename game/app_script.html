@@ -1659,6 +1659,8 @@ const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 
 const summitOpen = () => !!A && A.summit === 'open';
 // any name containing "tyler" (any capitalization) gets Tyler Victory Summit; everyone else gets the Default one. The dev toggle overrides this.
 const isTylerName = n => /tyler/i.test(n || '');
+// only a player named exactly Tanner (any capitalization) gets Tanner's starter story
+const isTannerName = n => /^\s*tanner\s*$/i.test(n || '');
 const summitForName = n => isTylerName(n) ? 'classic' : 'open';
 function applySummitByName() {
   if (!A || A.summitDev) return;
@@ -2297,6 +2299,7 @@ function openAdvMap({fromBattle, msg, force} = {}) {
   $('mapDex').hidden = mapFromBattle || !A.regional;
   renderAdvNextBar();
   show('journey');
+  if (A.tanner === 2 && !fromBattle && isTannerName(A.playerName)) tannerCall();
   requestAnimationFrame(() => {
     scrollMapTo(mapPoints()[from].y);
     if (A.regional && A.loc != null) placeMarkerOnRoute(A.loc);
@@ -2803,6 +2806,7 @@ async function advBattleOver(won) {
   try { const ko = E.koCounts(battle.log); A.team.forEach((m, i) => { m.kos = (m.kos || 0) + (ko[ctx.names[i]] || 0); }); } catch (e) {}
   if (fight.t0) { A.runMs = (A.runMs || 0) + Math.round(performance.now() - fight.t0); fight.t0 = 0; }
   readAdvHP();
+  if (fight.type === 'route' && A.tanner === 1) A.tanner = 2;   // Tanner: his first route battle is done, win or lose
   saveA();
   if (!won) {
     advHealAll(); A.loc = null; A.townAt = null;
@@ -3954,7 +3958,7 @@ function labSceneHTML() {
 let introName = '', introPick = null, introLus = {};
 let ngCarry = null;   // New Game+: what comes with you into the next adventure (the MonDex progress)
 async function openProfessor() {
-  introPick = null; introName = '';
+  introPick = null; introName = ''; tannerPhase = 0; tannerSeen = {}; tannerRe = false; starterList = null;
   introLus = {}; for (const f of E.STARTERS) introLus[f.key] = E.rollLustrous(f.stages[0].id, true, LUS_RATES[newAdvDiff] + (ngCarry ? ngCarry.ng * .01 : 0));   // rolled now, so you can see it before you choose
   setAccent(PROF.color);
   $('introStage').innerHTML = labSceneHTML();
@@ -3990,13 +3994,13 @@ $('introStage').addEventListener('submit', async e => {
   e.preventDefault();
   const name = $('nameInput').value.trim().replace(/\s+/g, ' ');
   if (!name) { $('nameNote').textContent = 'Type a name first.'; return; }
-  introName = name;
+  introName = name; tannerPhase = isTannerName(name) ? 1 : 0; tannerSeen = {};
   $('introStage').innerHTML = labSceneHTML();
   await talk(PROF, [`${name}! What a great name.`, 'Now, I have three Mons here with me. They were all born right here in Neofield, and each one is looking for a partner.', 'Take a look and choose the one you like best!']);
   showStarters();
 });
 function showStarters() {
-  const cards = E.STARTERS.map(f => {
+  const cards = (starterList || E.STARTERS).map(f => {
     const st = f.stages[0];
     return `<button class="starter" id="starter-${f.key}" data-starter="${f.key}" style="--c:${f.color}" aria-pressed="${introPick === f.key}">${E.monArt(st.id, '', !!introLus[f.key])}<b>${esc(st.name)}</b>${introLus[f.key] ? '<span class="lusnote">◆ Lustrous</span>' : ''}${typesHTML(st.types)}</button>`;
   }).join('');
@@ -4007,20 +4011,61 @@ function showStarters() {
       <p class="starterinfo">Evolves into ${f.stages.slice(1).map(s => `${esc(s.name)} at level ${s.at}`).join(', then ')}.</p>
       <div class="row"><button class="btn primary" id="starterGo" style="--accent:${f.color}">Choose ${esc(st.name)}</button></div>`;
   }
-  $('introStage').innerHTML = labSceneHTML() + `<div class="startercard"><b>Choose your first Mon</b><div class="starters">${cards}</div>${info}</div>`;
+  $('introStage').innerHTML = labSceneHTML() + `<div class="startercard"><b>${tannerRe ? 'Choose your new starter' : 'Choose your first Mon'}</b><div class="starters">${cards}</div>${info}</div>`;
 }
 $('introStage').addEventListener('click', async e => {
   const b = e.target.closest('[data-starter]');
+  if (b && tannerPhase === 1) { tannerRefuse(b.dataset.starter); return; }
   if (b) { introPick = b.dataset.starter; setAccent(E.familyOf(introPick).color); showStarters(); return; }
   if (e.target.id === 'starterGo' && introPick) {
     const st = E.familyOf(introPick).stages[0];
     $('introStage').innerHTML = labSceneHTML();
+    if (tannerRe) { tannerTakeNew(introPick); return; }
     await talk(PROF, [`So you've chosen ${st.name}! It already looks happy to be with you.`,
       'Take these too: five Mon Balls for catching wild Mons, and your very own MonDex.',
       `Your adventure starts now, ${introName}. Go make the Neofield Region proud!`]);
     startRegionalAdventure(introName, introPick, !!introLus[introPick]);
+    if (tannerPhase === 2) { A.tanner = 1; saveA(); tannerPhase = 0; }
   }
 });
+const TANNER_BROS = ['Tyler', 'Tucker', 'Trever'];
+// Tanner's starter story: each pick is already taken by a brother, then Okla gives him Eggyhen
+async function tannerRefuse(key) {
+  if (tannerBusy) return;
+  tannerBusy = true;
+  try {
+    if (!(key in tannerSeen)) tannerSeen[key] = Object.keys(tannerSeen).length;
+    $('introStage').innerHTML = labSceneHTML();
+    await talk(PROF, [`Oh, it seems your brother ${TANNER_BROS[tannerSeen[key]]} already picked that one.`]);
+    if (Object.keys(tannerSeen).length < 3) { showStarters(); return; }
+    await talk(PROF, ['Well, it appears your brothers have already picked all of these ones. Here, come out back and I will get you one.', 'Here you are, a great Mon.']);
+    tannerPhase = 2; starterList = [E.familyOf('wild1')]; introPick = 'wild1';
+    introLus.wild1 = E.rollLustrous(E.familyOf('wild1').stages[0].id, true, LUS_RATES[newAdvDiff]);
+    setAccent(E.familyOf('wild1').color);
+    showStarters();
+  } finally { tannerBusy = false; }
+}
+// Okla calls Tanner back after his first route battle (win or lose)
+async function tannerCall() {
+  A.tanner = 3; saveA();
+  await talk(PROF, [`Hey, Tanner, we were able to get a new batch of starter Mons. Come on back to ${HOME} and we will get you a starter Mon.`]);
+}
+function tannerRepick() {
+  tannerRe = true; starterList = null; introPick = null; introName = A.playerName;
+  introLus = {}; for (const f of E.STARTERS) introLus[f.key] = E.rollLustrous(f.stages[0].id, true, LUS_RATES[A.difficulty]);
+  setAccent(PROF.color);
+  $('introStage').innerHTML = labSceneHTML();
+  show('intro');
+  showStarters();
+}
+async function tannerTakeNew(famKey) {
+  const st = E.familyOf(famKey).stages[0];
+  await talk(PROF, [`So you've chosen ${st.name}! It already looks happy to be with you.`, 'Now you have two partners. Go make the Neofield Region proud, Tanner!']);
+  const lv = A.team[0] ? A.team[0].level : REG_START_LV;
+  A.team.push(Object.assign(E.newMember(famKey, lv, !!introLus[famKey]), {met: {where: 'Given by Professor Okla', t: Date.now(), gift: true}, kos: 0}));
+  A.tanner = 4; tannerRe = false; syncDexFromTeam(); saveA();
+  openAdvMap({});
+}
 function startRegionalAdventure(name, famKey, lus) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
@@ -4277,6 +4322,7 @@ function openTown(idx) {
   const d = advDest();
   if (idx == null) idx = d;
   if (idx > A.travelled) { toast(`${d - 1 === 17 ? `Beat every trainer on the ${TRAIL}` : shamOpen(d - 1) ? 'Beat Team Shamburg' : `Beat one wild Mon on ${E.ROUTES[d - 1].name}`} to reach ${placeName(d)}.`); return; }
+  if (A.tanner === 3 && idx === 0 && isTannerName(A.playerName)) { tannerRepick(); return; }
   if (A.lab) A.lab.at = null;
   if (idx === 18) { A.loc = null; A.townAt = null; saveA(); openSummit(); return; }
   A.loc = null; A.townAt = idx < d ? idx : null; saveA(); openAdvMap({});
@@ -4875,6 +4921,7 @@ $('optSound').addEventListener('change', e => { evoSound = e.target.checked; sto
 // ---------- save slots screen ----------
 let slotsMode = 'adv', slotAsk = null; // slotAsk: {n, diff}
 let newAdvDiff = 'normal';
+let tannerPhase = 0, tannerSeen = {}, tannerBusy = false, tannerRe = false, starterList = null;   // Tanner's story: 1 = his brothers took the starters, 2 = Okla gives him Eggyhen
 function openSlots(m) {
   slotsMode = m; slotAsk = null;
   renderSlots(); setAccent('#e8c76a'); show('slots');
