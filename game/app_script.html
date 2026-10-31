@@ -2372,12 +2372,13 @@ $('mapSvg').addEventListener('click', e => {
 });
 
 // --- battles ---
-const LUS_RATES = {easy: 0.05, normal: 0.10, hard: 0.15};
-const lusRate = () => LUS_RATES[A && A.difficulty] || 0.05;
+// Lustrous chance: wild Mons 2% / 3% / 4% (Easy / Normal / Hard); legendaries half of that. Every New Game+ adds 1% (wild) or 0.5% (legendary).
+const LUS_RATES = {easy: 0.02, normal: 0.03, hard: 0.04};
+const lusRate = (legend, ng) => (LUS_RATES[A && A.difficulty] || 0.02) / (legend ? 2 : 1) + (ng === undefined ? (A && A.ng) || 0 : ng) * (legend ? 0.005 : 0.01);
 function advFight(fight) {
   if (A.team.every(m => m.frac <= 0)) advHealAll();
   // rolled once, just before the battle starts, so the picture never changes mid-battle; a legendary re-rolls every time you enter its battle
-  if (fight.catchable) { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || fight.type === 'labWild' || A.dex.seen[id], lusRate()); }
+  if (fight.catchable) { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || fight.type === 'labWild' || A.dex.seen[id], lusRate(fight.type === 'questLegend')); }
   if (fight.type === 'e4' || fight.type === 'champion') fight.t0 = performance.now();   // the Victory Hall clock only runs while a Summit battle is on
   ctx = {kind: 'adventure', fight};
   foe = fight.foe;

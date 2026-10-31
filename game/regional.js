@@ -286,7 +286,7 @@ export const FAMILIES = [
     final: {ability: 'Moxie', item: 'Life Orb', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Dragon Dance', 'Outrage', 'Megahorn', 'Earthquake']}},
 
   // ---------- rare (legendary) Mons: only show up now and then on late routes ----------
-  {key: 'nivalux', color: '#bfe0f5', catchRate: 30, rare: true,
+  {key: 'nivalux', color: '#bfe0f5', catchRate: 14, rare: true,
     stages: [
       {name: 'Nivalux', types: ['Ice'], stats: S(95, 80, 90, 120, 105, 100), abilities: ['Snow Warning', 'Pressure'], h: 2.0, w: 180,
         entry: 'A snow-white wolf said to bring the first blizzard of winter. Silver bands circle its legs. Designed by Tyler.'},
@@ -295,7 +295,7 @@ export const FAMILIES = [
     evoMoves: {},
     final: {ability: 'Snow Warning', item: 'Light Clay', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Blizzard', 'Freeze-Dry', 'Aurora Veil', 'Shadow Ball']}},
 
-  {key: 'storment', color: '#e8c040', catchRate: 30, rare: true,
+  {key: 'storment', color: '#e8c040', catchRate: 14, rare: true,
     stages: [
       {name: 'Storment', types: ['Electric'], stats: S(90, 120, 85, 95, 85, 115), abilities: ['Pressure', 'Strong Jaw'], h: 2.0, w: 175,
         entry: 'A black wolf streaked with lightning. Thunder rolls across the sky wherever it runs. Designed by Tyler.'},
@@ -304,7 +304,7 @@ export const FAMILIES = [
     evoMoves: {},
     final: {ability: 'Strong Jaw', item: 'Life Orb', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Thunder Fang', 'Crunch', 'Psychic Fangs', 'Wild Charge']}},
 
-  {key: 'rensylk', color: '#f08a4b', catchRate: 30, rare: true,
+  {key: 'rensylk', color: '#f08a4b', catchRate: 14, rare: true,
     stages: [
       {name: 'Rensylk', types: ['Fire'], stats: S(90, 85, 85, 120, 110, 100), abilities: ['Pressure', 'Flash Fire'], h: 1.8, w: 120,
         entry: 'A fox whose fur glows in the colors of a sunset. Its ears flicker with soft flames. Designed by Tyler.'},
@@ -313,7 +313,7 @@ export const FAMILIES = [
     evoMoves: {},
     final: {ability: 'Flash Fire', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Flamethrower', 'Energy Ball', 'Calm Mind', 'Morning Sun']}},
 
-  {key: 'okloyama', color: '#e88a9a', catchRate: 20, rare: true,
+  {key: 'okloyama', color: '#e88a9a', catchRate: 10, rare: true,
     stages: [
       {name: 'Okloyama', types: ['Rock', 'Fairy'], stats: S(110, 130, 120, 80, 100, 70), abilities: ['Pressure', 'Solid Rock'], h: 3.1, w: 900,
         entry: 'A giant of rose crystal that walks inside its own storm clouds. Roses bloom wherever it steps. Designed by Tyler.'},
@@ -322,7 +322,7 @@ export const FAMILIES = [
     evoMoves: {},
     final: {ability: 'Solid Rock', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, def: 4}, moves: ['Diamond Storm', 'Play Rough', 'Earthquake', 'Stealth Rock']}},
 
-  {key: 'hexabeake', color: '#3a2a2a', catchRate: 20, rare: true,
+  {key: 'hexabeake', color: '#3a2a2a', catchRate: 10, rare: true,
     stages: [
       {name: 'Hexabeake', types: ['Fire', 'Poison'], stats: S(100, 115, 90, 125, 90, 100), abilities: ['Pressure', 'Flame Body'], h: 3.5, w: 200,
         entry: 'A dark phoenix whose wings drip with burning tar. Legends say it curses anyone who looks at it too long. Designed by Tyler.'},
@@ -331,7 +331,7 @@ export const FAMILIES = [
     evoMoves: {},
     final: {ability: 'Levitate', item: 'Life Orb', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Sludge Bomb', 'Flamethrower', 'Nasty Plot', 'Roost']}},
 
-  {key: 'aerialyn', color: '#f4a58a', catchRate: 20, rare: true,
+  {key: 'aerialyn', color: '#f4a58a', catchRate: 10, rare: true,
     stages: [
       {name: 'Aerialyn', types: ['Psychic', 'Flying'], stats: S(100, 100, 100, 100, 100, 100), abilities: ['Serene Grace', 'Inner Focus'], h: .4, w: 2,
         entry: 'A tiny, playful bird that is almost never seen. It is said to know a little of every move there is. Designed by Tyler.'},
@@ -340,7 +340,7 @@ export const FAMILIES = [
     evoMoves: {},
     final: {ability: 'Serene Grace', item: 'Leftovers', nature: 'Timid', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Air Slash', 'Psychic', 'Calm Mind', 'Roost']}},
   // ---------- #051: the secret Mon (Prof. Okla's side quest, after the Champion) ----------
-  {key: 'missingno', color: '#8f84d8', catchRate: 20, rare: true,
+  {key: 'missingno', color: '#8f84d8', catchRate: 10, rare: true,
     stages: [
       {name: 'Missingno', types: ['???'], stats: S(105, 105, 95, 105, 95, 125), abilities: ['Serene Grace'], h: 3.3, w: 0,
         entry: 'A tower of scrambled blocks that should not exist. It belongs to no type at all, and the world flickers where it walks. Found only by those who beat Prof. Okla.'},

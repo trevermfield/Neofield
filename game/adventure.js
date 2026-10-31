@@ -315,8 +315,8 @@ function pickFamily(keys) {
   for (let i = 0; i < keys.length; i++) { x -= w[i]; if (x < 0) return keys[i]; }
   return keys[0];
 }
-// 5% of the time a wild Mon is Lustrous (needs a Lustrous picture, and that Mon must have been seen before; legendaries pass seen = true)
-export const LUSTROUS_RATE = 0.05;
+// Normally 3% of the time a wild Mon is Lustrous (the game sets the real rate by difficulty) (needs a Lustrous picture, and that Mon must have been seen before; legendaries pass seen = true)
+export const LUSTROUS_RATE = 0.03;
 export function rollLustrous(speciesId, seen, rate = LUSTROUS_RATE) {
   return LUSTROUS_PICS.has(speciesId) && !!seen && Math.random() < rate;
 }
