@@ -449,13 +449,25 @@ export function spendSlotOnItem(battle, sideId, slot) {
 
 // ---------- catching wild Mons ----------
 // While armed, an attack that would knock out the wild Mon leaves it at 1 HP instead and flags a catch chance.
+// A wild Mon left at 1 HP is too weak to act for the rest of that turn, so it cannot heal itself out of the catch.
+const CATCH_WEAK = {
+  id: 'catchweak', name: 'Too Weak', fullname: 'Too Weak', effectType: 'Condition', exists: true, duration: 1,
+  onBeforeMovePriority: 100,
+  onBeforeMove(pokemon) { this.add('-message', `${pokemon.name} is too weak to attack!`); pokemon.removeVolatile('catchweak'); return false; },
+};
 const CATCH_GUARD = {
   name: 'catchguard', id: 'catchguard', effectType: 'Condition',
   onDamagePriority: -200,
   onDamage(damage, target) {
     const st = this.effectState;
     if (!st.armed || target.side.id !== 'p2') return;
-    if (damage >= target.hp) { st.ready = true; return Math.max(0, target.hp - 1); }
+    if (damage >= target.hp) {
+      st.ready = true;
+      const cache = this.dex.conditions.conditionCache;
+      if (!cache.has('catchweak')) cache.set('catchweak', CATCH_WEAK);
+      target.addVolatile('catchweak');
+      return Math.max(0, target.hp - 1);
+    }
   },
 };
 function guardOf(battle) {
