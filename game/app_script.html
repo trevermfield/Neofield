@@ -181,7 +181,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'trophy', 'vhall', 'farm', 'dev', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'vhall', 'farm', 'dev', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { if (id !== 'battle' && typeof wxStop === 'function') wxStop(); curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -1373,7 +1373,7 @@ function dexCard(set, idx) {
     const mv = E.Dex.moves.get(m);
     const acc = mv.accuracy === true ? 'Never misses' : `${mv.accuracy}% acc`;
     const pow = mv.category === 'Status' ? 'Status' : `${mv.category} · ${mv.basePower ? mv.basePower + ' power' : 'varies'}`;
-    const pp = Math.floor(mv.pp * 8 / 5);
+    const pp = mv.pp;
     const pri = mv.priority ? ` · Priority ${mv.priority > 0 ? '+' : ''}${mv.priority}` : '';
     return `<div class="mv" style="--t:${TYPE_COLORS[mv.type] || '#999'}"><div class="top"><b>${esc(mv.name)}</b>${typesHTML([mv.type])}</div>
       <div class="nums">${esc(pow)} · ${esc(acc)} · ${pp} PP${pri}</div><p>${esc(mv.shortDesc || mv.desc)}</p></div>`;
@@ -2134,8 +2134,8 @@ const ADV_START_LV = 8;
 const GYM_LV = JORDER.map((_, i) => i === 0 ? 8 : i === 1 ? 11 : i === 2 ? 14 : Math.round(10 + i * 50 / 16));
 const E4_LV = [62, 64, 66, 68];
 const CHAMP_LV = 70;
-// each rematch of the Summit is 5 levels tougher
-const lvBonus = () => Math.min(25, 5 * ((A && A.rematch) || 0));
+// a rematch of the Summit has the same levels as the first time
+const lvBonus = () => 0;
 const e4Lv = i => Math.min(100, E4_LV[i] + lvBonus());
 const champLv = () => Math.min(100, CHAMP_LV + lvBonus());
 const ADV_START_BAG = {hyperpotion: 6, fullrestore: 1, fullheal: 3, revive: 2, maxrevive: 0};
@@ -2799,6 +2799,7 @@ function advResult(icon, color, title, text, lines, buttons) {
 
 async function advBattleOver(won) {
   const fight = ctx.fight;
+  try { const ko = E.koCounts(battle.log); A.team.forEach((m, i) => { m.kos = (m.kos || 0) + (ko[ctx.names[i]] || 0); }); } catch (e) {}
   if (fight.t0) { A.runMs = (A.runMs || 0) + Math.round(performance.now() - fight.t0); fight.t0 = 0; }
   readAdvHP();
   saveA();
@@ -3194,33 +3195,35 @@ function recordWin() {
   if (!A.trophies) A.trophies = [];
   A.trophies.push({t: Date.now(), diff: A.difficulty, summit: A.summit, rematch: A.rematch || 0, ms: A.runMs || 0, team: A.team.map(m => ({s: mset(m).species, l: m.level, lus: !!m.lustrous}))});
 }
-function openTrophies() {
-  const list = (A.trophies || []).slice().reverse(), total = A.trophies ? A.trophies.length : 0;
-  $('trophySub').textContent = `${Math.max(total, A.hof || 0)} win${Math.max(total, A.hof || 0) === 1 ? '' : 's'}`;
-  const lost = Math.max(0, (A.hof || 0) - total);
-  $('trophyBody').innerHTML = (list.length ? list.map((w, i) => {
-    const n = Math.max(0, (A.hof || 0) - total) + total - i, d = new Date(w.t).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
-    return `<article class="trophy"><div class="tt"><b>Win #${n}${w.rematch ? ' · rematch' : ''}</b><small>${esc(d)}${w.diff ? ' · ' + esc(w.diff) : ''}</small></div>
-      <div class="tm">${w.team.map(m => `<div class="tmon">${artOf(m.s, m.lus)}<div>${esc(m.s)}${m.lus ? ' <i>◆</i>' : ''}</div><div>Lv ${m.l}</div></div>`).join('')}</div></article>`;
-  }).join('') : '<p class="note">Win the Victory Summit and the team you did it with is kept here.</p>')
-    + (lost && list.length ? `<p class="note">${lost} earlier win${lost === 1 ? ' was' : 's were'} before the case existed, so ${lost === 1 ? 'its team was' : 'their teams were'} not saved.</p>` : '');
-  show('trophy');
-}
-$('trophyBack').addEventListener('click', () => openSummit({keepAsk: true}));
-// Victory Hall: the five fastest wins. Only time spent inside Summit battles counts.
+// Victory Hall: every win keeps its team and its battle time. Sort by newest first or by best time (the five fastest).
 const fmtClock = ms => { const t = Math.round(ms / 1000), m = Math.floor(t / 60), sec = t % 60; return `${m}:${String(sec).padStart(2, '0')}`; };
+let vhSort = 'recent';
 function openVHall() {
-  const runs = (A.trophies || []).filter(w => w.ms > 0).sort((a, b) => a.ms - b.ms).slice(0, 5);
-  $('vhallSub').textContent = `${A.playerName || ''} · top ${Math.max(runs.length, 0)} of 5`;
-  $('vhallBody').innerHTML = '<p class="note">The five fastest times that beat the whole Summit. Only the time spent in battle counts: not the walks, the talking or the bag.</p>'
-    + (runs.length ? runs.map((w, i) => `<div class="vhrow"><span class="rk">${i + 1}</span><div><b>${esc(new Date(w.t).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'}))}${w.rematch ? ' · rematch' : ''}</b><small>${w.diff ? esc(w.diff) : ''}</small><div class="mini">${w.team.map(m => artOf(m.s, m.lus)).join('')}</div></div><span class="tm">${fmtClock(w.ms)}</span></div>`).join('')
-      : '<p class="note">No timed wins yet. Beat the Summit again and your battle time will be kept here.</p>');
+  const total = A.trophies ? A.trophies.length : 0, wins = Math.max(total, A.hof || 0), lost = Math.max(0, wins - total);
+  const all = (A.trophies || []).map((w, i) => ({...w, n: lost + i + 1}));
+  const list = vhSort === 'best' ? all.filter(w => w.ms > 0).sort((a, b) => a.ms - b.ms).slice(0, 5) : all.slice().reverse();
+  $('vhallSub').textContent = `${A.playerName || ''} · ${wins} win${wins === 1 ? '' : 's'}`;
+  const toggle = `<div class="row vhsort"><button class="chip" id="vhRecent" aria-pressed="${vhSort === 'recent'}">Newest first</button><button class="chip" id="vhBest" aria-pressed="${vhSort === 'best'}">Best time</button></div>`;
+  const note = vhSort === 'best' ? '<p class="note">The five fastest wins. Only the time spent in battle counts: not the walks, the talking or the bag.</p>' : '';
+  const cards = list.map((w, i) => {
+    const d = new Date(w.t).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+    return `<article class="trophy"><div class="tt"><b>${vhSort === 'best' ? `#${i + 1} · ` : ''}Win #${w.n}${w.rematch ? ' · rematch' : ''}</b><span class="clock">${w.ms > 0 ? fmtClock(w.ms) : ''}</span></div>
+      <div class="tt"><small>${esc(d)}${w.diff ? ' · ' + esc(w.diff) : ''}</small></div>
+      <div class="tm">${w.team.map(m => `<div class="tmon">${artOf(m.s, m.lus)}<div>${esc(m.s)}${m.lus ? ' <i>◆</i>' : ''}</div><div>Lv ${m.l}</div></div>`).join('')}</div></article>`;
+  }).join('');
+  const empty = vhSort === 'best' ? '<p class="note">No timed wins yet. Beat the Summit again and your battle time will be kept here.</p>' : '<p class="note">Win the Victory Summit and the team you did it with is kept here.</p>';
+  $('vhallBody').innerHTML = toggle + note + (cards || empty)
+    + (vhSort === 'recent' && lost && list.length ? `<p class="note">${lost} earlier win${lost === 1 ? ' was' : 's were'} before the Hall existed, so ${lost === 1 ? 'its team was' : 'their teams were'} not saved.</p>` : '');
   show('vhall');
 }
+$('vhallBody').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !A) return;
+  if (b.id === 'vhRecent') vhSort = 'recent'; else if (b.id === 'vhBest') vhSort = 'best'; else return;
+  const sc = $('vhall').querySelector('.scroll'), top = sc.scrollTop; openVHall(); sc.scrollTop = top;
+});
 $('vhallBack').addEventListener('click', () => openSummit({keepAsk: true}));
 $('summitHall').addEventListener('click', openVHall);
 $('summitBag').addEventListener('click', () => openAdvBag('summit'));
-$('summitTrophy').addEventListener('click', openTrophies);
 async function devSummitWin() {
   A.e4pos = 4; A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
   champions[A.difficulty] = true; store.set('champions', champions);
@@ -3608,8 +3611,7 @@ function openSummit(opts = {}) {
   } else if (!opts.keepAsk && !A.summitNote && !summitOpen()) { A.summitNote = 1; saveA(); showTylerNote(); }
   const steps = summitSteps();
   if (!opts.keepAsk) { summitAsk = false; ngAsk = false; }
-  $('summitTrophy').hidden = !((A.trophies && A.trophies.length) || A.hof);
-  $('summitHall').hidden = !(A.done || A.hof);
+  $('summitHall').hidden = !(A.done || A.hof || (A.trophies && A.trophies.length));
   $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
   const cleared = A.done ? 5 : A.e4pos < 4 ? A.e4pos : 4;
   // fights you can't reach yet stay a mystery until it's your turn
@@ -3649,7 +3651,7 @@ function openSummit(opts = {}) {
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
     <button class="btn primary" id="sRematch">Rematch the Summit</button>
-    <p class="note">Fight all five again, ${(A.rematch || 0) >= 5 ? 'at the same top level' : '5 levels higher'}. Leaving partway counts as a forfeit.</p>
+    <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>
     ${ngAsk ? `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Start New Game+?</b><small>Your team, items and money are replaced by a fresh start with one Mon. Your MonDex (red dots, gold diamonds and blue stars) and your Victory Hall times come with you.</small></div></div><div class="row"><button class="btn primary" id="sNgYes">Yes, start over</button><button class="btn" id="sNgNo">Not now</button></div>` : `<button class="btn" id="sNewPlus">New Game+</button>`}`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
@@ -3868,10 +3870,17 @@ $('jbagTeam').addEventListener('click', e => {
 
 
 // ---------- your team (from the map) ----------
-function teamCard(set, idx, levelLabel, extra) {
+function teamCard(set, idx, levelLabel, extra, meta) {
   return dexCard(set, idx)
+    .replace('</summary>', `${meta || ''}</summary>`)
     .replace('</span><span class="chev"></span>', `${levelLabel ? ` <span class="lvl">${levelLabel}</span>` : ''}</span><span class="chev"></span>`)
     .replace('<div class="dexbody">', `<div class="dexbody">${extra}`);
+}
+// under the types: where and when this Mon joined you, and how many Mons it has knocked out
+function metaHTML(m) {
+  const d = m.met && m.met.t ? new Date(m.met.t).toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'}) : '';
+  const left = m.met && m.met.where ? `${m.met.where}${d ? ' on ' + d : ''}` : '';
+  return `<span class="meta"><span>${esc(left)}</span><span>Mons defeated: ${m.kos || 0}</span></span>`;
 }
 function xpBlock(m) {
   const need = E.xpNeed(m.level), xp = m.level >= 100 ? need : (m.xp || 0);
@@ -3897,7 +3906,7 @@ function openTeamView(from) {
         + `<div class="kv"><div class="lbl">Battle-set goal</div><p class="evopath">${(m.final.moves || []).map(esc).join(', ')}${tutor.length ? ` · The Move Tutor can teach ${tutor.map(esc).join(', ')} now.` : ''}</p></div>`;
       const art = artOf(set.species, m.lustrous);
       const tools = A.regional && infoReturn !== 'battle' ? `<div class="teamtools">${i > 0 ? `<button class="btn" id="tofront-${i}" data-tofront="${i}">Make lead</button>` : '<span class="note">Leads your team</span>'}</div>` : '';
-      return `<div class="teamslot">${teamCard(set, i, `Lv ${m.level}`, (art ? `<div style="width:120px;height:120px;margin:0 auto">${art}</div>` : '') + extra)}${tools}</div>`;
+      return `<div class="teamslot">${teamCard(set, i, `Lv ${m.level}`, (art ? `<div style="width:120px;height:120px;margin:0 auto">${art}</div>` : '') + extra, metaHTML(m))}${tools}</div>`;
     });
   } else if (J) {
     cards = (J.teamSets || E.parseTeam(J.teamText).team).map((set, i) => {
@@ -4014,7 +4023,7 @@ $('introStage').addEventListener('click', async e => {
 function startRegionalAdventure(name, famKey, lus) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
-    team: [E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus)], box: [], dex: ngCarry ? ngCarry.dex : {seen: {}, caught: {}}, loc: null,
+    team: [Object.assign(E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus), {met: {where: 'Given by Professor Okla', t: Date.now(), gift: true}, kos: 0})], box: [], dex: ngCarry ? ngCarry.dex : {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: summitForName(name),
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
@@ -4173,7 +4182,7 @@ function openRoute(r) {
 const OKLA_AIDE = {name: "Prof. Okla's Aide", key: null, color: '#b8b29a', icon: 'star', svg: '<img src="portraits/okla-aide.jpg" alt="">'};
 async function oklaAide() {
   A.cryoGift = true;
-  const m = E.newMember('cryodon', 25);
+  const m = E.newMember('cryodon', 25); m.met = {where: 'Revived by Prof. Okla\'s aide', t: Date.now(), gift: true}; m.kos = 0;
   (A.box = A.box || []).push(m);
   syncDexFromTeam(); saveA();
   await talk(OKLA_AIDE, ['Excuse me, trainer! I am Prof. Okla\'s aide. The Professor asked me to find you out here on Route 7.',
@@ -4312,8 +4321,17 @@ function routeBattle(r) {
   const f = E.familyOf(set.family);
   advFight({type: 'route', route: r, catchable: true, sets: [set], foe: {name: 'Wild', wild: true, key: null, color: f.color, icon: 'leaf', title: `Wild ${set.species}`, subtitle: `${E.ROUTES[r].name} · level ${lv}`}});
 }
+function caughtWhere() {
+  const f = ctx && ctx.fight; if (!f) return '';
+  if (f.type === 'route' && E.ROUTES[f.route]) return E.ROUTES[f.route].name;
+  if (f.quest != null && AREAS[f.quest]) return AREAS[f.quest].name;
+  if (f.type === 'labWild') return 'Route 0';
+  if (f.type === 'trailWild') return TRAIL;
+  return '';
+}
 function addCaught(c) {
   const m = E.newMember(c.family, c.level, c.lustrous);
+  m.met = {where: caughtWhere(), t: Date.now()}; m.kos = 0;
   m.frac = Math.max(0.01, c.frac);
   const name = mset(m).species;
   if (A.team.length < 6) { A.team.push(m); syncDexFromTeam(); return `${name} joined your team!`; }

@@ -184,6 +184,8 @@ textarea { width: 100%; box-sizing: border-box; min-height: 160px; background: v
 .dex > summary::-webkit-details-marker { display: none; }
 .dex > summary .nm { font-family: var(--font-display); font-weight: 800; font-size: 24px; text-transform: uppercase; line-height: 1; }
 .dex > summary .sub { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+.dex > summary .meta { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.dex > summary .meta span:last-child { white-space: nowrap; text-align: right; }
 .dex > summary .chev { color: var(--dim); font-size: 13px; font-weight: 700; }
 .dex[open] > summary .chev::after { content: "Hide"; } .dex:not([open]) > summary .chev::after { content: "Details"; }
 .dexbody { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--line); padding-top: 12px; }
@@ -622,7 +624,9 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .trophy .tt small { color: var(--muted); font-size: 12px; }
 .trophy .tm { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .trophy .tmon { background: var(--panel-2); border-radius: 10px; padding: 6px 4px; text-align: center; font-size: 11px; line-height: 1.2; }
-.trophy .tmon img, .trophy .tmon svg { width: 100%; max-width: 64px; height: 64px; object-fit: contain; }
+.trophy .tmon img, .trophy .tmon svg { display: block; width: 100%; max-width: 64px; height: 64px; object-fit: contain; margin: 0 auto 4px; }
+.trophy .clock { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.vhsort { margin-bottom: 10px; gap: 8px; }
 .trophy .tmon i { color: #e8b53a; font-style: normal; }
 #battle.gloomy .mon.fx-faint { opacity: .06; transform: translateY(16px) scale(.96); filter: blur(3px); transition: opacity 1.6s ease, transform 1.6s ease, filter 1.6s ease; }
 /* weather and terrain tint the whole battle screen */
@@ -1084,19 +1088,10 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
   <section class="screen" id="summit" hidden>
     <div class="maphead">
       <div class="mapttl"><small id="summitSub"></small><span>Victory Summit</span></div>
-      <div class="row"><button class="ghost" id="summitHall" hidden>Victory Hall</button><button class="ghost" id="summitTrophy" hidden>Trophies</button><button class="ghost" id="summitBag">Bag</button><button class="ghost" id="summitTeam">Team</button><button class="ghost" id="summitLeave">Leave</button></div>
+      <div class="row"><button class="ghost" id="summitHall" hidden>Victory Hall</button><button class="ghost" id="summitBag">Bag</button><button class="ghost" id="summitTeam">Team</button><button class="ghost" id="summitLeave">Leave</button></div>
     </div>
     <div class="mapwrap"><svg id="summitSvg" viewBox="0 0 360 420" role="img" aria-label="Victory Summit map"></svg></div>
     <div class="nextbar" id="summitBar"></div>
-  </section>
-
-  <!-- VICTOR'S TROPHY CASE -->
-  <section class="screen" id="trophy" hidden>
-    <div class="maphead">
-      <div class="mapttl"><small id="trophySub"></small><span>Victor's Trophy Case</span></div>
-      <div class="row"><button class="ghost" id="trophyBack">Back</button></div>
-    </div>
-    <div class="scroll"><div class="trailbody" id="trophyBody"></div></div>
   </section>
 
   <!-- VICTORY HALL: the five fastest wins -->

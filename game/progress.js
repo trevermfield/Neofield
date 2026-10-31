@@ -50,3 +50,16 @@ export function participantsFromLog(log, names) {
   names.forEach((n, i) => { if (seen.has(n)) slots.add(i); });
   return slots;
 }
+
+// How many foes each of your Mons knocked out in a battle, read from the battle log. Returns {battleName: count}.
+// A knockout goes to the Mon that used the last move on your side (or the Mon in front if the foe fainted to its own move, poison or weather).
+export function koCounts(log) {
+  const out = {}; let front = null, lastMover = null;
+  for (const line of log || []) {
+    let m;
+    if ((m = /^\|(?:switch|drag)\|p1[a-z]?: ([^|]+)\|/.exec(line))) { front = m[1]; lastMover = null; }
+    else if ((m = /^\|move\|(p[12])[a-z]?: ([^|]+)\|/.exec(line))) { if (m[1] === 'p1') lastMover = m[2]; else lastMover = null; }
+    else if (/^\|faint\|p2/.test(line)) { const who = lastMover || front; if (who) out[who] = (out[who] || 0) + 1; }
+  }
+  return out;
+}

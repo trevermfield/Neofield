@@ -3,6 +3,8 @@ import {Battle, Dex, Teams, TeamValidator} from '@pkmn/sim';
 import {TEAM_TEXT} from './teams.js';
 
 export const FORMAT = 'gen9nationaldexubers';
+// Moves have their base PP (no PP Ups, which would give 8/5 of it)
+Battle.prototype.calculatePP = function (move) { return move.pp; };
 export {Dex, TEAM_TEXT};
 
 export function parseTeam(text) {

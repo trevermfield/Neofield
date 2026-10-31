@@ -245,7 +245,7 @@ export function awardXP(team, parts, kind, foeLevels, cfg = XP) {
     const share = parts.has(slot) ? 1 : cfg.benchShare;
     let gain = 0;
     for (const lv of foeLevels) gain += xpForKO(kind, lv, m.level, cfg);
-    gain = Math.round(gain * share);
+    gain = Math.max(1, Math.round(gain * share));   // every battle gives at least 1 XP, even against much weaker foes
     const before = m.level;
     m.xp = (m.xp || 0) + gain;
     let n = 0;
@@ -272,7 +272,7 @@ export function statsAt(finalSet, level, moves, species) {
 }
 export function moveInfo(name) {
   const m = dex.moves.get(name);
-  return {name: m.name, type: m.type, category: m.category, power: m.basePower, accuracy: m.accuracy === true ? null : m.accuracy, pp: Math.floor(m.pp * 8 / 5), desc: m.shortDesc || m.desc};
+  return {name: m.name, type: m.type, category: m.category, power: m.basePower, accuracy: m.accuracy === true ? null : m.accuracy, pp: m.pp, desc: m.shortDesc || m.desc};
 }
 
 // A leader's team at a level (their Mons shown at the right evolution stage)
