@@ -3656,8 +3656,7 @@ function openSummit(opts = {}) {
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
     <button class="btn primary" id="sRematch">Rematch the Summit</button>
-    <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>
-    ${ngAsk ? `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Start New Game+?</b><small>${ngInfoHTML()}</small></div></div><div class="row"><button class="btn primary" id="sNgYes">Yes, start over</button><button class="btn" id="sNgNo">Not now</button></div>` : `<button class="btn" id="sNewPlus">New Game+</button>`}`;
+    <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
@@ -3683,9 +3682,6 @@ $('summitBar').addEventListener('click', e => {
   else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sDevNote') showTylerNote();
   else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA(); openSummit(); }
-  else if (e.target.id === 'sNewPlus') { ngAsk = true; openSummit({keepAsk: true}); }
-  else if (e.target.id === 'sNgNo') { ngAsk = false; openSummit({keepAsk: true}); }
-  else if (e.target.id === 'sNgYes') startNewGamePlus();
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
     summitAsk = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA();
