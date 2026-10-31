@@ -3796,9 +3796,9 @@ function renderShop() {
     <button class="btn primary" id="buy-${id}" data-buy="${id}" ${A.money < price || (id === 'pokeball' && (A.bag.pokeball || 0) >= 99) ? 'disabled' : ''}>${id === 'pokeball' && (A.bag.pokeball || 0) >= 99 ? 'Max 99' : 'Buy'}</button></div>`).join('');
   $('shopTutor').innerHTML = A.team.map((m, i) => {
     const cur = mset(m);
-    const opts = E.tutorOptions(m);
+    const opts = E.tutorMoves(m);
     return `<div class="tutorbox"><b>${esc(cur.species)} <span class="lvl">Lv ${m.level}</span></b><small class="note">Knows ${cur.moves.map(esc).join(', ')}</small>
-      <div class="row">${opts.length ? opts.map(mv => `<button class="btn" data-tutor="${i}" data-move="${esc(mv)}" ${A.money < TUTOR_PRICE ? 'disabled' : ''}>Teach ${esc(mv)}</button>`).join('') : '<small class="note">Nothing to teach right now. More moves open up as it evolves.</small>'}</div></div>`;
+      <div class="row">${opts.length ? opts.map(mv => `<button class="btn${mv.set ? ' setmove' : ''}" data-tutor="${i}" data-move="${esc(mv.name)}" ${A.money < TUTOR_PRICE ? 'disabled' : ''}>Teach ${esc(mv.name)}</button>`).join('') : '<small class="note">Nothing to teach right now. More moves open up as it evolves.</small>'}</div></div>`;
   }).join('');
 }
 $('shopItems').addEventListener('click', e => {
