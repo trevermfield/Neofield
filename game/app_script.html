@@ -39,7 +39,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', 
 // Each phone has 4 save slots. A slot holds an Adventure half and a Battle Hall half; built teams,
 // recently used teams and settings are shared by all slots.
 const NSLOTS = 4;
-const SLOT_KEYS = new Set(['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'adventure', 'profile', 'hallTeam']);
+const SLOT_KEYS = new Set(['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'adventure', 'profile', 'hallTeam', 'linkRecords']);
 const ADV_KEYS = ['adventure'];
 const HALL_KEYS = ['myTeam', 'customTeam', 'difficulty', 'badgeBook', 'badges', 'champions', 'journey', 'hallTeam'];
 const ls = {
@@ -162,11 +162,11 @@ function renderLeaders() {
       <div class="go">${badges[k] ? 'REMATCH' : 'BATTLE'}</div></button>`;
   }).join('') + oklaCard();
 }
-// Prof. Okla joins the Battle Hall once he has been beaten in this slot's adventure (never counted as a badge)
+// Prof. Okla joins the Battle Hall (as an opponent and as a team you can use) once this slot's adventure has beaten the Champion or him (never counted as a badge)
+function oklaOpen() { try { return !!(A && A.regional && (A.done || A.hof > 0 || (A.lab && A.lab.beat))); } catch (e) { return false; } }
+const gymKeys = () => oklaOpen() ? [...ORDER, 'okla'] : ORDER;
 function oklaCard() {
-  let beat = false;
-  try { beat = !!(A && A.lab && A.lab.beat); } catch (e) { beat = false; }
-  if (!beat) return '';
+  if (!oklaOpen()) return '';
   const L = LEADERS.okla, mons = E ? teamNames(E.TEAM_TEXT.okla) : '';
   return `<button class="leader" id="leader-okla" data-k="okla" style="--c:${L.color}" ${E ? '' : 'disabled'}>${emblem(L.icon, L.color)}
     <div class="who"><div class="meta">${esc(L.type)} · ${esc(L.badge)}</div><div class="title">${esc(L.title)}</div><div class="mons">${esc(mons)}</div></div><div class="go">BATTLE</div></button>`;
@@ -181,7 +181,7 @@ function myTeamText() { const m = myTeam(); return m ? (m.text || E.setsToText(m
 function baseName() { const m = myTeam(); return m ? m.name : 'Player'; }
 function needTeam() { openHall(); toast('Pick a team for the Battle Hall first.'); }
 
-const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'vhall', 'farm', 'dev', 'intro', 'dex'];
+const SCREENS = ['title', 'slots', 'options', 'setup', 'teams', 'builder', 'moned', 'lead', 'battle', 'info', 'jstart', 'journey', 'jbag', 'shop', 'quest', 'trail', 'summit', 'vhall', 'farm', 'trade', 'dev', 'intro', 'dex'];
 let curScreen = null;
 function show(id) { if (id !== 'battle' && typeof wxStop === 'function') wxStop(); curScreen = id; $('toast').hidden = true; for (const s of SCREENS) $(s).hidden = s !== id; window.scrollTo(0, 0); }
 function setAccent(color) { document.documentElement.style.setProperty('--accent', color); }
@@ -214,8 +214,8 @@ function showLeadScreen() {
   $('leadTitle').textContent = `vs ${foe.title || foe.name}${foe.wild && foeLead ? ` · Lv ${foeLead.level}` : ''}`;
   $('leadSub').textContent = mode === 'cpu'
     ? `${foe.subtitle || ''}. ${battle.activePerHalf > 1 ? `Pick ${leadNeed()} Mon${leadNeed() === 1 ? '' : 's'} to send out first, in order.` : 'Pick who goes out first.'}`
-    : `Online battle. Pick who goes out first. ${foe.name} is choosing too.`;
-  $('foeRoster').innerHTML = battle[FOE].pokemon.map(p => `${esc(p.species.name)} <span class="lvl">Lv ${p.level}</span> ${typesHTML(p.species.types)}`).join('<br>');
+    : `Online battle. ${battle.activePerHalf > 1 ? `Pick ${leadNeed()} Mon${leadNeed() === 1 ? '' : 's'} to send out first, in order.` : 'Pick who goes out first.'} ${foe.name} is choosing too.`;
+  $('foeRoster').innerHTML = battle[FOE].pokemon.filter(p => p.name !== 'Nobody').map(p => `${esc(p.species.name)} <span class="lvl">Lv ${p.level}</span> ${typesHTML(p.species.types)}`).join('<br>');
   const carry = ctx && ctx.kind !== undefined;
   $('leadList').innerHTML = battle[ME].pokemon.map((p, i) => {
     if (p.name === 'Nobody') return '';
@@ -1110,6 +1110,19 @@ $('devWin').addEventListener('click', async () => {
   await refresh();
 });
 
+// Your win-loss record against each friend you have link-battled, by their save name (kept per save slot)
+function linkRecordsGet() { try { return store.get('linkRecords', {}) || {}; } catch (e) { return {}; } }
+function recordLink(name, won) {
+  const r = linkRecordsGet(), e = r[name] || {w: 0, l: 0};
+  if (won) e.w++; else e.l++;
+  r[name] = e; store.set('linkRecords', r);
+  return e;
+}
+function linkRecordsHTML() {
+  const r = linkRecordsGet(), names = Object.keys(r);
+  if (!names.length) return '';
+  return `<div class="linkrecords"><p class="note"><b>Your record against friends</b></p>${names.sort((a, b) => (r[b].w + r[b].l) - (r[a].w + r[a].l)).map(n => `<p class="note">You vs ${esc(n)}: ${r[n].w}-${r[n].l}</p>`).join('')}</div>`;
+}
 function showResult() {
   if (!battle) return;
   const won = battle.winner === battle[ME].name;
@@ -1136,7 +1149,8 @@ function showResult() {
     const left = battle[won ? ME : FOE].pokemon.filter(p => !p.fainted).length;
     const ff = match && match.data.forfeit;
     const why = ff ? (ff === ME ? 'You forfeited.' : `${esc(foe.name)} forfeited.`) : `${left} ${left === 1 ? 'Mon' : 'Mons'} left standing after ${battle.turn} turns.`;
-    html = `${emblem(ic, foe.color)}<h3>${won ? 'You beat ' + esc(foe.name) : esc(foe.name) + ' wins'}</h3><p>${why}</p>
+    const rec = match && match.link ? recordLink(foe.name, won) : null;
+    html = `${emblem(ic, foe.color)}<h3>${won ? 'You beat ' + esc(foe.name) : esc(foe.name) + ' wins'}</h3><p>${why}</p>${rec ? `<p class="note">You vs ${esc(foe.name)}: ${rec.w}-${rec.l}</p>` : ''}
       <div class="row" style="justify-content:center"><button class="btn primary" id="toSetup">Back to lobby</button></div>`;
   }
   $('result').innerHTML = html;
@@ -1395,7 +1409,7 @@ function dexCard(set, idx) {
 function renderInfo() {
   const mine = myTeam();
   const own = mine && mine.kind !== 'gym' ? mine : null;
-  const keys = [...(own ? ['mine'] : []), ...ORDER];
+  const keys = [...(own ? ['mine'] : []), ...gymKeys()];
   if (!keys.includes(infoKey)) infoKey = mine && mine.kind === 'gym' ? mine.key : keys[0];
   $('infoChips').innerHTML = keys.map(k => `<button class="chip" id="info-${k}" data-k="${k}" aria-pressed="${k === infoKey}">${k === 'mine' ? esc(own.label) : esc(LEADERS[k].first)}</button>`).join('');
   const team = infoKey === 'mine' ? own.sets : (E.parseTeam(E.TEAM_TEXT[infoKey]).team || []);
@@ -2781,7 +2795,8 @@ function awardFightXP(fight) {
   A.team.forEach(ensureMoves);
   // everything on the Laurel Pass (its road, wild Mons and legendary sites) gives double XP
   const trail = fight.type === 'trailTrainer' || fight.type === 'trailWild' || (fight.quest != null && fight.quest >= LEG0);
-  const cfg = trail ? {...E.XP, base: Object.fromEntries(Object.entries(E.XP.base).map(([k, v]) => [k, v * 2]))} : E.XP;
+  const mult = fight.type === 'champion' ? 3 : trail ? 2 : 1;   // the Champion is worth triple XP, the Laurel Pass double
+  const cfg = mult > 1 ? {...E.XP, base: Object.fromEntries(Object.entries(E.XP.base).map(([k, v]) => [k, v * mult]))} : E.XP;
   const events = E.awardXP(A.team, parts, XP_KIND[fight.type] || 'wild', fight.sets.map(x => x.level), cfg);
   saveA();
   return events;
@@ -4289,10 +4304,16 @@ function labCardHTML() {
     <button class="btn primary" id="lChallenge">${L.beat ? 'Battle Prof. Okla again' : 'Challenge Prof. Okla'}</button>
     ${quest}<div class="advactions"><button class="btn" id="aShop">Shop</button><button class="btn" id="aFarm">Farm</button><button class="btn" id="aCenter">Heal team</button></div>`;
 }
+// Route lists: a red dot for a normal catch and a gold diamond if you have caught a Lustrous one
+function routeStatus(id, caught, seen) {
+  const lus = A.dex.lusCaught && A.dex.lusCaught[id];
+  const parts = [caught ? '<span class="caughtdot">●</span> Caught' : '', lus ? '<span class="lusdot">◆</span> Lustrous' : ''].filter(Boolean);
+  return parts.length ? parts.join(' · ') : seen ? 'Seen' : 'Not seen yet';
+}
 function labRouteCardHTML() {
   const mons = ['starter1', 'starter2', 'starter3'].map(k => {
     const st = E.familyOf(k).stages[0], seen = A.dex.seen[st.id], caught = A.dex.caught[st.id];
-    return `<div class="routemon ${seen ? '' : 'unseen'}">${E.monArt(st.id)}<span>${seen ? esc(st.name) : '???'}</span><small>${caught ? '<span class="caughtdot">●</span> Caught' : seen ? 'Seen' : 'Not seen yet'}</small></div>`;
+    return `<div class="routemon ${seen ? '' : 'unseen'}">${E.monArt(st.id)}<span>${seen ? esc(st.name) : '???'}</span><small>${routeStatus(st.id, caught, seen)}</small></div>`;
   }).join('');
   return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>Route 0</b><small>${esc(HOME)} to Prof. Okla's Lab · wild Mons at level 5 · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
     <div class="routemons">${mons}</div>
@@ -4340,7 +4361,7 @@ function routeCardHTML(r) {
     const f = E.familyOf(k);
     const st = f.stages[E.stageAt(E.chainOf(f.finalSet.species), lv)] || f.stages[0];
     const seen = A.dex.seen[st.id], caught = A.dex.caught[st.id];
-    return `<div class="routemon ${seen ? '' : 'unseen'}">${E.monArt(st.id)}<span>${seen ? esc(st.name) : '???'}</span><small>${caught ? '<span class="caughtdot">●</span> Caught' : seen ? 'Seen' : 'Not seen yet'}</small></div>`;
+    return `<div class="routemon ${seen ? '' : 'unseen'}">${E.monArt(st.id)}<span>${seen ? esc(st.name) : '???'}</span><small>${routeStatus(st.id, caught, seen)}</small></div>`;
   }).join('');
   return `<div class="nextcard" style="--c:#8fb36a"><span class="face">${emblem('leaf', '#8fb36a')}</span><div><b>${esc(R.name)}</b><small>${esc(placeName(r))} to ${esc(placeName(r + 1))} · wild Mons around level ${lv} · ${A.bag.pokeball || 0} Mon Balls</small></div></div>
     <div class="routemons">${mons}</div>
@@ -4647,7 +4668,10 @@ function openFarm() {
 // Releasing a legendary Mon lets it return to its site, so it can be caught again (for example to try for a Lustrous one).
 function releaseMon(list, i) {
   const m = list.splice(i, 1)[0]; if (!m) return;
-  const sp = mset(m).species;
+  legendReturns(mset(m).species);
+}
+// A legendary Mon that leaves you (released or traded away) returns to its site, so it can be caught again
+function legendReturns(sp) {
   for (let k = LEG0; k < AREAS.length; k++) {
     const ar = AREAS[k], q = A.quests[k];
     if (!ar.legend || !q || !q.done || q.trainer !== sp) continue;
@@ -4787,7 +4811,7 @@ function convertLegacyTeams() {
 let hallTeamSel = store.get('hallTeam', null); // {kind: 'gym', key} | {kind: 'adv'} | {kind: 'built', id}
 function hallTeam() {
   const t = hallTeamSel;
-  if (t && (t.kind === 'adv' || t.kind === 'built' || (t.kind === 'gym' && LEADERS[t.key]))) return t;
+  if (t && (t.kind === 'adv' || t.kind === 'built' || (t.kind === 'gym' && LEADERS[t.key] && (t.key !== 'okla' || oklaOpen())))) return t;
   return {kind: 'gym', key: 'trever'};
 }
 function setHallTeam(t) { hallTeamSel = t; store.set('hallTeam', t); }
@@ -4836,7 +4860,7 @@ function renderTeamPanel() {
   let html;
   if (t.kind === 'gym') {
     html = `<p>Use any gym leader's team, at level 100.</p>
-      <div class="chips">${ORDER.map(k => `<button class="chip" type="button" data-gym="${k}" aria-pressed="${t.key === k}">${esc(LEADERS[k].first)} · ${esc(LEADERS[k].type)}</button>`).join('')}</div>
+      <div class="chips">${gymKeys().map(k => `<button class="chip" type="button" data-gym="${k}" aria-pressed="${t.key === k}">${esc(LEADERS[k].first)} · ${esc(LEADERS[k].type)}</button>`).join('')}</div>
       <p>${esc(teamNames(E.TEAM_TEXT[t.key]))}</p>
       <div class="row"><button class="btn" type="button" data-act="guide">Team guide: moves, items, stats</button></div>`;
   } else if (t.kind === 'adv') {
@@ -5256,6 +5280,9 @@ $('monedBody').addEventListener('click', e => {
 // same battle from the same seed and send each other only their choices, like the Claude version does.
 let link = null;      // {role: 'host' | 'guest' | 'join', code, peer, conn, status, error, tries}
 let linkNote = '';    // last problem, shown in the Link Battle card
+let linkMode = 'singles';   // what a host starts: 'singles' | 'doubles' | 'triples' | 'trade'
+const LINK_MODES = [['singles', 'Singles'], ['doubles', 'Doubles'], ['triples', 'Triples'], ['trade', 'Trade']];
+const linkModeName = m => (LINK_MODES.find(x => x[0] === m) || LINK_MODES[0])[1];
 const LINK_ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const linkId = code => `neofield-v1-${code}`;
 function peerOpts() {
@@ -5269,9 +5296,12 @@ function renderLink() {
   const mine = myTeam();
   let html;
   if (!link) {
-    html = `<p class="note">Battle a friend on another phone. One of you hosts and shares the 4-letter code, the other joins with it. Both phones need internet.</p>
-      <div class="row"><button class="btn primary" type="button" data-link="host" ${mine ? '' : 'disabled'}>Host a battle</button><button class="btn" type="button" data-link="joinask" ${mine ? '' : 'disabled'}>Join with a code</button></div>
-      <p class="note">${mine ? `You'll battle with ${esc(mine.label)}.` : 'Pick a team above first.'}</p>`;
+    const trading = linkMode === 'trade', canHost = trading ? advReady() : !!mine;
+    html = `<p class="note">Battle or trade with a friend on another phone. One of you hosts and shares the 4-letter code, the other joins with it. Both phones need internet.</p>
+      <div class="seg linkseg" role="radiogroup" aria-label="What to do" style="grid-template-columns:repeat(4,1fr)">${LINK_MODES.map(([k, l]) => `<button type="button" role="radio" data-linkmode="${k}" aria-checked="${k === linkMode}">${l}</button>`).join('')}</div>
+      <div class="row"><button class="btn primary" type="button" data-link="host" ${canHost ? '' : 'disabled'}>Host ${trading ? 'a trade' : 'a battle'}</button><button class="btn" type="button" data-link="joinask" ${mine || advReady() ? '' : 'disabled'}>Join with a code</button></div>
+      <p class="note">${trading ? (advReady() ? `You'll trade Mons from your Slot ${curSlot} adventure. Lustrous and legendary Mons can be traded too.` : `Trading uses the Mons from your adventure. There's no adventure in Slot ${curSlot} yet.`)
+        : mine ? `You'll battle with ${esc(mine.label)}. The host picks Singles, Doubles or Triples; the joining friend plays whatever the host picks.` : 'Pick a team above first.'}</p>${linkRecordsHTML()}`;
   } else if (link.role === 'join') {
     html = `<label class="note" for="linkCode">Battle code from your friend</label>
       <input id="linkCode" class="linkinput" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" value="${esc(link.code || '')}">
@@ -5279,7 +5309,7 @@ function renderLink() {
   } else if (link.role === 'host') {
     html = link.status === 'opening' ? '<p class="note"><span class="pulse"></span>Getting a battle code…</p>'
       : `<p class="note">Your battle code</p><p class="linkcode">${esc(link.code)}</p>
-        <p class="note"><span class="pulse"></span>Waiting for your friend. They tap Join with a code in their Battle Hall and type this in.</p>`;
+        <p class="note">${esc(linkModeName(link.mode))} · <span class="pulse"></span>Waiting for your friend. They tap Join with a code in their Battle Hall and type this in.</p>`;
     html += `<div class="row"><button class="btn" type="button" data-link="cancel">Cancel</button></div>`;
   } else {
     html = `<p class="note"><span class="pulse"></span>Connecting to battle ${esc(link.code)}…</p><div class="row"><button class="btn" type="button" data-link="cancel">Cancel</button></div>`;
@@ -5289,6 +5319,8 @@ function renderLink() {
   if (link && link.role === 'join') $('linkCode').focus();
 }
 $('online').addEventListener('click', e => {
+  const lm = e.target.closest('[data-linkmode]');
+  if (lm && E) { linkMode = lm.dataset.linkmode; linkNote = ''; renderLink(); return; }
   const b = e.target.closest('[data-link]'); if (!b || b.disabled || !E) return;
   const act = b.dataset.link;
   linkNote = '';
@@ -5305,7 +5337,7 @@ function linkHost() {
   linkEnd();
   const code = Array.from({length: 4}, () => LINK_ALPHA[Math.floor(Math.random() * LINK_ALPHA.length)]).join('');
   const peer = new E.Peer(linkId(code), peerOpts());
-  link = {role: 'host', code, peer, conn: null, status: 'opening'};
+  link = {role: 'host', code, peer, conn: null, status: 'opening', mode: linkMode};
   peer.on('open', () => { if (link && link.peer === peer) { link.status = 'waiting'; renderLink(); } });
   peer.on('connection', c => {
     if (!link || link.peer !== peer) return;
@@ -5344,7 +5376,7 @@ function wireConn(c) {
 }
 function linkInfo() {
   const mine = myTeam();
-  return mine ? {name: profileName() || mine.name, key: mine.kind === 'gym' ? mine.key : null, color: mine.color || CUSTOM_COLOR, team: myTeamText()} : null;
+  return {name: profileName() || (mine && mine.name) || 'Trainer', key: mine && mine.kind === 'gym' ? mine.key : null, color: (mine && mine.color) || CUSTOM_COLOR, team: mine ? myTeamText() : null, adv: advReady()};
 }
 function linkSend(msg) { if (link && link.conn && link.conn.open) { try { link.conn.send(msg); } catch (e) { /* resent on reconnect */ } } }
 function linkError(peer, err) {
@@ -5376,6 +5408,7 @@ function linkRetry() {
 }
 function onLinkClose() {
   link.conn = null;
+  if (trade) { trade.note = 'Lost the connection. Close the trade and start a new one.'; trade.gone = true; renderTrade(); return; }
   if (match && match.link && battle) {
     if (battle.ended) return;
     addLine(link.role === 'guest' ? 'Lost the connection. Reconnecting…' : `Lost the connection to ${esc(foe.name)}. Waiting for them to reconnect…`, 'bad');
@@ -5392,23 +5425,38 @@ function onLinkData(msg) {
     if (link.role !== 'host') return;
     if (match && match.link) { linkSend({t: 'start', data: match.data, choices}); return; } // friend reconnected
     const me = linkInfo(), them = msg.info;
-    if (!me || !them || !them.team) return;
+    if (!them) return;
+    if (link.mode === 'trade') {
+      if (!me.adv || !them.adv) { linkNote = !me.adv ? 'You need an adventure in this slot to trade.' : 'Your friend needs an adventure in their slot to trade.'; linkSend({t: 'notrade'}); linkEnd(); if (curScreen === 'setup') renderLink(); return; }
+      linkSend({t: 'start', data: {kind: 'trade', p1: {name: me.name}, p2: {name: them.name}}});
+      openTrade(them.name);
+      return;
+    }
+    if (!me.team || !them.team) return;
     const p2 = {...them};
     if (p2.name === me.name) p2.name += ' 2';
-    const data = {status: 'active', seed: [0, 0, 0, 0].map(() => Math.floor(Math.random() * 0x10000)), p1: me, p2};
+    const data = {status: 'active', gameType: link.mode === 'doubles' || link.mode === 'triples' ? link.mode : 'singles', seed: [0, 0, 0, 0].map(() => Math.floor(Math.random() * 0x10000)), p1: me, p2};
     linkSend({t: 'start', data, choices: {p1: [], p2: []}});
     openLinkMatch(data, {p1: [], p2: []});
   } else if (msg.t === 'start') {
     if (link.role !== 'guest' || !msg.data) return;
+    if (msg.data.kind === 'trade') { if (!advReady()) { linkSend({t: 'notrade'}); return; } openTrade(msg.data.p1.name); return; }
     const same = match && match.link && battle && JSON.stringify(match.data.seed) === JSON.stringify(msg.data.seed);
     if (same) { mergeChoices(msg.choices); linkSend({t: 'moves', side: ME, list: choices[ME]}); return; }
     openLinkMatch(msg.data, msg.choices || {});
+  } else if (msg.t === 'notrade') {
+    linkNote = 'The trade could not start. Both of you need an adventure in the slot you are using.';
+    linkEnd();
+    if (trade) { trade = null; openHall(); } else if (curScreen === 'setup') renderLink();
+  } else if (msg.t === 'offer' || msg.t === 'accept' || msg.t === 'cancel') {
+    tradeMessage(msg);
   } else if (msg.t === 'moves') {
     mergeChoices({[msg.side]: msg.list});
   } else if (msg.t === 'forfeit') {
     if (match && match.link && battle && !battle.ended) { match.data = {...match.data, forfeit: msg.side, status: 'done'}; refresh(); }
   } else if (msg.t === 'leave') {
-    if (battle && !battle.ended) addLine(`${esc(foe.name)} left the battle.`, 'bad');
+    if (trade) { trade.note = `${trade.friend} left the trade.`; trade.gone = true; renderTrade(); }
+    else if (battle && !battle.ended) addLine(`${esc(foe.name)} left the battle.`, 'bad');
   } else if (msg.t === 'busy') {
     linkNote = 'That battle already has two players.';
     linkEnd();
@@ -5432,7 +5480,11 @@ function openLinkMatch(data, initial) {
   const opp = data[FOE];
   foe = {name: opp.name, key: opp.key, color: opp.color || CUSTOM_COLOR};
   setAccent(foe.color);
-  beginBattle({name: data.p1.name, team: E.parseTeam(data.p1.team).team}, {name: data.p2.name, team: E.parseTeam(data.p2.team).team}, data.seed);
+  const gt = data.gameType === 'doubles' || data.gameType === 'triples' ? data.gameType : 'singles', need = gt === 'triples' ? 3 : gt === 'doubles' ? 2 : 1;
+  // doubles and triples need a Mon for every slot: a small team is padded with "Nobody" (fainted from the start, never shown), the same on both phones
+  const pad = t => { const team = E.parseTeam(t).team.slice(); while (team.length < need) team.push({...team[0], name: 'Nobody'}); return team; };
+  beginBattle({name: data.p1.name, team: pad(data.p1.team)}, {name: data.p2.name, team: pad(data.p2.team)}, data.seed, gt);
+  for (const sd of ['p1', 'p2']) { battle[sd].pokemon.forEach(p => { if (p.name === 'Nobody') { p.hp = 0; p.fainted = true; } }); E.recountLeft(battle[sd]); }
   choices = {p1: (initial.p1 || []).slice(), p2: (initial.p2 || []).slice()};
   applied = {p1: 0, p2: 0};
   show('battle');
@@ -5447,6 +5499,110 @@ function linkEnd() {
   if (l.conn && l.conn.open) { try { l.conn.send({t: 'leave'}); } catch (e) { /* closing anyway */ } }
   setTimeout(() => { try { if (l.conn) l.conn.close(); } catch (e) { /* already closed */ } try { if (l.peer) l.peer.destroy(); } catch (e) { /* already gone */ } }, 300);
 }
+
+
+// ---------- trading: swap one Mon for one Mon with a friend over the link ----------
+// Both phones show both offers. A trade only happens when both of you accept the same two offers. Lustrous and legendary Mons can be traded.
+let trade = null;   // {friend, mine: {id, list, i, mon} | null, theirs: {id, mon} | null, meAcc, themAcc, note, gone}
+const tradeId = () => Math.random().toString(36).slice(2, 10);
+function openTrade(friend) {
+  trade = {friend, mine: null, theirs: null, meAcc: false, themAcc: false, note: '', gone: false};
+  mode = 'cpu'; ctx = null;
+  setAccent('#8fb36a');
+  renderTrade(); show('trade');
+}
+// Only Neofield Mons built the way the game builds them are accepted from a friend's phone
+function cleanMon(x) {
+  try {
+    if (!x || typeof x !== 'object' || !x.final || typeof x.final.species !== 'string') return null;
+    const fam = E.FAMILIES.find(f => f.finalSet.species === x.final.species);
+    if (!fam) return null;
+    const m = {final: JSON.parse(JSON.stringify(fam.finalSet))};
+    m.level = Math.max(1, Math.min(100, Math.floor(+x.level) || 1));
+    m.frac = Math.max(0.01, Math.min(1, +x.frac || 1));
+    m.tutored = Array.isArray(x.tutored) ? x.tutored.filter(v => typeof v === 'string' && E.Dex.moves.get(v).exists).slice(0, 40) : [];
+    if (Array.isArray(x.moves)) { const mv = x.moves.filter(v => typeof v === 'string' && E.Dex.moves.get(v).exists).slice(0, 4); if (mv.length) m.moves = mv; }
+    if (x.lustrous) m.lustrous = true;
+    m.kos = Math.max(0, Math.floor(+x.kos) || 0);
+    if (+x.xp > 0) m.xp = Math.floor(+x.xp);
+    if (x.met && typeof x.met === 'object') m.met = {where: String(x.met.where || '').slice(0, 60), t: +x.met.t || Date.now()};
+    return m;
+  } catch (e) { return null; }
+}
+const tradeList = k => k === 'team' ? A.team : A.box;
+function tradeMonHTML(m) {
+  const set = mset(m);
+  return `<div class="boxmon">${artOf(set.species, m.lustrous)}<b>${esc(set.species)} <span class="lvl">Lv ${m.level}</span></b>${m.lustrous ? '<small style="color:#e8c76a">◆ Lustrous</small>' : ''}<small class="note">${set.moves.map(esc).join(', ')}</small></div>`;
+}
+function renderTrade() {
+  if (!trade || !A) return;
+  const T = trade, live = !T.gone && link && link.conn && link.conn.open;
+  $('tradeSub').textContent = `Trading with ${T.friend}`;
+  const row = (m, k, i) => `<div class="boxmon">${artOf(mset(m).species, m.lustrous)}<b>${esc(mset(m).species)} <span class="lvl">Lv ${m.level}</span></b>${m.lustrous ? '<small style="color:#e8c76a">◆ Lustrous</small>' : ''}<button class="btn" type="button" data-toffer="${k}:${i}" ${live && !(T.mine && T.mine.list === k && T.mine.i === i) ? '' : 'disabled'}>${T.mine && T.mine.list === k && T.mine.i === i ? 'Offered' : 'Offer'}</button></div>`;
+  let status = T.note || '';
+  if (!status) status = !T.mine ? 'Pick one of your Mons to offer.' : !T.theirs ? `Waiting for ${T.friend} to offer a Mon.` : T.meAcc ? `You accepted. Waiting for ${T.friend}.` : T.themAcc ? `${T.friend} accepted. Check the offers, then accept.` : 'Check both offers, then tap Accept.';
+  $('tradeBody').innerHTML = `<p class="note">${esc(status)}</p>
+    <div class="tradepair"><div class="section"><h2>Your offer</h2>${T.mine ? tradeMonHTML(T.mine.mon) + `<div class="row"><button class="btn" type="button" data-tcancel="1" ${live ? '' : 'disabled'}>Take it back</button></div>` : '<p class="note">Nothing offered yet.</p>'}</div>
+    <div class="section"><h2>${esc(T.friend)}'s offer</h2>${T.theirs ? tradeMonHTML(T.theirs.mon) : '<p class="note">Nothing offered yet.</p>'}</div></div>
+    <div class="row"><button class="btn primary" type="button" id="tradeAccept" ${live && T.mine && T.theirs && !T.meAcc ? '' : 'disabled'}>${T.meAcc ? 'Accepted' : 'Accept this trade'}</button></div>
+    <div class="section"><h2>Your team · ${A.team.length} of 6</h2><div class="boxgrid">${A.team.map((m, i) => row(m, 'team', i)).join('')}</div></div>
+    <div class="section"><h2>The Farm · ${A.box.length}</h2><div class="boxgrid">${A.box.map((m, i) => row(m, 'box', i)).join('') || '<p class="note">Nobody on the Farm.</p>'}</div></div>`;
+}
+function tradeReset() { if (trade) { trade.meAcc = false; trade.themAcc = false; } }
+$('tradeBody').addEventListener('click', e => {
+  const T = trade; if (!T || !A) return;
+  const off = e.target.closest('[data-toffer]');
+  if (off && !off.disabled) {
+    const [k, ix] = off.dataset.toffer.split(':'), i = +ix, m = tradeList(k)[i];
+    if (!m) return;
+    ensureMoves(m);
+    T.mine = {id: tradeId(), list: k, i, mon: JSON.parse(JSON.stringify(m))};
+    tradeReset(); T.note = '';
+    linkSend({t: 'offer', id: T.mine.id, mon: T.mine.mon});
+    renderTrade(); return;
+  }
+  if (e.target.closest('[data-tcancel]')) {
+    T.mine = null; tradeReset(); T.note = '';
+    linkSend({t: 'cancel'});
+    renderTrade(); return;
+  }
+  if (e.target.id === 'tradeAccept' && !e.target.disabled && T.mine && T.theirs) {
+    T.meAcc = true; T.note = '';
+    linkSend({t: 'accept', mine: T.mine.id, theirs: T.theirs.id});
+    tradeMaybeDo(); renderTrade();
+  }
+});
+function tradeMessage(msg) {
+  const T = trade; if (!T || !A) return;
+  if (msg.t === 'offer') {
+    const mon = cleanMon(msg.mon);
+    if (!mon || typeof msg.id !== 'string') return;
+    T.theirs = {id: msg.id.slice(0, 16), mon}; tradeReset(); T.note = '';
+  } else if (msg.t === 'cancel') {
+    T.theirs = null; tradeReset(); T.note = '';
+  } else if (msg.t === 'accept') {
+    if (T.mine && T.theirs && msg.mine === T.theirs.id && msg.theirs === T.mine.id) { T.themAcc = true; tradeMaybeDo(); }
+  }
+  renderTrade();
+}
+// Both accepted the same two offers: swap them in place on this phone
+function tradeMaybeDo() {
+  const T = trade;
+  if (!T || !T.meAcc || !T.themAcc || !T.mine || !T.theirs) return;
+  const list = tradeList(T.mine.list), cur = list[T.mine.i];
+  if (!cur || cur.final.species !== T.mine.mon.final.species || cur.level !== T.mine.mon.level) {
+    T.mine = null; T.theirs = null; tradeReset(); T.note = 'The Mon you offered changed, so the trade was cancelled.'; return;
+  }
+  const got = T.theirs.mon;
+  got.met = {where: `Trade with ${T.friend}`, t: Date.now()};
+  const gave = mset(cur).species, took = mset(got).species;
+  legendReturns(gave);
+  list[T.mine.i] = got;
+  syncDexFromTeam(); saveA();
+  T.mine = null; T.theirs = null; tradeReset();
+  T.note = `You traded ${gave} for ${took}! ${took} was added to your MonDex.`;
+}
+$('tradeBack').addEventListener('click', () => { trade = null; linkEnd(); openHall(); });
 
 // ---------- staying up to date ----------
 // If a phone ever starts an older copy of the game, notice and reload once to get the newest one.

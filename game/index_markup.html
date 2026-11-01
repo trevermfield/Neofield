@@ -463,6 +463,8 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .dexmoves { display: grid; grid-template-columns: 3.5ch 1fr auto; gap: 3px 10px; font-size: 13px; align-items: center; }
 .dexmoves span:first-child { color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (max-width: 420px) { .dexhero { grid-template-columns: 96px 1fr; } .dexhero .pic { width: 96px; height: 96px; font-size: 28px; } .dexhero h2 { font-size: 24px; } }
+.tradepair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.linkrecords { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
 .boxgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
 .boxmon { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 8px; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
 .boxmon .monart { width: 64px; height: 64px; }
@@ -1120,6 +1122,15 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
       <div class="row"><button class="ghost" id="farmBack">Back</button></div>
     </div>
     <div class="scroll"><div class="trailbody" id="farmBody"></div></div>
+  </section>
+
+  <!-- LINK TRADE -->
+  <section class="screen" id="trade" hidden>
+    <div class="maphead">
+      <div class="mapttl"><small id="tradeSub"></small><span>Trade</span></div>
+      <div class="row"><button class="ghost" id="tradeBack">Done</button></div>
+    </div>
+    <div class="scroll"><div class="trailbody" id="tradeBody"></div></div>
   </section>
 
   <!-- ADVENTURE: PROFESSOR INTRO -->
