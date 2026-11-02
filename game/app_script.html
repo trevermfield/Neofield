@@ -4182,11 +4182,11 @@ $('introStage').addEventListener('click', async e => {
     if (tannerPhase === 2) { A.tanner = 1; saveA(); tannerPhase = 0; }
   }
 });
-// ---------- Tucker's starter dies when it would evolve a second time; Prof. Okla gives it back at Willow Hearth ----------
+// ---------- Tucker's starter dies when it would evolve for the first time; Prof. Okla gives it back at Willow Hearth ----------
 function tkDies(m, ev) {
   if (!m || !m.tk || A.tk || !isTuckerName(A.playerName)) return false;
   const fam = E.FAMILIES.find(f => f.stages.some(x => x.name === ev.from));
-  if (!fam || fam.stages.length < 3 || fam.stages[2].name !== ev.to) return false;
+  if (!fam || fam.stages.length < 2 || fam.stages[0].name !== ev.from) return false;   // its first evolution (level 16 for the starters)
   return A.team.length > 1 || (A.box || []).length > 0;   // never leave the team empty
 }
 async function tkDeathScene(m, ev) {
@@ -4491,8 +4491,8 @@ function labCardHTML() {
 // Route lists: a red dot for a normal catch and a gold diamond if you have caught a Lustrous one
 function routeStatus(id, caught, seen) {
   const lus = A.dex.lusCaught && A.dex.lusCaught[id];
-  const parts = [caught ? '<span class="caughtdot" aria-label="Caught">●</span>' : '', lus ? '<span class="lusdot" aria-label="Lustrous">◆</span>' : ''].filter(Boolean);
-  return parts.length ? parts.join(' ') : seen ? 'Seen' : 'Not seen yet';
+  if (caught || lus) return `<span class="caughtdot" aria-hidden="true">●</span>${lus ? '<span class="lusdot" aria-hidden="true">◆</span>' : ''} Caught`;
+  return seen ? 'Seen' : 'Not seen yet';
 }
 function labRouteCardHTML() {
   const mons = ['starter1', 'starter2', 'starter3'].map(k => {
