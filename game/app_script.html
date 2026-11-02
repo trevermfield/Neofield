@@ -1676,6 +1676,7 @@ const isTylerName = n => /tyler/i.test(n || '');
 // only a player named exactly Tanner (any capitalization) gets Tanner's starter story
 // Neofield Mons shown in the MonDex. Missingno is never listed; Makenna's Eeviil line only appears once her Mon has been seen, and is not counted.
 const dexRegional = (list) => E.SPECIES.filter(s => s.id !== 'missingno' && (!E.regionalInfo(s.name).secret || (list && A && A.dex && A.dex.seen[s.id])));
+const isTuckerName = n => /^\s*tucker\s*$/i.test(n||'');
 const isMakennaName = n => /^\s*makenna\s*$/i.test(n||'');
 const isTannerName = n => /^\s*tanner\s*$/i.test(n || '');
 const summitForName = n => isTylerName(n) ? 'classic' : 'open';
@@ -2317,6 +2318,7 @@ function openAdvMap({fromBattle, msg, force} = {}) {
   renderAdvNextBar();
   show('journey');
   if (A.tanner === 2 && !fromBattle && isTannerName(A.playerName)) tannerCall();
+  if (A.tk && A.tk.phase === 1 && !fromBattle && isTuckerName(A.playerName)) tkCall();
   requestAnimationFrame(() => {
     scrollMapTo(mapPoints()[from].y);
     if (A.regional && A.loc != null) placeMarkerOnRoute(A.loc);
@@ -2773,10 +2775,13 @@ async function evolveScene(m, ev) {
 // Show what happened to the team: XP, level-ups, evolutions and new moves. Returns lines for the result box.
 async function showGrowth(events) {
   const lines = [];
+  let tkDead = null;   // Tucker's starter does not survive its second evolution
   for (const ev of events) {
     const m = A.team[ev.slot];
+    if (tkDead && ev.slot === tkDead.ev.slot && ev.type !== 'xp') continue;
     if (ev.type === 'xp') { if (ev.gained > 0) lines.push(`XP|${ev.species}|${ev.gained}`); continue; }
     if (ev.type === 'grew') lines.push(`${ev.species} grew to level ${ev.level}.`);
+    else if (ev.type === 'evolve' && tkDies(m, ev)) { await tkDeathScene(m, ev); tkDead = {m, ev}; lines.push(`${ev.from} died.`); }
     else if (ev.type === 'evolve') { await evolveScene(m, ev); lines.push(`${ev.from} evolved into ${ev.to}!`); }
     else if (ev.type === 'learned') lines.push(`${ev.species} learned ${ev.move}!`);
     else if (ev.type === 'wants') {
@@ -2786,6 +2791,7 @@ async function showGrowth(events) {
     }
     saveA();
   }
+  if (tkDead) tkLose(tkDead.m, tkDead.ev);
   saveA();
   return lines;
 }
@@ -4053,6 +4059,51 @@ $('introStage').addEventListener('click', async e => {
     if (tannerPhase === 2) { A.tanner = 1; saveA(); tannerPhase = 0; }
   }
 });
+// ---------- Tucker's starter dies when it would evolve a second time; Prof. Okla gives it back at Willow Hearth ----------
+function tkDies(m, ev) {
+  if (!m || !m.tk || A.tk || !isTuckerName(A.playerName)) return false;
+  const fam = E.FAMILIES.find(f => f.stages.some(x => x.name === ev.from));
+  if (!fam || fam.stages.length < 3 || fam.stages[2].name !== ev.to) return false;
+  return A.team.length > 1 || (A.box || []).length > 0;   // never leave the team empty
+}
+async function tkDeathScene(m, ev) {
+  const el = $('evo'), stage = $('evoStage');
+  setEvoColors(E.statsAt(m.final, ev.oldLevel, m.moves, ev.from).types);
+  el.className = 'evo'; el.hidden = false; $('evoSkip').hidden = true;
+  stage.innerHTML = `<div class="orb"><span class="glyph">${artOf(ev.from, m.lustrous) || '?'}</span></div><div class="ename">${esc(ev.from)}</div><div class="eline">What? ${esc(ev.from)} is evolving!</div><div class="row"><button class="btn primary" id="evoGo">Watch!</button></div>`;
+  await new Promise(r => { $('evoGo').onclick = r; $('evoGo').focus(); });
+  stage.querySelector('.row').remove();
+  stage.querySelector('.eline').textContent = `${ev.from} is glowing…`;
+  el.classList.add('charging');
+  await wait(2600);
+  el.classList.remove('charging');
+  stage.innerHTML = `<div class="orb"><span class="glyph" style="filter:grayscale(1) brightness(.6);opacity:.55">${artOf(ev.from, m.lustrous) || '?'}</span></div><div class="ename">${esc(ev.from)}</div><div class="eline">Oh... it died.</div><div class="row"><button class="btn primary" id="evoDone">...</button></div>`;
+  await new Promise(r => { $('evoDone').onclick = r; $('evoDone').focus(); });
+  el.hidden = true; el.className = 'evo';
+}
+function tkLose(m, ev) {
+  m.level = ev.oldLevel; m.moves = ev.movesBefore.slice();   // it comes back exactly as it was just before it evolved
+  A.team.splice(A.team.indexOf(m), 1);
+  A.tk = {phase: 1, mon: m};
+  saveA();
+}
+async function tkCall() {
+  A.tk.phase = 2; saveA();
+  await talk(PROF, ['Tucker! I was having lunch at Choa Garden, and I heard from some other, more competent Mon trainers that your Mon died because you did not love it enough.', `Come back to ${HOME} and see me.`]);
+}
+async function tkReturn() {
+  const you = {name: A.playerName, key: null, color: '#e8c76a', icon: 'star'};
+  $('introStage').innerHTML = labSceneHTML(); show('intro');
+  await talk(PROF, ['Ah, Tucker. I am sorry about your Mon.', 'I have studied Mons my whole life, and I think I can bring it back. But it will only work if you promise me something.', 'You must never jump on it, and you must never throw it against the wall.']);
+  await talk(you, ['I promise.']);
+  await talk(PROF, ['Good. Then here it is, just as it was before.']);
+  const mon = A.tk.mon;
+  if (A.team.length < 6) A.team.push(mon); else (A.box = A.box || []).push(mon);
+  A.tk = {phase: 3};
+  syncDexFromTeam(); saveA();
+  toast(`${mset(mon).species} (Lv ${mon.level}) came back.`);
+  openAdvMap({});
+}
 const TANNER_BROS = ['Tyler', 'Tucker', 'Trever'];
 // Tanner's starter story: each pick is already taken by a brother, then Okla gives him Eggyhen
 async function tannerRefuse(key) {
@@ -4094,7 +4145,7 @@ async function tannerTakeNew(famKey) {
 function startRegionalAdventure(name, famKey, lus) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
-    team: [Object.assign(E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus), {met: {where: 'Given by Prof. Okla', t: Date.now(), gift: true}, kos: 0})], box: [], dex: ngCarry ? ngCarry.dex : {seen: {}, caught: {}}, loc: null,
+    team: [Object.assign(E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus), {met: {where: 'Given by Prof. Okla', t: Date.now(), gift: true}, kos: 0, ...(isTuckerName(name) ? {tk: true} : {})})], box: [], dex: ngCarry ? ngCarry.dex : {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: summitForName(name),
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
@@ -4355,6 +4406,7 @@ function openTown(idx) {
   if (idx == null) idx = d;
   if (idx > A.travelled) { toast(`${d - 1 === 17 ? `Beat every trainer on the ${TRAIL}` : shamOpen(d - 1) ? 'Beat Team Shamburg' : `Beat one wild Mon on ${E.ROUTES[d - 1].name}`} to reach ${placeName(d)}.`); return; }
   if (A.tanner === 3 && idx === 0 && isTannerName(A.playerName)) { tannerRepick(); return; }
+  if (A.tk && A.tk.phase === 2 && idx === 0 && isTuckerName(A.playerName)) { tkReturn(); return; }
   if (A.lab) A.lab.at = null;
   if (idx === 18) { A.loc = null; A.townAt = null; saveA(); openSummit(); return; }
   A.loc = null; A.townAt = idx < d ? idx : null; saveA(); openAdvMap({});

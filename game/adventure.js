@@ -215,12 +215,12 @@ export function growMember(m, slot, n) {
   const events = [];
   if (m.level >= 100 || n <= 0) return events;
   const chain = chainOf(m.final.species);
-  const oldLv = m.level;
+  const oldLv = m.level, movesBefore = m.moves.slice();
   const from = chain[stageAt(chain, oldLv)].sp.name;
   m.level = Math.min(100, oldLv + n);
   const to = chain[stageAt(chain, m.level)].sp.name;
   events.push({type: 'grew', slot, species: from, level: m.level});
-  if (from !== to) events.push({type: 'evolve', slot, from, to, oldLevel: oldLv});
+  if (from !== to) events.push({type: 'evolve', slot, from, to, oldLevel: oldLv, movesBefore});
   for (const mv of movesGained(chain, oldLv, m.level)) {
     if (m.moves.includes(mv)) continue;
     if (m.moves.length < 4) { m.moves.push(mv); events.push({type: 'learned', slot, species: to, move: mv}); }
