@@ -2827,7 +2827,7 @@ function setEvoColors(types) { const [a, b] = evoColors(types); const el = $('ev
 async function evolveScene(m, ev) {
   const el = $('evo'), stage = $('evoStage');
   const before = E.statsAt(m.final, m.level, m.moves, ev.from), after = E.statsAt(m.final, m.level, m.moves, ev.to);
-  const reduce = reducedMotion();
+  const reduce = reducedMotion(), hatch = ev.from === 'Mystery Egg';
   let skipped = false;
   el.className = 'evo'; setEvoColors(before.types);
   updateSoundBtn();
@@ -2836,7 +2836,7 @@ async function evolveScene(m, ev) {
   el.hidden = false;
   if (!reduce) fx.raf = requestAnimationFrame(fxLoop);
   // 1. intro
-  stage.innerHTML = `<div class="orb"><span class="glyph">${artOf(ev.from, m.lustrous) || '?'}</span></div><div class="ename" id="evoName">${esc(ev.from)}</div><div class="eline">What? ${esc(ev.from)} is evolving!</div><div class="row"><button class="btn primary" id="evoGo">Watch!</button></div>`;
+  stage.innerHTML = `<div class="orb"><span class="glyph">${artOf(ev.from, m.lustrous) || '?'}</span></div><div class="ename" id="evoName">${esc(ev.from)}</div><div class="eline">What? ${esc(ev.from)} is ${hatch ? 'hatching' : 'evolving'}!</div><div class="row"><button class="btn primary" id="evoGo">Watch!</button></div>`;
   $('evoSkip').hidden = true;
   await new Promise(r => { $('evoGo').onclick = r; $('evoGo').focus(); });
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
@@ -2845,7 +2845,7 @@ async function evolveScene(m, ev) {
   // 2. charge
   if (!reduce) {
     stage.querySelector('.row').remove();
-    stage.querySelector('.eline').textContent = `${ev.from} is glowing…`;
+    stage.querySelector('.eline').textContent = `${ev.from} is ${hatch ? 'hatching' : 'glowing'}…`;
     el.classList.add('charging'); fx.mode = 'charge';
     const total = 4200; sfxCharge(total / 1000);
     const name = $('evoName'), glyph = stage.querySelector('.glyph');
@@ -2873,7 +2873,7 @@ async function evolveScene(m, ev) {
   sfxReveal();
   const lbl = {hp: 'HP', atk: 'Atk', def: 'Def', spa: 'Sp. Atk', spd: 'Sp. Def', spe: 'Speed'};
   stage.innerHTML = `<div class="banner">Congratulations!</div><div class="orb"><span class="glyph">${artOf(ev.to, m.lustrous) || '★'}</span></div><div class="ename">${esc(ev.to)}</div>
-    <div class="eline">Your ${esc(ev.from)} evolved into ${esc(ev.to)}!</div>${typesHTML(after.types)}
+    <div class="eline">Your ${esc(ev.from)} ${hatch ? 'hatched into' : 'evolved into'} ${esc(ev.to)}!</div>${typesHTML(after.types)}
     <div class="estats">${Object.keys(lbl).map(k => `<span>${lbl[k]} <b>${after.stats[k] - before.stats[k] > 0 ? '+' : ''}${after.stats[k] - before.stats[k]}</b></span>`).join('')}</div>
     <div class="row"><button class="btn primary" id="evoDone">Awesome!</button></div>`;
   if (!reduce) {
@@ -2902,7 +2902,7 @@ async function showGrowth(events) {
     if (ev.type === 'xp') { if (ev.gained > 0) lines.push(`XP|${ev.species}|${ev.gained}`); continue; }
     if (ev.type === 'grew') lines.push(`${ev.species} grew to level ${ev.level}.`);
     else if (ev.type === 'evolve' && tkDies(m, ev)) { await tkDeathScene(m, ev); tkDead = {m, ev}; lines.push(`${ev.from} died.`); }
-    else if (ev.type === 'evolve') { await evolveScene(m, ev); lines.push(`${ev.from} evolved into ${ev.to}!`); }
+    else if (ev.type === 'evolve') { await evolveScene(m, ev); lines.push(`${ev.from} ${ev.from === 'Mystery Egg' ? 'hatched' : 'evolved'} into ${ev.to}!`); }
     else if (ev.type === 'learned') lines.push(`${ev.species} learned ${ev.move}!`);
     else if (ev.type === 'wants') {
       if (m.moves.includes(ev.move)) continue;
@@ -3558,7 +3558,7 @@ function ensureQuest(i) {
   A.quests[i] = {
     level: lv, step: 0, done: false, trainer: ar.trainer,
     wild: [0, 1, 2].map(k => A.regional ? E.regionalWild(i, Math.max(2, lv - 2 + k)) : E.randomMon(Math.max(2, lv - 2 + k), ar.types)),
-    trainerTeam: [0, 1, 2].map(() => E.randomMon(lv + 1, ar.types, true, ar.skip)),
+    trainerTeam: [0, 1, 2].map(() => E.randomMon(lv + 1, ar.types, true, ar.skip, true)),
   };
   saveA();
   return A.quests[i];

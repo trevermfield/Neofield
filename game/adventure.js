@@ -158,7 +158,10 @@ export function monOf(speciesName, level, trained = true) {
     evs: {hp: ev, atk: ev, def: ev, spa: ev, spd: ev, spe: ev}, ivs: {hp: iv, atk: iv, def: iv, spa: iv, spd: iv, spe: iv},
   };
 }
-export function randomMon(level, types = null, trained = false, skip = null) {
+// noLegend: also leave out the 600+ total-stat "pseudo-legendary" Mons (Dragonite, Garchomp, Metagross...) so side quest trainers never field a legend-class Mon
+const statTotal = sp => Object.values(sp.baseStats).reduce((x, y) => x + y, 0);
+export function randomMon(level, types = null, trained = false, skip = null, noLegend = false) {
+  if (noLegend) { for (let k = 0; k < 60; k++) { const m = randomMon(level, types, trained, skip, false); if (statTotal(dex.species.get(m.species)) < 600) return m; } }
   let list = bases();
   if (skip && skip.length) { const f = list.filter(x => ![...familyTypes(x)].some(t => skip.includes(t))); if (f.length) list = f; }
   if (types && types.length) {
