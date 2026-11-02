@@ -42,9 +42,10 @@ const HEAD = `<!doctype html>
 `;
 
 // Tyler's finished Mons, for the "Who's that Mon?" intro (it runs before the battle engine loads)
-const {SPECIES} = await import('../game/regional.js');
+const {SPECIES, FAMILIES} = await import('../game/regional.js');
+const SECRET = new Set(FAMILIES.filter(f => f.secret).flatMap(f => f.stages.map(st => st.id)));   // special-case Mons (Makenna's Eeviil line)
 const {MON_PICS} = await import('../game/art.js');
-const introMons = SPECIES.filter(sp => MON_PICS[sp.id] && sp.id !== 'missingno')   // the secret Mon is never shown in the intro
+const introMons = SPECIES.filter(sp => MON_PICS[sp.id] && sp.id !== 'missingno' && !SECRET.has(sp.id))   // Missingno and Makenna's Mons are never shown in the intro
   .map(sp => ({name: sp.name, num: sp.num, types: sp.types, pic: MON_PICS[sp.id]}));
 
 const script = readFileSync(game('app_script.html'), 'utf8');
