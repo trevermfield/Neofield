@@ -505,6 +505,7 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
 .titlefade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,18,24,0) 40%, rgba(15,18,24,.92) 78%); }
 .titlemain { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; padding: clamp(24px, 14vh, 140px) 32px clamp(16px, 4vh, 32px); }
 .titlekick { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .3em; color: var(--muted); }
+.wordmark img { display: block; width: min(86vw, 420px); height: auto; margin: 0 auto; filter: drop-shadow(0 2px 6px rgba(0,0,0,.55)); }
 .wordmark { margin-top: 6px; max-width: 100%; font-size: clamp(44px, 15vw, 84px); line-height: .95; letter-spacing: .06em; font-weight: 800; color: #f4f1e8; }
 .titlebar { margin-top: 14px; width: 64px; height: 3px; border-radius: 2px; background: #e8c76a; }
 .titlespace { flex: 1; min-height: 16px; }
@@ -884,8 +885,8 @@ img.monart { object-fit: contain; user-select: none; -webkit-user-drag: none; }
     <div class="titlefade" aria-hidden="true"></div>
     <div class="titlemain">
       <p class="titlekick">THE REGION OF</p>
-      <h1 class="wordmark">NEOFIELD</h1>
-      <div class="titlebar" aria-hidden="true"></div>
+      <h1 class="wordmark"><img src="title-logo.png" alt="NEOFIELD"></h1>
+      
       <div class="titlespace"></div>
       <nav class="titlenav" aria-label="Play">
         <button class="bigbtn gold" id="goAdventure" type="button">Adventure</button>

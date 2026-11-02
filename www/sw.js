@@ -1,7 +1,7 @@
 // Offline support: always ask the server first (skipping the phone's own short-term cache) so updates
 // show up right away, and fall back to the last saved copy when there is no connection.
 const CACHE = 'neofield-v2';
-const CORE = ['./', 'index.html', 'engine.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+const CORE = ['./', 'index.html', 'engine.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'title-logo.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
