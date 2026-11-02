@@ -1677,6 +1677,117 @@ const isTylerName = n => /tyler/i.test(n || '');
 // Neofield Mons shown in the MonDex. Missingno is never listed; Makenna's Eeviil line only appears once her Mon has been seen, and is not counted.
 const dexRegional = (list) => E.SPECIES.filter(s => s.id !== 'missingno' && (!E.regionalInfo(s.name).secret || (list && A && A.dex && A.dex.seen[s.id])));
 const isTuckerName = n => /^\s*tucker\s*$/i.test(n||'');
+// Tanner and Tucker saves only: their gym leaders and side quest trainers use Tyler's own intro lines ({name} is the player's name)
+const TT_GYM = {
+ "lillian": [
+  "Welcome to Bloomfield. Mind the seedlings on your way in.",
+  "Glad you're here! All I need is Mother Earth, Father Sky, and my dear ol’ Uncle {name}."
+ ],
+ "trever": [
+  "I ran the numbers on your team before you walked in. Your odds are about as high as your middle child wits!"
+ ],
+ "oksana": [
+  "Welcome to Tidemend! As a healthcare professional, I would like to take this opportunity to warn you that somebody's Mon, maybe *yours*, *will* be hurt. They won’t be getting a deep tissue massage."
+ ],
+ "charlotte": [
+  "Uncle {name} welcome to my gym! Daddy told me you're a certified loser, so this should be easy! He always beats you!"
+ ],
+ "tyler": [
+  "So you made it to Mirefang Hollow. Don't you know big brothers always beat little brothers? My poison team might just bully your team into something great. You can thank me for the rest of your life."
+ ],
+ "tucker": [
+  "Welcome to Cragpine. Watch your step, these trails bite back. If my rock team is as thick as my skull you're gunna have a hard time. I sit on the toilet longer than this battle will take. Ready?"
+ ],
+ "kaley": [
+  "Hold on, I'm on a call. ... I'll call you back, I have a challenger. If I see a Ghost Mon, I say catch it. If I see a Pod Racer I say “ooo ooo teeny!”"
+ ],
+ "makenna": [
+  "You didn't see me, but I've been watching you since the edge of town. Strike from the shadows or not at all. I'm gunna make you say “I wanna go home!”"
+ ],
+ "lynne": [
+  "Show me the foundation you've built, young man. But don't make me mad or I'm going to blow up…",
+  ".",
+  ".",
+  ".",
+  "I JUST BLEW UP!"
+ ],
+ "tanner": [
+  "Alright, rookie, this is my gym. Don't mind my finger-toes, they give me traction on the court. My Mons drop dimes and their jumper is wet. But be careful, if you beat me, I might throw scissors at your head!"
+ ],
+ "theo": [
+  "My Bug Mons are cool, but they also sting! Watch out! Just like The Blob, we'll make you DIE! DIE!"
+ ],
+ "jack": [
+  "Gloves on! Ironknuckle trains its fighters the hard way. Don't be like one of the 76% of trainers that don't stretch before doing physical activity!"
+ ],
+ "tali": [
+  "I saw this battle in my book before you arrived. I can read the future. I don't even need to learn each other's names, I already know each OTHA'S names! Let's go!"
+ ],
+ "parker": [
+  "Hold on, let me pause my game. Okay, you have my full attention. My uncle's tell me you suck at video games. They mopped the floor with you. So will my Fire Mons!"
+ ],
+ "kent": [
+  "Wyrmforge builds things to last. Dragons included. I had two great sons travel through here, and on to the Elite 4. You won't make it, little boy. Time for my dragons to drop the hammer!"
+ ],
+ "rachel": [
+  "Today is evaluation day. The key word here is 'value.' Do you have any? Not yet! But before this battle is over, this gym's gonna be filled with skinny wieners!"
+ ],
+ "anna": [
+  "Being an only child, educated entirely by private tutors my whole life, I'm looking forward to interacting with a middle sibling for the first time. No way you can soar as high as my flyers. Maybe you can “sour” instead."
+ ]
+};
+const TT_QUEST = [
+ [
+  "You made it all the way through Whisperleaf Forest? The insects will be out soon. They're gunna eat you for breakfast! With skim milk."
+ ],
+ [
+  "You made it all the way through Echo Cave? Can you smell it? There's a life force in here tonight. Do you feel it?"
+ ],
+ [
+  "You made it all the way through Galecrest Mountain? You must have potential. Come with me, to part the wild horse's mane… REPULSE THE MONKEY!"
+ ],
+ [
+  "YOU STINK YOU STINK YOU STINK YOU STINK!!!"
+ ],
+ [
+  "You made it all the way through Sunscar Desert? Someone once said war is hell. They've never been to fat camp."
+ ],
+ [
+  "Everybody wants to be… ROASTY TOASTY!"
+ ],
+ [
+  "You made it all the way through Fogmire Swamp? I am with you. I love you. I was not afraid of that little deer!"
+ ],
+ [
+  "You made it all the way through Frostfang Tundra? Your victory has been cancelled due to lack of hustle. Deal with it."
+ ],
+ [
+  "You made it all the way through Old Stone Ruins? I'll take a picture to commemorate. Put your fat finger down! ….You've broken my camera!!!"
+ ],
+ [
+  "You made it all the way through Saltwind Beach? We better swim together, Lars has us on the body system. And don't drink the water, he peed in it!"
+ ],
+ [
+  "You made it all the way through Thunder Plains? Remember to keep your eye on the Monball, don't put Twinkies on your pizza, I have no idea what I'm saying…"
+ ],
+ [
+  "You made it all the way through Duskwood Grove? Now, I must inform you; I have a severely deviated septum. When I sleep I make a very disturbing sound... Don't be alarmed, I am fine."
+ ],
+ [
+  "You made it all the way through Skyreach Cliffs? Huh, very fat I see. Sorry to hear about your little friend, Josh. He's… well, he's dead."
+ ],
+ [
+  "You made it all the way through Old Iron Works? Better than fighting the Elite 4. I'm not battling a bunch of fat loads!"
+ ],
+ [
+  "You made it all the way through Fairy Meadow? Congratulations, you are the fattest boy in camp."
+ ],
+ [
+  "You made it all the way through Dragon's Den? I'm doggin it {name}, I'm doggin it! Let me get something to sit on. Come here you devil log!"
+ ]
+];
+const isTT = () => !!(A && (isTannerName(A.playerName) || isTuckerName(A.playerName)));
+const ttLines = ls => ls.map(l => l.replace(/\{name\}/g, A.playerName));
 const isMakennaName = n => /^\s*makenna\s*$/i.test(n||'');
 const isTannerName = n => /^\s*tanner\s*$/i.test(n || '');
 const summitForName = n => isTylerName(n) ? 'classic' : 'open';
@@ -2205,8 +2316,16 @@ const TRAIL_TEAMS = [
   ['wild5', 'weldonrust', 'starter1'],    // Mira: Coldbra, Weldonrust, Venuzoid
   ['campyre', 'marooner', 'starter3'],    // Boone: Bonpyre, Marooner, Bellowtoise
   ['wild6', 'bizon', 'starter2'],         // Juno: Ripgool, Werebizon, Shardizar
-  ['noterish', 'banchief', 'maraudur'],   // Ryo: Damerish, Banchief, Maraudoom
-  ['chetswatch', 'nidomonk', 'pinedale'], // Hana: Chetswatch, Nidomonk, Coltmare
+  ['noterish', 'banchief', 'chetswatch', 'maraudur'],            // Ryo: Damerish, Banchief, Chetswatch, Maraudoom
+  ['wild3', 'wild2', 'yucrane', 'nidomonk', 'pinedale'],           // Hana: Zapybara, Sycamage, Yucrane, Nidomonk, Coltmare
+];
+// what each Laurel Pass trainer says before the fight and after losing it
+const TRAIL_LINES = [
+  {intro: "Neofield's best trainers travel through here to face the Elite 4. You'll be a good warm up!", win: "There are powerful Mons throughout the pass. Build your best team for the Elite 4, you're gunna need it."},
+  {intro: "Only the best make it to the top. You think you got what it takes to be the Champion?", win: "My team needs a boost. I hear there's a Move Tutor at the Victory Summit Shop. Your Mons can learn all new moves, even old moves it forgot!"},
+  {intro: "Laurel Pass isn't for the weak. When I'm Champion you can tell your friends about me!", win: "Guess I'll keep training then..."},
+  {intro: "Show me the fight that got you this far. No room for mercy if you want to be Champion.", win: "You love your Mons. All respect from me. Watch your back, the new Champion will exploit all your weaknesses. Good luck."},
+  {intro: "I'm the best Neofield has to offer. I want to be the Champion. The Elite 4 rotates its best Gym Leaders to filter out the unworthy. But I've beat all the Gyms, and now I'll beat you.", win: "That was some fight! You're ruthless. Mons are only as strong as their trainer. I hear the new Champion is ruthless too. Dig deep inside you and find the light to win! You're ready."},
 ];
 const trailLv = i => 58 + Math.round(i * 8 / (TRAIL_TRAINERS.length - 1));
 const trailOpen = () => !!(A && A.regional && A.pos >= 17);
@@ -2572,7 +2691,7 @@ async function advChallenge() {
   }
   const sp = speakerFor(st);
   if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp, summitOpen() ? {name: `MIRROR ${A.playerName}`.toUpperCase(), lines: MIRROR_LINES.intro} : {}); } finally { duskBusy = false; } }
-  else await talk(sp, st.kind === 'gym' ? LINES[st.key].intro : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
+  else await talk(sp, st.kind === 'gym' ? (isTT() && TT_GYM[st.key] ? ttLines(TT_GYM[st.key]) : LINES[st.key].intro) : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
   hallOff();
   const f = st.kind === 'champion' && summitOpen()
     ? {...CHAMP, name: `Mirror ${A.playerName}`, title: `Mirror ${A.playerName}`, key: null, subtitle: `Victory Summit · level ${lv}`}
@@ -2917,7 +3036,7 @@ async function advBattleOver(won) {
     const through = TRAIL_TRAINERS.every((_, i) => A.trail.t[i]) && A.travelled < advDest();
     if (through) A.travelled = advDest();
     saveA();
-    if (fight.idx === TRAIL_TRAINERS.length - 1) await talk({name: TRAIL_TRAINERS[fight.idx], key: TRAINER_ART[TRAIL_TRAINERS[fight.idx]] || null, color: '#e8c76a', icon: 'crown'}, [`That was some fight! You're ruthless. Mons are only as strong as their trainer. I hear the new Champion is ruthless too. Dig deep inside you and find the light to win! You're ready.`]);
+    await talk({name: TRAIL_TRAINERS[fight.idx], key: TRAINER_ART[TRAIL_TRAINERS[fight.idx]] || null, color: '#e8c76a', icon: 'crown'}, [TRAIL_LINES[fight.idx].win]);
     const lines = await showGrowth(xpEvents);
     advResult('crown', '#e8c76a', `${TRAIL_TRAINERS[fight.idx]} defeated`, `You won ${money(prize)}.${through ? ` That was the last trainer. You can now go to ${esc(LEAGUE)}.` : ''}`, lines,
       `${through ? `<button class="btn primary" id="aToMapTown">Go to ${esc(LEAGUE)}</button>` : ''}<button class="btn ${through ? '' : 'primary'}" id="aToTrail">Back to the ${TRAIL}</button>`);
@@ -3517,7 +3636,7 @@ function questContinue(i) {
     const mon = q.wild[q.step];
     advFight({type: 'questWild', quest: i, catchable: !!mon.family, sets: [JSON.parse(JSON.stringify(mon))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · ${q.step + 1} of ${nWild}`}});
   } else {
-    talk({name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: ar.icon}, [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
+    talk({name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: ar.icon}, isTT() && TT_QUEST[i] ? ttLines(TT_QUEST[i]) : [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
       advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: 'star', title: qName(q), subtitle: `${ar.name} · level ${q.level + 1}`}});
     });
   }
@@ -3804,7 +3923,7 @@ function trailWild() {
 async function trailFight(i) {
   const lv = trailLv(i), name = TRAIL_TRAINERS[i];
   const sets = TRAIL_TEAMS[i].map(k => E.regionalWild(17, lv, k));
-  await talk({name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown'}, ['I have been waiting on the Laurel Pass for a worthy challenger. Show me what you have got!']);
+  await talk({name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown'}, [TRAIL_LINES[i].intro]);
   advFight({type: 'trailTrainer', idx: i, lv, sets, foe: {name, key: TRAINER_ART[name] || null, color: '#e8c76a', icon: 'crown', title: name, subtitle: `${TRAIL} · level ${lv}`}});
 }
 $('trailLeave').addEventListener('click', () => openAdvMap({}));
@@ -4368,8 +4487,8 @@ function labCardHTML() {
 // Route lists: a red dot for a normal catch and a gold diamond if you have caught a Lustrous one
 function routeStatus(id, caught, seen) {
   const lus = A.dex.lusCaught && A.dex.lusCaught[id];
-  const parts = [caught ? '<span class="caughtdot">●</span> Caught' : '', lus ? '<span class="lusdot">◆</span> Lustrous' : ''].filter(Boolean);
-  return parts.length ? parts.join(' · ') : seen ? 'Seen' : 'Not seen yet';
+  const parts = [caught ? '<span class="caughtdot" aria-label="Caught">●</span>' : '', lus ? '<span class="lusdot" aria-label="Lustrous">◆</span>' : ''].filter(Boolean);
+  return parts.length ? parts.join(' ') : seen ? 'Seen' : 'Not seen yet';
 }
 function labRouteCardHTML() {
   const mons = ['starter1', 'starter2', 'starter3'].map(k => {
