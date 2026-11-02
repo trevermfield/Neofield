@@ -75,6 +75,7 @@ export const MON_PICS = Object.fromEntries([
   'aerialyn',
   'missingno',
   'eeviil', 'starreon',
+  'mysteryegg', 'yoshling', 'yoshin',
   'chemo', 'death', 'weariness', 'fear', 'pain', 'loneliness', 'uncertainty',
 ].map(id => [id, `mons/${id}.png`]));
 

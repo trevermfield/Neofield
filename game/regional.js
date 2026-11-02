@@ -362,6 +362,21 @@ export const FAMILIES = [
     evoMoves: {'Starreon': ['Night Blade']},
     final: {ability: 'Beads of Ruin', item: 'Life Orb', nature: 'Hasty', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Night Blade', 'Thunderbeam', 'Shooting Star', 'Lightning Storm']}},
 
+  // ---------- Anna's special Mon: Prof. Okla gives her a Mystery Egg after her starter (see the starter screen) ----------
+  {key: 'mystegg', secret: true, secretNote: 'Prof. Okla gives it to one very special trainer along with her starter. It starts out as an egg and hatches at level 5.', color: '#d9c9a3', catchRate: 0,
+    stages: [
+      {name: 'Mystery Egg', types: ['Normal'], stats: S(35, 35, 35, 35, 35, 35), abilities: ['Scrappy'], h: .4, w: 1.2,
+        entry: 'Nobody knows what is inside. It wobbles when it hears a friendly voice, and it is warm to hold.'},
+      {name: 'Yoshling', at: 5, types: ['Normal'], stats: S(55, 60, 55, 45, 50, 45), abilities: ['Scrappy'], h: .5, w: 6,
+        entry: 'It just hatched and wears half of its shell like a hat. It licks everything to find out what it is.'},
+      {name: 'Yoshin', at: 17, types: ['Normal'], stats: S(90, 95, 90, 70, 80, 75), abilities: ['Scrappy'], h: 1.2, w: 45,
+        entry: 'A tough, loyal traveler that rolls through trouble and never leaves a friend behind.'},
+    ],
+    moves: [[1, 'Wiggle'], [5, 'Lick'], [5, 'Stomp'], [9, 'Headbutt'], [13, 'Rapid Spin'], [17, 'Growth'], [21, 'Dizzy Punch'], [25, 'Razor Shell'],
+      [29, 'Soft-Boiled'], [33, 'Power Of The One Ring'], [37, 'Egg Bomb'], [41, 'Bounce'], [45, 'Shell Smash']],
+    evoMoves: {},
+    final: {ability: 'Scrappy', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, spe: 4}, moves: ['Shell Smash', 'Egg Bomb', 'Power Of The One Ring', 'Soft-Boiled']}},
+
   {key: 'chemo', boss: true, rare: true, color: '#8bd42a', catchRate: 0,
     stages: [{name: 'Chemo', types: ['Poison', 'Steel'], stats: S(100, 110, 120, 80, 100, 60), abilities: ['Corrosion'], h: 2.0, w: 80, entry: 'A skeleton in a tattered hospital gown, pushing an IV stand full of glowing green poison.'}],
     moves: [[1, 'Poison Sting'], [30, 'Iron Head'], [50, 'Gunk Shot'], [60, 'Toxic']], evoMoves: {},
@@ -496,6 +511,9 @@ copyMove('nightblade', 'darkpulse', 'Night Blade', -9001);
 copyMove('lightningstorm', 'thunderwave', 'Lightning Storm', -9002);
 copyMove('thunderbeam', 'thunderbolt', 'Thunderbeam', -9003);
 copyMove('shootingstar', 'searingshot', 'Shooting Star', -9004);
+copyMove('wiggle', 'splash', 'Wiggle', -9005);
+copyMove('poweroftheonering', 'zenheadbutt', 'Power Of The One Ring', -9006);
+for (const id of ['dizzypunch', 'eggbomb', 'bounce', 'stomp', 'lick']) if (dex.data.Moves[id]) delete dex.data.Moves[id].isNonstandard;   // Anna's Mon uses older moves
 
 // ---------- inject into the simulator ----------
 let num = 1;
@@ -534,7 +552,7 @@ export function regionalInfo(name) {
   if (!st) return null;
   const fam = FAMILIES.find(f => f.key === st.family);
   const routes = ROUTES.filter(r => r.families.includes(fam.key)).map(r => r.name);
-  return {...st, familyKey: fam.key, color: fam.color, catchRate: fam.catchRate, starter: !!fam.starter, rare: !!fam.rare, secret: !!fam.secret, routes, line: fam.stages.map(s => ({name: s.name, at: s.at || 1}))};
+  return {...st, familyKey: fam.key, color: fam.color, catchRate: fam.catchRate, starter: !!fam.starter, rare: !!fam.rare, secret: !!fam.secret, secretNote: fam.secretNote || '', routes, line: fam.stages.map(s => ({name: s.name, at: s.at || 1}))};
 }
 export const familyOf = key => FAMILIES.find(f => f.key === key);
 export const STARTERS = FAMILIES.filter(f => f.starter);
