@@ -121,6 +121,7 @@ export function setAtLevel(finalSet, level, opts = {}) {
 }
 
 // ---------- wild Mons ----------
+const UNTAGGED_PARADOX = [1020, 1021, 1022, 1023];
 const BANNED_TAGS = ['Restricted Legendary', 'Sub-Legendary', 'Mythical', 'Ultra Beast', 'Paradox'];
 const REGIONAL = ['Alola', 'Galar', 'Hisui', 'Paldea'];
 let basePool = null;
@@ -129,6 +130,7 @@ function bases() {
   basePool = dex.species.all().filter(s => s.exists && !s.prevo && s.num > 0 && s.num < 1026
     && (!s.isNonstandard || s.isNonstandard === 'Past')
     && !s.tags.some(t => BANNED_TAGS.includes(t))
+    && !UNTAGGED_PARADOX.includes(s.num)   // Gouging Fire, Raging Bolt, Iron Boulder and Iron Crown have no Paradox tag in the data
     && (!s.forme || (REGIONAL.includes(s.forme) && !dex.species.get(s.baseSpecies).prevo && !s.requiredItem))
     && !s.battleOnly && !s.cosmeticFormes?.includes?.(s.name)
     && Object.keys(learnsetOf(s)).length > 0);
