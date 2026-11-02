@@ -352,7 +352,7 @@ export const FAMILIES = [
   // ---------- Makenna's special Mon: Prof. Okla offers it only to a player named Makenna (see the starter screen) ----------
   {key: 'eeviil', secret: true, color: '#8d5fd1', catchRate: 0,
     stages: [
-      {name: 'Eeviil', types: ['Dark'], stats: S(80, 80, 80, 80, 80, 80), abilities: ['Fury Coat'], h: .3, w: 6.5,
+      {name: 'Eeviil', types: ['Dark'], stats: S(80, 80, 80, 80, 80, 80), abilities: ['Fur Coat'], h: .3, w: 6.5,
         entry: 'A little night-fox found by Prof. Okla. A swirl of stars shimmers inside its flaming ears, and it never lets a friend out of its sight.'},
       {name: 'Starreon', at: 25, types: ['Dark', 'Electric'], stats: S(100, 100, 100, 100, 100, 100), abilities: ['Beads of Ruin'], h: 1, w: 24,
         entry: 'A piece of the night sky wearing fur. Star rings spin around its paws, and a bright star glows on its brow.'},
@@ -496,7 +496,6 @@ copyMove('nightblade', 'darkpulse', 'Night Blade', -9001);
 copyMove('lightningstorm', 'thunderwave', 'Lightning Storm', -9002);
 copyMove('thunderbeam', 'thunderbolt', 'Thunderbeam', -9003);
 copyMove('shootingstar', 'searingshot', 'Shooting Star', -9004);
-dex.data.Abilities.furycoat = {...dex.data.Abilities.furcoat, name: 'Fury Coat', num: -9001};
 
 // ---------- inject into the simulator ----------
 let num = 1;
