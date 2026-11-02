@@ -1674,6 +1674,9 @@ const summitOpen = () => !!A && A.summit === 'open';
 // any name containing "tyler" (any capitalization) gets Tyler Victory Summit; everyone else gets the Default one. The dev toggle overrides this.
 const isTylerName = n => /tyler/i.test(n || '');
 // only a player named exactly Tanner (any capitalization) gets Tanner's starter story
+// Neofield Mons shown in the MonDex. Missingno is never listed; Makenna's Eeviil line only appears once her Mon has been seen, and is not counted.
+const dexRegional = (list) => E.SPECIES.filter(s => s.id !== 'missingno' && (!E.regionalInfo(s.name).secret || (list && A && A.dex && A.dex.seen[s.id])));
+const isMakennaName = n => /^\s*makenna\s*$/i.test(n||'');
 const isTannerName = n => /^\s*tanner\s*$/i.test(n || '');
 const summitForName = n => isTylerName(n) ? 'classic' : 'open';
 function applySummitByName() {
@@ -3953,9 +3956,9 @@ const artOf = (name, lus) => (E && E.isRegional(name)) ? E.monArt(toId(name), ''
 const BALL_SVG = `<svg class="ballicon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/><path d="M1.5 10a8.5 8.5 0 0 1 17 0Z" fill="#e25b4f" stroke="#1b1f2a" stroke-width="1.6"/><circle cx="10" cy="10" r="2.6" fill="#fff" stroke="#1b1f2a" stroke-width="1.6"/></svg>`;
 
 // --- the professor (an original character) ---
-// Professor Okla, drawn for the game (portraits/okla.png is his head and shoulders, okla-full.png all of him)
+// Prof. Okla, drawn for the game (portraits/okla.png is his head and shoulders, okla-full.png all of him)
 const PROF_IMG = '<img src="portraits/okla.png" alt="">';
-const PROF = {name: 'Professor Okla', key: null, color: '#7fb8e6', svg: PROF_IMG};
+const PROF = {name: 'Prof. Okla', key: null, color: '#7fb8e6', svg: PROF_IMG};
 
 function labSceneHTML() {
   const jars = ['#72c25a', '#f08a4b', '#5f9cf0', '#ee9ad0', '#f2d04a'].map((c, i) => `<span class="jar" style="left:${20 + i * 18}px;top:${14}px;background:${c}"></span>`).join('');
@@ -3987,7 +3990,7 @@ async function openProfessor() {
   }
   await talk(PROF, [
     'Hello there! Welcome to the world of Mons!',
-    "My name is Okla. Everyone around here calls me the Mon Professor.",
+    "My name is Okla. Everyone around here calls me the Mon Prof.",
     'This is the Neofield Region. Mons live everywhere: in the tall grass along the routes, deep in the forests and caves, even out at sea.',
     "Seventeen Gym Leaders guard the region's towns. Beat them all to earn their badges, then climb Victory Summit to face the Elite Four and the Champion.",
     'Tap a route on your map to walk it. Every route has its own wild Mons, and some live nowhere else.',
@@ -4012,6 +4015,12 @@ $('introStage').addEventListener('submit', async e => {
   if (!name) { $('nameNote').textContent = 'Type a name first.'; return; }
   introName = name; tannerPhase = isTannerName(name) ? 1 : 0; tannerSeen = {};
   $('introStage').innerHTML = labSceneHTML();
+  if (isMakennaName(name)) {   // Makenna is not offered the usual three: Prof. Okla found a special Mon he thinks she will like better
+    starterList = [E.familyOf('eeviil')]; introPick = 'eeviil'; setAccent(E.familyOf('eeviil').color);
+    await talk(PROF, [`${name}! What a great name.`, 'I was going to show you three Mons today, but something wonderful happened the other night.',
+      'I found a little Mon out in the field, with stars swirling inside its ears. I think you would like it far better than the others.', 'Take a look. It has been waiting for someone just like you.']);
+    showStarters(); return;
+  }
   await talk(PROF, [`${name}! What a great name.`, 'Now, I have three Mons here with me. They were all born right here in Neofield, and each one is looking for a partner.', 'Take a look and choose the one you like best!']);
   showStarters();
 });
@@ -4078,14 +4087,14 @@ async function tannerTakeNew(famKey) {
   const st = E.familyOf(famKey).stages[0];
   await talk(PROF, [`So you've chosen ${st.name}! It already looks happy to be with you.`, 'Now you have two partners. Go make the Neofield Region proud, Tanner!']);
   const lv = A.team[0] ? A.team[0].level : REG_START_LV;
-  A.team.push(Object.assign(E.newMember(famKey, lv, !!introLus[famKey]), {met: {where: 'Given by Professor Okla', t: Date.now(), gift: true}, kos: 0}));
+  A.team.push(Object.assign(E.newMember(famKey, lv, !!introLus[famKey]), {met: {where: 'Given by Prof. Okla', t: Date.now(), gift: true}, kos: 0}));
   A.tanner = 4; tannerRe = false; syncDexFromTeam(); saveA();
   openAdvMap({});
 }
 function startRegionalAdventure(name, famKey, lus) {
   A = {
     v: 2, regional: true, difficulty: newAdvDiff, teamKey: 'regional', playerName: name,
-    team: [Object.assign(E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus), {met: {where: 'Given by Professor Okla', t: Date.now(), gift: true}, kos: 0})], box: [], dex: ngCarry ? ngCarry.dex : {seen: {}, caught: {}}, loc: null,
+    team: [Object.assign(E.newMember(famKey, REG_START_LV, lus === undefined ? E.rollLustrous(E.familyOf(famKey).stages[0].id, true, LUS_RATES[newAdvDiff]) : lus), {met: {where: 'Given by Prof. Okla', t: Date.now(), gift: true}, kos: 0})], box: [], dex: ngCarry ? ngCarry.dex : {seen: {}, caught: {}}, loc: null,
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: summitForName(name),
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
@@ -4244,13 +4253,14 @@ function openRoute(r) {
 const OKLA_AIDE = {name: "Prof. Okla's Aide", key: null, color: '#b8b29a', icon: 'star', svg: '<img src="portraits/okla-aide.jpg" alt="">'};
 async function oklaAide() {
   A.cryoGift = true;
-  const m = E.newMember('cryodon', 25); m.met = {where: 'Revived by Prof. Okla\'s aide', t: Date.now(), gift: true}; m.kos = 0;
+  const lus = (A.ng || 0) > 0;   // in New Game+ the revived Cryodon is always Lustrous
+  const m = E.newMember('cryodon', 25, lus); m.met = {where: 'Revived by Prof. Okla\'s aide', t: Date.now(), gift: true}; m.kos = 0;
   (A.box = A.box || []).push(m);
   syncDexFromTeam(); saveA();
-  await talk(OKLA_AIDE, ['Excuse me, trainer! I am Prof. Okla\'s aide. The Professor asked me to find you out here on Route 7.',
+  await talk(OKLA_AIDE, ['Excuse me, trainer! I am Prof. Okla\'s aide. The Prof. asked me to find you out here on Route 7.',
     'Remember the fossil he found frozen in the ice? He thawed it out and brought it back to life!',
-    `It is a Cryodon, and it is happy to meet you. I sent it to your Farm. Swap it in when you are in a town.`]);
-  toast(`Cryodon (Lv 25) was sent to your Farm.`);
+    lus ? `It is a Cryodon, and look how it shimmers! I have never seen one glow like that. I sent it to your Farm. Swap it in when you are in a town.` : `It is a Cryodon, and it is happy to meet you. I sent it to your Farm. Swap it in when you are in a town.`]);
+  toast(`${lus ? 'Lustrous ' : ''}Cryodon (Lv 25) was sent to your Farm.`);
 }
 // ---------- Prof. Okla's Lab (opens once the Champion is beaten): Route 0 with the three starters, the lab town, Okla, and the Missingno quest ----------
 const LAB = {x: 296, y: 662};
@@ -4487,14 +4497,14 @@ function renderDexList() {
   const adv = dexMode === 'adventure';
   $('dexTitle').textContent = adv ? `${A.playerName}'s MonDex` : 'MonDex';
   if (adv) {
-    const reg = E.SPECIES.filter(s => s.id !== 'missingno'), seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id] || (A.dex.lusCaught && A.dex.lusCaught[s.id])).length;
+    const reg = dexRegional(), seen = reg.filter(s => A.dex.seen[s.id]).length, caught = reg.filter(s => A.dex.caught[s.id] || (A.dex.lusCaught && A.dex.lusCaught[s.id])).length;
     $('dexSub').textContent = `Neofield Mons: ${seen} of ${reg.length} seen, ${caught} caught. Tap one you've seen for everything about it.`;
-  } else $('dexSub').textContent = `${E.SPECIES.filter(s => s.id !== 'missingno').length} Neofield Mons and ${nationalList().length} Mons from the main games.`;
+  } else $('dexSub').textContent = `${dexRegional().length} Neofield Mons and ${nationalList().length} Mons from the main games.`;
   $('dexTabs').innerHTML = [['regional', 'Neofield'], ['national', adv ? 'Others you have seen' : 'National']].map(([k, l]) => `<button class="chip" id="dextab-${k}" data-dextab="${k}" aria-pressed="${dexTab === k}">${l}</button>`).join('');
   const match = (name, num, types) => !q || name.toLowerCase().includes(q) || String(num) === q.replace(/^#?0*/, '') || types.some(t => t.toLowerCase() === q);
   let rows = [];
   if (dexTab === 'regional') {
-    rows = E.SPECIES.filter(s => s.id !== 'missingno' && match(s.name, s.num, s.types)).map(s => {
+    rows = dexRegional(true).filter(s => match(s.name, s.num, s.types)).map(s => {
       const known = !adv || A.dex.seen[s.id];
       const c = E.regionalInfo(s.name).color;
       return `<button class="dexrow ${known ? '' : 'unseen'}" style="--c:${c}" data-dex="${esc(s.name)}" ${known ? '' : 'disabled'}><span class="thumb">${E.monArt(s.id)}</span><span><small>#${pad3(s.num)}${adv && A.dex.caught[s.id] ? ' <span class="caughtdot">●</span>' : ''}${adv && A.dex.lusCaught && A.dex.lusCaught[s.id] ? ' <span class="lusdot">◆</span>' : ''}${adv && A.dex.lv100 && A.dex.lv100[s.id] ? ' <span class="stardot">★</span>' : ''}</small><b>${known ? esc(s.name) : '???'}</b>${known ? typesHTML(s.types) : '<small>Not seen yet</small>'}</span></button>`;
@@ -4548,7 +4558,7 @@ function showDexEntry(name, lus) {
   try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
   const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
   const status = adv && reg ? [A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : '', A.dex.lusCaught && A.dex.lusCaught[reg.id] ? '<span class="lusdot">◆</span> Lustrous caught' : '', A.dex.lv100 && A.dex.lv100[reg.id] ? '<span class="stardot">★</span> Lvl 100 reached' : ''].filter(Boolean).join(' · ') || 'Seen' : '';
-  const where = reg ? (reg.starter ? 'Given by Professor Okla at the start of an adventure.' : reg.id === 'cryodon' ? 'A fossil Mon. It never appears in the wild: Prof. Okla\'s aide revives it and sends it to your Farm on Route 7.' : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
+  const where = reg ? (reg.starter ? 'Given by Prof. Okla at the start of an adventure.' : reg.id === 'cryodon' ? 'A fossil Mon. It never appears in the wild: Prof. Okla\'s aide revives it and sends it to your Farm on Route 7.' : reg.secret ? 'A special Mon Prof. Okla found in a field. He only offers it to one very special trainer.' : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
   const dexNames = [...$('dexList').querySelectorAll('[data-dex]:not([disabled])')].map(b => b.dataset.dex);
   const di = dexNames.indexOf(sp.name), prevN = di > 0 ? dexNames[di - 1] : '', nextN = di >= 0 && di < dexNames.length - 1 ? dexNames[di + 1] : '';
   const dexNav = `<div class="dexnav"><button class="btn ghost" data-dexgo="${esc(prevN)}" ${prevN ? '' : 'disabled'}>‹ Previous</button><button class="btn ghost" data-dexgo="${esc(nextN)}" ${nextN ? '' : 'disabled'}>Next ›</button></div>`;

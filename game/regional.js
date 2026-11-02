@@ -349,6 +349,19 @@ export const FAMILIES = [
     evoMoves: {},
     final: {ability: 'Serene Grace', item: '', nature: 'Hasty', evs: {atk: 252, spa: 4, spe: 252}, moves: ['Hyper Beam', 'Tri Attack', 'Extreme Speed', 'Swift']}},
   // ---------- the Champion's six (never wild, never in the MonDex) ----------
+  // ---------- Makenna's special Mon: Prof. Okla offers it only to a player named Makenna (see the starter screen) ----------
+  {key: 'eeviil', secret: true, color: '#8d5fd1', catchRate: 0,
+    stages: [
+      {name: 'Eeviil', types: ['Dark'], stats: S(80, 80, 80, 80, 80, 80), abilities: ['Fury Coat'], h: .3, w: 6.5,
+        entry: 'A little night-fox found by Prof. Okla. A swirl of stars shimmers inside its flaming ears, and it never lets a friend out of its sight.'},
+      {name: 'Starreon', at: 25, types: ['Dark', 'Electric'], stats: S(100, 100, 100, 100, 100, 100), abilities: ['Beads of Ruin'], h: 1, w: 24,
+        entry: 'A piece of the night sky wearing fur. Star rings spin around its paws, and a bright star glows on its brow.'},
+    ],
+    moves: [[1, 'Bite'], [1, 'Growl'], [7, 'Quick Attack'], [10, 'Snarl'], [13, 'Slash'], [16, 'Thunder Fang'], [19, 'Screech'],
+      [25, 'Night Blade'], [30, 'Lightning Storm'], [35, 'Thunderbeam'], [40, 'Shooting Star']],
+    evoMoves: {'Starreon': ['Night Blade']},
+    final: {ability: 'Beads of Ruin', item: 'Life Orb', nature: 'Hasty', evs: {spa: 252, spe: 252, hp: 4}, moves: ['Night Blade', 'Thunderbeam', 'Shooting Star', 'Lightning Storm']}},
+
   {key: 'chemo', boss: true, rare: true, color: '#8bd42a', catchRate: 0,
     stages: [{name: 'Chemo', types: ['Poison', 'Steel'], stats: S(100, 110, 120, 80, 100, 60), abilities: ['Corrosion'], h: 2.0, w: 80, entry: 'A skeleton in a tattered hospital gown, pushing an IV stand full of glowing green poison.'}],
     moves: [[1, 'Poison Sting'], [30, 'Iron Head'], [50, 'Gunk Shot'], [60, 'Toxic']], evoMoves: {},
@@ -475,7 +488,15 @@ export const ROUTES = [
 ].map(([name, fams], i) => ({name, families: fams, idx: i}));
 
 // Dex category line under each name in the MonDex ("The Bulb Mon").
-const CATEGORY = {Bulbazoid: 'Bulb', Ivyzoid: 'Spotlight', Venuzoid: 'Satellite', Shardmander: 'Gem', Shardmeleon: 'Crystal', Shardizar: 'Amethyst', Grrtle: 'Turtle', Roartortle: 'Angry', Bellowtoise: 'Tank', Eggyhen: 'Chick', Leggyhen: 'Rooster', Sycasqeek: 'Critter', Sycamage: 'Mage', Zapybara: 'Capybara', Bloogilp: 'Sunfish', Poseigunk: 'Swamp', Yucrane: 'Heron', Bizon: 'Bison', Werebizon: 'Beast', Riptome: 'Tombstone', Ripblok: 'Graveyard', Ripgool: 'Moai', Campyre: 'Campfire', Bonpyre: 'Bonfire', Maraudur: 'Viking', Maraudoom: 'Marauder', Icerpent: 'Snow Snake', Coldbra: 'Ice Cobra', Marooner: 'Hermes', Weldonrust: 'Colossal', Noterish: 'Shamrock', Damerish: 'Irish', Pinedale: 'Wrangler', Broncho: 'Mustang', Coltmare: 'Stallion', Mugnbud: 'Dung Beetle', Nidomonk: 'Mystical', Chetswatch: 'Bigfoot', Banchief: 'Phantom', Cryodon: 'Glyptodon', Rimeocerus: 'Woolly Rhino', Wyrmie: 'Larva', Wyrmpod: 'Chrysalis', Wyrmega: 'Wyrm', Nivalux: 'Ice Storm', Storment: 'Thunderstorm', Rensylk: 'Sunset', Okloyama: 'Conservation', Hexabeake: 'Industry', Aerialyn: 'Flycatcher'};
+const CATEGORY = {Bulbazoid: 'Bulb', Ivyzoid: 'Spotlight', Venuzoid: 'Satellite', Shardmander: 'Gem', Shardmeleon: 'Crystal', Shardizar: 'Amethyst', Grrtle: 'Turtle', Roartortle: 'Angry', Bellowtoise: 'Tank', Eggyhen: 'Chick', Leggyhen: 'Rooster', Sycasqeek: 'Critter', Sycamage: 'Mage', Zapybara: 'Capybara', Bloogilp: 'Sunfish', Poseigunk: 'Swamp', Yucrane: 'Heron', Bizon: 'Bison', Werebizon: 'Beast', Riptome: 'Tombstone', Ripblok: 'Graveyard', Ripgool: 'Moai', Campyre: 'Campfire', Bonpyre: 'Bonfire', Maraudur: 'Viking', Maraudoom: 'Marauder', Icerpent: 'Snow Snake', Coldbra: 'Ice Cobra', Marooner: 'Hermes', Weldonrust: 'Colossal', Noterish: 'Shamrock', Damerish: 'Irish', Pinedale: 'Wrangler', Broncho: 'Mustang', Coltmare: 'Stallion', Mugnbud: 'Dung Beetle', Nidomonk: 'Mystical', Chetswatch: 'Bigfoot', Banchief: 'Phantom', Cryodon: 'Glyptodon', Rimeocerus: 'Woolly Rhino', Wyrmie: 'Larva', Wyrmpod: 'Chrysalis', Wyrmega: 'Wyrm', Nivalux: 'Ice Storm', Storment: 'Thunderstorm', Rensylk: 'Sunset', Okloyama: 'Conservation', Hexabeake: 'Industry', Aerialyn: 'Flycatcher', Eeviil: 'Star Fox', Starreon: 'Cosmos'};
+
+// ---------- Makenna's special moves and ability: renamed copies of existing ones ----------
+const copyMove = (id, base, name, num) => { const m = {...dex.data.Moves[base], name, num}; delete m.isNonstandard; dex.data.Moves[id] = m; };
+copyMove('nightblade', 'darkpulse', 'Night Blade', -9001);
+copyMove('lightningstorm', 'thunderwave', 'Lightning Storm', -9002);
+copyMove('thunderbeam', 'thunderbolt', 'Thunderbeam', -9003);
+copyMove('shootingstar', 'searingshot', 'Shooting Star', -9004);
+dex.data.Abilities.furycoat = {...dex.data.Abilities.furcoat, name: 'Fury Coat', num: -9001};
 
 // ---------- inject into the simulator ----------
 let num = 1;
@@ -514,7 +535,7 @@ export function regionalInfo(name) {
   if (!st) return null;
   const fam = FAMILIES.find(f => f.key === st.family);
   const routes = ROUTES.filter(r => r.families.includes(fam.key)).map(r => r.name);
-  return {...st, familyKey: fam.key, color: fam.color, catchRate: fam.catchRate, starter: !!fam.starter, rare: !!fam.rare, routes, line: fam.stages.map(s => ({name: s.name, at: s.at || 1}))};
+  return {...st, familyKey: fam.key, color: fam.color, catchRate: fam.catchRate, starter: !!fam.starter, rare: !!fam.rare, secret: !!fam.secret, routes, line: fam.stages.map(s => ({name: s.name, at: s.at || 1}))};
 }
 export const familyOf = key => FAMILIES.find(f => f.key === key);
 export const STARTERS = FAMILIES.filter(f => f.starter);
