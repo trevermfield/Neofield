@@ -373,7 +373,7 @@ async function refresh() {
   if (!battle.ended && req && req.teamPreview && !battle[ME].isChoiceDone()) { showLeadScreen(); return; }
   if (!$('battle').hidden || !$('lead').hidden) show('battle');
   renderControls();
-  $('devWin').hidden = !(A && A.dev && ctx && ctx.kind === 'adventure' && !battle.ended);
+  $('devWin').hidden = !(devOn() && ctx && ctx.kind === 'adventure' && !battle.ended);
   if (battle.ended && !resultShown) {
     resultShown = true;
     if (mode === 'online' && match && match.data.status !== 'done') {
@@ -1105,7 +1105,7 @@ $('forfeit').addEventListener('click', async () => {
 
 // developer mode: win the fight you're in right now
 $('devWin').addEventListener('click', async () => {
-  if (!battle || battle.ended || !A || !A.dev) return;
+  if (!battle || battle.ended || !devOn()) return;
   battle.forceWin(ME);
   await refresh();
 });
@@ -2487,7 +2487,7 @@ function openAdvMap({fromBattle, msg, force} = {}) {
 }
 function renderAdvNextBar() {
   renderAdvNextBarMain();
-  if (A.dev && !mapFromBattle) $('nextBar').insertAdjacentHTML('beforeend', '<button class="btn" id="aDev">Developer tools</button>');
+  if (devOn() && !mapFromBattle) $('nextBar').insertAdjacentHTML('beforeend', '<button class="btn" id="aDev">Developer tools</button>');
 }
 function renderAdvNextBarMain() {
   const bar = $('nextBar');
@@ -2569,7 +2569,7 @@ function advFight(fight) {
   if (WILD_FIGHTS.includes(fight.type)) $('forfeit').textContent = 'Flee';   // wild Mons: you can just leave, no blackout
   if (fight.type === 'champion') gloomOn();
   if (fight.type === 'e4') bgmStart('battle', {fade: 1.5, vol: .5});   // Gauntlet plays through every Elite Four fight
-  if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!A.dev);
+  if (fight.catchable && battle) E.armCatch(battle, (A.bag.pokeball || 0) > 0 || !!devOn());
 }
 function applyAdvHP() {
   const state = {};
@@ -3732,7 +3732,7 @@ function playEntrance(id, after, opts = {}) {
     root.classList.remove('on');
     setTimeout(() => { root.hidden = true; root.innerHTML = ''; entrOpen = false; if (after) after(); }, 750);
   };
-  if (A && A.dev) { const sk = document.createElement('button'); sk.className = 'btn eskip'; sk.type = 'button'; sk.textContent = 'Skip'; sk.onclick = e => { e.stopPropagation(); finish(); }; root.appendChild(sk); }   // dev mode only
+  if (devOn()) { const sk = document.createElement('button'); sk.className = 'btn eskip'; sk.type = 'button'; sk.textContent = 'Skip'; sk.onclick = e => { e.stopPropagation(); finish(); }; root.appendChild(sk); }   // dev mode only
   ent.run(root, later, finish);
 }
 function entranceRoad(root, later, finish) {
@@ -3861,7 +3861,7 @@ function openSummit(opts = {}) {
     <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
-  if (A.dev && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
+  if (devOn() && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at ${summitOpen() ? 'the first Elite Four battle' : 'the In-Laws'}. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
   show('summit');
@@ -4154,10 +4154,10 @@ const NG_INFO = ['You lose: your team and everything on your Farm, your items an
   'You keep: your MonDex (every red dot, gold diamond and blue star), your Victory Hall times and your trophies.',
   'You gain: Lustrous Mons get a little easier to find each time you start a New Game+ (+1% for wild Mons, +0.5% for legendaries, and it stacks).'];
 const ngInfoHTML = () => NG_INFO.map(t => `<p>${esc(t)}</p>`).join('');
-function startNewGamePlus() {   // A is the finished adventure that was just loaded
+function startNewGamePlus(diff) {   // A is the finished adventure that was just loaded; diff is the difficulty picked for the new run
   ngAsk = false; syncDexFromTeam();
   ngCarry = {dex: JSON.parse(JSON.stringify(A.dex)), ng: (A.ng || 0) + 1, name: A.playerName, trophies: A.trophies || [], hof: A.hof || 0};
-  newAdvDiff = A.difficulty; hallOff(); openProfessor();
+  newAdvDiff = DIFFS[diff] ? diff : A.difficulty; hallOff(); openProfessor();
 }
 let ngCarry = null;   // New Game+: what comes with you into the next adventure (the MonDex progress)
 async function openProfessor() {
@@ -4653,7 +4653,7 @@ function addCaught(c) {
 
 // --- catching in battle ---
 function wildBattle() { return !!(ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.catchable && battle && !battle.ended); }
-function canThrow() { const m = battle && battle.p2.active[0]; return wildBattle() && ((A.bag.pokeball || 0) > 0 || A.dev) && m && !m.fainted && m.hp > 0; }
+function canThrow() { const m = battle && battle.p2.active[0]; return wildBattle() && ((A.bag.pokeball || 0) > 0 || devOn()) && m && !m.fainted && m.hp > 0; }
 function catchPending() { return !!(ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.catchable && battle && !battle.ended && E.catchReady(battle)); }
 function catchHTML() {
   const mon = battle.p2.active[0], balls = A.bag.pokeball || 0;
@@ -4664,7 +4664,7 @@ async function throwBall() {
   if (playing || !canThrow()) return;
   playing = true; bagSel = null; panel = 'fight';
   const mon = battle.p2.active[0], fight = ctx.fight;
-  if (!A.dev) A.bag.pokeball--;
+  if (!devOn()) A.bag.pokeball--;
   saveA();
   $('controls').innerHTML = '<div class="waiting">…</div>';
   const fam = E.familyOf(fight.sets[0].family);
@@ -4833,7 +4833,7 @@ function devJump(val, setLv) {
   advHealAll(); saveA();
 }
 function openDev(msg) {
-  if (!A || !A.dev) { openAdvMap({}); return; }
+  if (!devOn()) { openAdvMap({}); return; }
   mapMode = 'adventure';
   setAccent('#e8c76a');
   const stageNow = A.done ? 'Adventure complete' : A.pos < 17 ? `Gym ${A.pos + 1}: ${TOWNS[A.order[A.pos]]}` : A.e4pos < 4 ? `Elite Four ${A.e4pos + 1}` : 'Champion';
@@ -4861,7 +4861,7 @@ function openDev(msg) {
   show('dev');
 }
 $('devBody').addEventListener('click', e => {
-  const t = e.target.closest('[data-dev]'); if (!t || !A || !A.dev) return;
+  const t = e.target.closest('[data-dev]'); if (!t || !devOn()) return;
   const act = t.dataset.dev, list = t.dataset.w === 'box' ? A.box : A.team, i = +t.dataset.i;
   const sc = $('dev').querySelector('.scroll'), top = sc.scrollTop;
   let msg = '';
@@ -5187,7 +5187,7 @@ $('optionsBack').addEventListener('click', () => openTitle());
 $('optSound').addEventListener('change', e => { evoSound = e.target.checked; store.set('evoSound', evoSound); if (!evoSound) bgmStop(); });
 
 // ---------- save slots screen ----------
-let slotsMode = 'adv', slotAsk = null, slotNg = null; // slotAsk: {n, diff}; slotNg: the slot that is asking about New Game+
+let slotsMode = 'adv', slotAsk = null, slotNg = null, slotNgDiff = 'normal'; // slotAsk: {n, diff}; slotNg: the slot that is asking about New Game+
 let newAdvDiff = 'normal';
 let tannerPhase = 0, tannerSeen = {}, tannerBusy = false, tannerRe = false, starterList = null;   // Tanner's story: 1 = his brothers took the starters, 2 = Okla gives him Eggyhen
 function openSlots(m) {
@@ -5251,6 +5251,7 @@ function renderSlots() {
       }
     } else if (adv && x.adv && (x.adv.done || x.adv.hof > 0) && slotNg === x.n) {
       acts = `<div class="askbox"><p><b style="color:var(--fg)">Start New Game+ in Slot ${x.n}?</b></p><div class="nginfo">${ngInfoHTML()}</div>
+        <span class="note">Difficulty for the new run</span>${diffSegHTML(slotNgDiff)}
         <div class="acts"><button class="btn gold" type="button" data-act="ngyes" data-n="${x.n}">Start New Game+</button><button class="btn ghostbtn" type="button" data-act="ngno">Not now</button></div></div>`;
     } else if (has) {
       const ngBtn = adv && x.adv && (x.adv.done || x.adv.hof > 0) ? `<button class="btn" type="button" data-act="ng" data-n="${x.n}">New Game+</button>` : '';
@@ -5272,11 +5273,11 @@ $('slotsBody').addEventListener('click', e => {
     loadSlot(n); touchProfile();
     if (slotsMode === 'adv') openAdvMap({}); else openHall();
   } else if (act === 'new') { slotAsk = {n, diff: 'normal'}; slotNg = null; renderSlots(); }
-  else if (act === 'ng') { slotNg = n; slotAsk = null; renderSlots(); }
+  else if (act === 'ng') { slotNg = n; slotNgDiff = (slotAdv(n) || {}).difficulty || 'normal'; slotAsk = null; renderSlots(); }
   else if (act === 'ngno') { slotNg = null; renderSlots(); }
-  else if (act === 'ngyes') { slotNg = null; loadSlot(n); touchProfile(); startNewGamePlus(); }
+  else if (act === 'ngyes') { const d = slotNgDiff; slotNg = null; loadSlot(n); touchProfile(); startNewGamePlus(d); }
   else if (act === 'cancel') { slotAsk = null; renderSlots(); }
-  else if (act === 'diff') { slotAsk.diff = b.dataset.v; renderSlots(); }
+  else if (act === 'diff') { if (slotNg !== null) slotNgDiff = b.dataset.v; else slotAsk.diff = b.dataset.v; renderSlots(); }
   else if (act === 'start') {
     if (slotsMode === 'adv') {
       loadSlot(n);
@@ -5870,6 +5871,7 @@ if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: ()
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
+function devOn() { return !!(A && A.dev && devMode); }   // a developer save only shows its tools while Developer mode is on
 (function devSecret() {
   let taps = 0, t0 = 0;
   $('whoisImg').addEventListener('click', () => {
