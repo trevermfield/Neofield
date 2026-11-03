@@ -163,7 +163,7 @@ function renderLeaders() {
   }).join('') + oklaCard();
 }
 // Prof. Okla joins the Battle Hall (as an opponent and as a team you can use) once this slot's adventure has beaten the Champion or him (never counted as a badge)
-function oklaOpen() { try { return !!(A && A.regional && (A.done || A.hof > 0 || (A.lab && A.lab.beat))); } catch (e) { return false; } }
+function oklaOpen() { try { return !!(A && A.regional && (A.done || (A.hof || 0) > (A.hofStart || 0) || (A.lab && A.lab.beat))); } catch (e) { return false; } }
 const gymKeys = () => oklaOpen() ? [...ORDER, 'okla'] : ORDER;
 function oklaCard() {
   if (!oklaOpen()) return '';
@@ -4272,7 +4272,7 @@ function startRegionalAdventure(name, famKey, lus) {
     order: JORDER.slice(), pos: 0, e4: E4_KEYS.slice(), e4pos: 0, champTeam: null, summit: summitForName(name),
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
-  if (ngCarry) { A.ng = ngCarry.ng; A.trophies = ngCarry.trophies; A.hof = ngCarry.hof; ngCarry = null; }
+  if (ngCarry) { A.ng = ngCarry.ng; A.trophies = ngCarry.trophies; A.hof = ngCarry.hof; A.hofStart = ngCarry.hof; ngCarry = null; }   // hofStart: wins from earlier runs do not open Prof. Okla's lab in this one
   if (A.summit === 'open') setupOpenSummit();
   touchProfile({name});
   saveA();
@@ -4375,7 +4375,7 @@ function syncDexFromTeam() {
 }
 
 // --- routes ---
-const routeOpen = r => A && A.regional && (A.done || A.hof > 0 || r <= Math.min(A.pos, 17));
+const routeOpen = r => A && A.regional && (A.done || (A.hof || 0) > (A.hofStart || 0) || r <= Math.min(A.pos, 17));
 const routeLevel = r => r === 0 ? 5 : r >= 17 ? 58 : GYM_LV[r - 1];
 const placeName = i => i === 0 ? HOME : i <= 17 ? TOWNS[A.order[i - 1]] : LEAGUE;
 function routeOverlay() {
@@ -4448,7 +4448,7 @@ const OKLA_LINES = {
   winAgain: ['Ha! Beaten again. You truly are the best there is. Come back whenever you like.'],
 };
 // once the Champion has been beaten, Route 0, the lab and every route stay open for good (a Summit rematch or a forfeit never closes them)
-const beatenOnce = () => !!(A && A.regional && (A.done || A.hof > 0 || (A.lab && A.lab.beat)));
+const beatenOnce = () => !!(A && A.regional && (A.done || (A.hof || 0) > (A.hofStart || 0) || (A.lab && A.lab.beat)));
 const labOn = () => beatenOnce();
 const labS = () => A.lab || (A.lab = {});
 function labPlace() { const l = labOn() ? labS() : null; return l && l.at; }
