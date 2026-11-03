@@ -1669,8 +1669,26 @@ const MIRROR_LINES = {
   intro: ['You climbed the whole mountain, and I was behind you every step.', 'Everything you fear, everything you have built, I carry it all. Beat yourself, if you can.'],
   defeat: 'You looked straight at me and did not look away.',
 };
+// ---- Anna's Victory Summit: fixed family Elite Four (singles, doubles, doubles, triples) and a Champion who mirrors her own team ----
+const ANNA_E4 = [
+  {members: ['tyler'], mode: 'singles', picks: [6],
+    intro: {tyler: "Time for the Elite 4. Of course you'll battle me first, who else? Can my gamer wife show me up?"},
+    win: {tyler: "Not bad. Guess I got poopy diaper duty. You'll pay for this later ;)"}},
+  {members: ['tucker', 'kaley', 'tanner', 'oksana', 'trever', 'rachel'], mode: 'doubles', picks: [1, 1, 1, 1, 1, 1],
+    intro: {tucker: 'Falling rocks ahead...', kaley: 'Our mons are pretty scary...', tanner: 'Time to cool off your fastbreak...', oksana: 'Sorry to dampen your plans...', trever: 'Steel yourself. Your odds are long...', rachel: "You'll be swapping over to your book after this battle. Let's begin."},
+    win: {tucker: 'Rocky ending. I need a nap.', kaley: "Terrifying. You're the real boss.", tanner: 'Ice in your veins! No wonder Tyler teamed up with you on a lifetime contract.', oksana: "I'll never ask you to come to Cleveland again.", trever: 'Iron will. Heart of Gold.', rachel: 'Your story continues. Let me know how it ends.'}},
+  {members: ['kent', 'lynne'], mode: 'doubles', picks: [3, 3],
+    intro: {kent: "I knew you'd make it, you're my favorite daughter!", lynne: "Sorry we have to ground your flight, honey. Tell the girls Nana had to do it."},
+    win: {kent: 'Good match. Tyler would never get this far.', lynne: 'Way to go Anna. Now go win it all!'}},
+  {members: ['makenna', 'charlotte', 'lillian'], mode: 'triples', picks: [2, 2, 2],
+    intro: {makenna: "Strong Mons eh, well you can't beat me.", charlotte: "You won't battle me, I'll battle you!", lillian: "Mom. Forget this game. Let's go snuggle instead."},
+    win: {makenna: "Dang. I just used my lowest Mons. Trust me, I did.", charlotte: "You won't battle me, I WILL!", lillian: "Ah ba ba ba ba ba ba ahhhhhh. I'm hungry now."}},
+];
+const ANNA_CHAMP = 'THE OWNER';
+const ANNA_CHAMP_LINES = ["Your Mons are strong. I'll win with them!", "My team can't win without them. Give me your essence. I'll win it all with dem boys!", "Now let's kick this off. I'll own your Mons, then I'm owning the whole region."];
 const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
-const summitOpen = () => !!A && A.summit === 'open';
+const summitOpen = () => !!A && (A.summit === 'open' || A.summit === 'anna');
+const summitAnna = () => !!A && A.summit === 'anna';
 // any name containing "tyler" (any capitalization) gets Tyler Victory Summit; everyone else gets the Default one. The dev toggle overrides this.
 const isTylerName = n => /tyler/i.test(n || '');
 // only a player named exactly Tanner (any capitalization) gets Tanner's starter story
@@ -1791,7 +1809,7 @@ const ttLines = ls => ls.map(l => l.replace(/\{name\}/g, A.playerName));
 const isAnnaName = n => /^\s*anna\s*$/i.test(n||'');
 const isMakennaName = n => /^\s*makenna\s*$/i.test(n||'');
 const isTannerName = n => /^\s*tanner\s*$/i.test(n || '');
-const summitForName = n => isTylerName(n) ? 'classic' : 'open';
+const summitForName = n => isTylerName(n) ? 'classic' : isAnnaName(n) ? 'anna' : 'open';
 function applySummitByName() {
   if (!A || A.summitDev) return;
   const want = summitForName(A.playerName);
@@ -1805,7 +1823,20 @@ function drawOpenSummit() {
   let at = 0;
   return OPEN_SHAPE.map(sh => { const m = pool.slice(at, at + sh.n); at += sh.n; return m; });
 }
+function setupAnnaSummit() {
+  ANNA_E4.forEach((sh, i) => {
+    const key = OPEN_KEYS[i], L = sh.members.map(k => LEADERS[k]);
+    const title = sh.members.length === 1 ? `Elite Four ${L[0].title}` : L.map(l => l.first).join(', ').replace(/, ([^,]*)$/, ' & $1');
+    const g = {title, members: sh.members.slice(), picks: sh.picks.slice(), mode: sh.mode, must: {}, color: L[0].color, icon: L[0].icon};
+    g.label = `${modeName(g)} · ${sh.members.length} ${sh.members.length === 1 ? 'trainer' : 'trainers'}`;
+    E4_FIGHTS[key] = g;
+    E4_TALK[key] = {intro: sh.members.map(k => [k, sh.intro[k]]), win: sh.members.map(k => [k, sh.win[k]])};
+  });
+  A.e4gen = ANNA_E4.map(sh => sh.members.slice());
+  A.e4 = OPEN_KEYS.slice();
+}
 function setupOpenSummit() {
+  if (summitAnna()) { setupAnnaSummit(); return; }
   const ok = Array.isArray(A.e4gen) && A.e4gen.length === 4 && A.e4gen.every((m, i) => Array.isArray(m) && m.length === OPEN_SHAPE[i].n && m.every(k => LEADERS[k])) && new Set(A.e4gen.flat()).size === 7;
   if (!ok) A.e4gen = drawOpenSummit();   // drawn once; kept in the save so retrying never changes who you face
   A.e4gen.forEach((members, i) => {
@@ -2691,11 +2722,11 @@ async function advChallenge() {
     else { A.champTeam = E.CHAMPION_TEXT; sets = E.leaderSets(A.champTeam, lv); }
   }
   const sp = speakerFor(st);
-  if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp, summitOpen() ? {name: `MIRROR ${A.playerName}`.toUpperCase(), lines: MIRROR_LINES.intro} : {}); } finally { duskBusy = false; } }
+  if (st.kind === 'champion') { if (duskBusy) return; duskBusy = true; try { await duskIn(); await championIntro(sets, lv, sp, summitAnna() ? {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true} : summitOpen() ? {name: `MIRROR ${A.playerName}`.toUpperCase(), lines: MIRROR_LINES.intro} : {}); } finally { duskBusy = false; } }
   else await talk(sp, st.kind === 'gym' ? (isTT() && TT_GYM[st.key] ? ttLines(TT_GYM[st.key]) : LINES[st.key].intro) : st.kind === 'e4' ? [LINES[st.key].e4] : CHAMP_LINES.intro);
   hallOff();
   const f = st.kind === 'champion' && summitOpen()
-    ? {...CHAMP, name: `Mirror ${A.playerName}`, title: `Mirror ${A.playerName}`, key: null, subtitle: `Victory Summit · level ${lv}`}
+    ? (summitAnna() ? {...CHAMP, name: 'The Owner', title: 'The Owner', key: null, subtitle: `Victory Summit · level ${lv}`} : {...CHAMP, name: `Mirror ${A.playerName}`, title: `Mirror ${A.playerName}`, key: null, subtitle: `Victory Summit · level ${lv}`})
     : st.kind === 'champion'
     ? {...CHAMP, name: 'Cancer', title: 'Cancer', key: null, subtitle: `Victory Summit · level ${lv}`}
     : {name: LEADERS[st.key].first, key: st.key, color: LEADERS[st.key].color, icon: LEADERS[st.key].icon,
@@ -3084,7 +3115,7 @@ async function advBattleOver(won) {
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { battleOff(); bgmStart('hall', {fade: 3, vol: .45});   // the hall music comes back while the trainers talk
     await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); }
-  else if (fight.type === 'champion') await championDefeat(fight.mirror ? MIRROR_LINES.defeat : undefined);
+  else if (fight.type === 'champion') await championDefeat(fight.mirror ? (summitAnna() ? 'Well played. Some things cannot be owned.' : MIRROR_LINES.defeat) : undefined);
   else await talk(fight.speaker, LINES[fight.stage.key].win);
   if (fight.type === 'champion') { gloomOff(); await finale(); }
   endBattleQuietly(); ctx = null;
@@ -3164,6 +3195,7 @@ async function championReveal(species) {
 }
 // the Champion, seen only as a dark silhouette (waist up) in the fog
 // the whole layout is in place from the start; only opacity changes, so nothing moves while he speaks
+const ciJerry = (over, name) => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox ciJerry" id="ciImg"><img class="jy j1 on" src="portraits/jerry1.png" alt="" draggable="false"><img class="jy j2" src="portraits/jerry2.png" alt="" draggable="false"><img class="jy j3" src="portraits/jerry3.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName" id="ciName">${esc(name)}</b><p class="ciLine" id="ciLine"></p></div>`;
 const ciLayout = (over, name = 'CANCER') => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox" id="ciImg"><img class="ciHuman" src="cancer.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName" id="ciName">${esc(name)}</b><p class="ciLine" id="ciLine"></p></div>`;
 async function ciSay(lineEl, text, ms, tap) {
   lineEl.textContent = text; lineEl.classList.remove('say'); void lineEl.offsetWidth; lineEl.classList.add('say');
@@ -3233,7 +3265,7 @@ async function championIntro(sets, lv, sp, opts = {}) {
   bgmStart('fog');
   const fx = gloomFX($('ciCanvas'));
   // 1. just the words, "THE CHAMPION", in the middle of the dark
-  stage.innerHTML = ciLayout('THE CHAMPION', opts.name);
+  stage.innerHTML = opts.jerry ? ciJerry('THE CHAMPION', opts.name) : ciLayout('THE CHAMPION', opts.name);
   requestAnimationFrame(() => requestAnimationFrame(() => $('ciOver') && $('ciOver').classList.add('on')));
   beat(); await sleepOrSkip(1100); beat(); tone(98, 0, 2.5, 'sine', .12); tone(147, .1, 2.5, 'sine', .05);
   await Promise.race([sleepOrSkip(3200), tap()]);
@@ -3242,9 +3274,20 @@ async function championIntro(sets, lv, sp, opts = {}) {
   tone(98, 0, 1.8, 'sine', .14);
   await Promise.race([sleepOrSkip(3200), tap()]);
   // 3. his name appears under the image, then his words under the name
+  if (opts.jerry) {   // his silhouette, then the man steps out of it, his name, then his grin as he asks for your Mons
+    const show = c => stage.querySelectorAll('.jy').forEach(im => im.classList.toggle('on', im.classList.contains(c) || (c === 'j2' && im.classList.contains('j1'))));
+    const say = async t => { if (!skipped) await ciSay($('ciLine'), t, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); };
+    await say(opts.lines[0]);
+    show('j2'); beat(); await Promise.race([sleepOrSkip(1400), tap()]);
+    $('ciName').classList.add('on'); tone(65, 0, 2.4, 'sine', .2);
+    await Promise.race([sleepOrSkip(2600), tap()]);
+    show('j3'); await say(opts.lines[1]);
+    show('j2'); await say(opts.lines[2]);
+  } else {
   $('ciName').classList.add('on'); beat(); tone(65, 0, 2.4, 'sine', .2);
   await Promise.race([sleepOrSkip(2600), tap()]);
-  for (const line of (opts.lines || CHAMP_LINES.intro)) { if (skipped) break; await ciSay($('ciLine'), line, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); }
+  }
+  if (!opts.jerry) for (const line of (opts.lines || CHAMP_LINES.intro)) { if (skipped) break; await ciSay($('ciLine'), line, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); }
   // 4. out through the dark into the battle
   const fl = $('ciFlash'); fl.classList.remove('go'); void fl.offsetWidth; fl.classList.add('go');
   el.classList.add('quake'); tone(60, 0, 1.2, 'sine', .35); tone(90, .05, .9, 'sawtooth', .05);
@@ -3470,7 +3513,7 @@ async function finale() {
     title.style.opacity = '';
   };
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch (e) { audio = null; }
-  const cheer = summitOpen() ? A.e4gen.flat().map((k, i) => [k, OPEN_CHEER[i]]) : E4_CHEER;
+  const cheer = summitOpen() ? A.e4gen.flat().map((k, i) => [k, OPEN_CHEER[i % OPEN_CHEER.length]]) : E4_CHEER;
   crowd.innerHTML = cheer.map(([k]) => `<span class="fslot" style="--c:${LEADERS[k].color}">${portraitHTML(k, LEADERS[k].color)}</span>`).join('');
   team.innerHTML = ''; team.hidden = true; crowd.hidden = true; go.hidden = true;
   title.className = 'ftitle splash'; title.innerHTML = `<small>You are the</small><b>CHAMPION!</b>`;
@@ -4273,7 +4316,7 @@ function startRegionalAdventure(name, famKey, lus) {
     money: 1500, bag: {...ADV_START_BAG, pokeball: devMode ? 99 : 12}, quests: {}, questsV3: true, dev: !!devMode, travelled: 0, done: false, loc: 0, shamburg: {step: [0, 0, 0], done: [false, false, false]}, trail: {t: []},
   };
   if (ngCarry) { A.ng = ngCarry.ng; A.trophies = ngCarry.trophies; A.hof = ngCarry.hof; A.hofStart = ngCarry.hof; ngCarry = null; }   // hofStart: wins from earlier runs do not open Prof. Okla's lab in this one
-  if (A.summit === 'open') setupOpenSummit();
+  if (summitOpen()) setupOpenSummit();
   touchProfile({name});
   saveA();
   openAdvMap({msg: 'You are on Route 1. Beat one wild Mon to reach the next town.'});
@@ -4294,7 +4337,7 @@ function migrateA() {
   A.shamburg = A.shamburg || {step: [0, 0, 0], done: [false, false, false]};
   A.trail = A.trail || {t: []};
   applySummitByName();
-  if (A.summit === 'open') setupOpenSummit();
+  if (summitOpen()) setupOpenSummit();
   else if (!Array.isArray(A.e4) || A.e4.length !== 4 || A.e4.some(k => !E4_FIGHTS[k])) A.e4 = E4_KEYS.slice();   // the Elite Four became the family fights
   if (!A.questsV3) {   // the Victory Road side quest was replaced by the Laurel Pass; legendary quests moved from 17..22 to 16..21
     const nq = {};
@@ -4821,9 +4864,9 @@ $('devBody').addEventListener('click', e => {
   else if (act === 'trailreset') { A.trail = {t: []}; msg = 'Laurel Pass trainers reset.'; }
   else if (act === 'summitclassic' || act === 'summitopen') {
     A.summit = act === 'summitopen' ? 'open' : 'classic'; A.summitDev = true;
-    if (A.summit === 'open') setupOpenSummit(); else A.e4 = E4_KEYS.slice();
+    if (summitOpen()) setupOpenSummit(); else A.e4 = E4_KEYS.slice();
     A.e4pos = 0; A.done = false; A.champTeam = null; A.summitIntro = 0; A.summitNote = 0;
-    msg = `Switched to the ${A.summit === 'open' ? 'Default' : 'Tyler'} Victory Summit and reset it.`; }
+    msg = `Switched to the ${A.summit === 'classic' ? 'Tyler' : A.summit === 'anna' ? "Anna's" : 'Default'} Victory Summit and reset it.`; }
   else if (act === 'summitreset') { A.e4pos = 0; A.done = false; A.champTeam = null; A.summitIntro = 0; A.summitNote = 0; msg = 'Victory Summit reset: the Elite Four and the Champion are ready to fight again.'; }
   saveA();
   openDev(msg); sc.scrollTop = top;
@@ -5808,7 +5851,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {champIntro: () => championIntro([], 50, null, {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
