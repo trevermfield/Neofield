@@ -1079,7 +1079,7 @@ $('controls').addEventListener('click', e => {
 
 // ---------- forfeit and results ----------
 let forfeitArmed = false;
-const WILD_FIGHTS = ['route', 'train', 'questWild', 'trailWild', 'questLegend', 'labWild'];
+const WILD_FIGHTS = ['route', 'train', 'questWild', 'questGrass', 'trailWild', 'questLegend', 'labWild'];
 $('forfeit').addEventListener('click', async () => {
   if (!battle) return;
   if (battle.ended) { leaveBattle(); return; }
@@ -2956,7 +2956,7 @@ async function showGrowth(events) {
 }
 // XP for the fight that was just won (call while the battle still exists). Team Mons that were sent out get full XP,
 // the rest of the team half, and Mons on the Farm none.
-const XP_KIND = {gym: 'gym', e4: 'gym', champion: 'gym', route: 'wild', labWild: 'wild', okla: 'gym', train: 'wild', questWild: 'wild', shamburg: 'trainer', trailTrainer: 'trainer', trailWild: 'wild', questTrainer: 'trainer', questLegend: 'legend'};
+const XP_KIND = {gym: 'gym', e4: 'gym', champion: 'gym', route: 'wild', labWild: 'wild', okla: 'gym', train: 'wild', questWild: 'wild', questGrass: 'wild', shamburg: 'trainer', trailTrainer: 'trainer', trailWild: 'wild', questTrainer: 'trainer', questLegend: 'legend'};
 function awardFightXP(fight) {
   if (fight.type === 'questLegend' && !fight.caught) return [];
   const parts = E.participantsFromLog(battle.log, ctx.names);
@@ -2996,11 +2996,11 @@ async function advBattleOver(won) {
   if (!won) {
     advHealAll(); A.loc = null; A.townAt = null;
     if (fight.type === 'e4' || fight.type === 'champion') { A.e4pos = 0; A.runMs = 0; }
-    if (fight.quest != null) A.quests[fight.quest].step = 0;
+    if (fight.quest != null && fight.type !== 'questGrass') A.quests[fight.quest].step = 0;   // walking in the grass of a cleared area never restarts its quest
     if (fight.sham != null) A.shamburg.step[fight.sham] = 0;
     saveA();
     advResult(fight.foe.icon || 'star', fight.foe.color, 'You blacked out',
-      `Your team was rushed to the Mon Center and fully healed. ${fight.sham != null ? 'Team Shamburg is waiting, and you have to beat them again from the first trainer.' : fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
+      `Your team was rushed to the Mon Center and fully healed. ${fight.sham != null ? 'Team Shamburg is waiting, and you have to beat them again from the first trainer.' : fight.type === 'questGrass' ? 'The area is still cleared. Walk in the grass again whenever you like.' : fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
       null, `<button class="btn primary" id="aToMap">Back to map</button>`);
     return;
   }
@@ -3099,6 +3099,14 @@ async function advBattleOver(won) {
       advResult(ar.icon, ar.color, 'It got away', `${esc(q.trainer)} was knocked out but not caught, and it slipped away. It will come back if you try again. Weaken it a little, then throw a Mon Ball.${missGift}`, null,
         `<button class="btn primary" id="aQuestNext">Try again</button>${fight.quest === MISS ? `<button class="btn" id="aToMap">Back to the lab</button>` : `<button class="btn" id="aToTrail">Back to the ${TRAIL}</button>`}`);
     }
+    return;
+  }
+  if (fight.type === 'questGrass') {
+    const caughtMsg = fight.caught ? addCaught(fight.caught) : '';
+    saveA();
+    const lines = await showGrowth(xpEvents);
+    advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, fight.caught ? `${fight.caught.species} caught!` : 'Wild Mon defeated', `${esc(caughtMsg)}${AREAS[fight.quest].legend ? ` Double XP on the ${TRAIL}.` : ''}`, lines,
+      `<button class="btn primary" id="aGrassAgain">Keep walking</button><button class="btn" id="aToQuest">Quest map</button>`);
     return;
   }
   if (fight.type === 'questWild') {
@@ -3586,7 +3594,7 @@ $('result').addEventListener('click', e => {
   const id = e.target.id;
   if (id === 'fNo') { $('overlay').hidden = true; return; }
   if (id === 'fYes' && ctx) { $('overlay').hidden = true; ctx.forfeitOk = true; forfeitArmed = true; $('forfeit').click(); return; }
-  if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aTrailAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain', 'aLabAgain'].includes(id)) return;
+  if (!['aToMap', 'aToSummit', 'aToMapTown', 'aShamNext', 'aQuestMap', 'aToTrail', 'aToMapTravel', 'aTrainAgain', 'aTrailAgain', 'aQuestNext', 'aToQuest', 'aRouteAgain', 'aLabAgain', 'aGrassAgain'].includes(id)) return;
   const fight = ctx && ctx.kind === 'adventure' ? ctx.fight : null;
   $('overlay').hidden = true;
   endBattleQuietly(); ctx = null;
@@ -3594,6 +3602,7 @@ $('result').addEventListener('click', e => {
   else if (id === 'aTrailAgain') trailWild();
   else if (id === 'aRouteAgain') routeBattle(fight.route);
   else if (id === 'aLabAgain') labGrass();
+  else if (id === 'aGrassAgain') questGrass(fight.quest);
   else if (id === 'aShamNext') shamFight(fight.sham);
   else if (id === 'aToTrail') openTrail();
   else if (id === 'aToSummit') openSummit({animate: true});
@@ -3662,8 +3671,9 @@ function openQuest(i, opts = {}) {
   $('questSvg').innerHTML = svg;
   let card;
   if (q.done && q.again) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)} is back</b><small>You released it, so it returned here · level ${q.boss.level} · weaken it, then throw a Mon Ball · ${A.bag.pokeball || 0} left</small></div></div>
-    <button class="btn primary" id="qGo">Approach ${esc(q.trainer)}</button>`;
-  else if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>${q.legend ? `You caught ${esc(q.trainer)} here.` : `You beat ${esc(qName(q))} here.`} Nothing left to do.</small></div></div>`;
+    <button class="btn primary" id="qGo">Approach ${esc(q.trainer)}</button><button class="btn" id="qGrass">Walk in the grass</button>`;
+  else if (q.done) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Quest cleared</b><small>${q.legend ? `You caught ${esc(q.trainer)} here.` : `You beat ${esc(qName(q))} here.`} Nothing left to do here, but you can still walk in the grass.</small></div></div>
+    <button class="btn primary" id="qGrass">Walk in the grass</button>`;
   else if (q.step < nWild) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem(ar.icon, ar.color)}</span><div><b>Wild Mon ${q.step + 1} of ${nWild}</b><small>Something is rustling ahead · around level ${q.level} · HP carries over, so use your bag</small></div></div>
     <button class="btn primary" id="qGo">Keep going</button>`;
   else if (q.legend) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>A legendary Mon · level ${q.boss.level} · weaken it, then throw a Mon Ball · ${A.bag.pokeball || 0} left</small></div></div>
@@ -3704,7 +3714,18 @@ function questContinue(i) {
     });
   }
 }
-$('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questContinue(questIdx()); });
+// A cleared side quest area: walk in its grass for more wild Mons (same kinds as the quest's own wild Mons, a little below the quest's level)
+function questGrass(i) {
+  const ar = AREAS[i], q = ensureQuest(i);
+  const lv = Math.max(2, q.level - 2 + Math.floor(Math.random() * 4));
+  let mon;
+  if (ar.legend) {   // the Laurel Pass sites and the Glitch Shore: random Neofield Mons #010-#039, like their own wild Mons
+    const pool = E.FAMILIES.filter(f => !f.rare && f.stages[0].num >= 10 && f.stages[0].num <= 39).map(f => f.key);
+    mon = E.regionalWild(17, lv, pool[Math.floor(Math.random() * pool.length)]);
+  } else mon = A.regional ? E.regionalWild(i, lv) : E.randomMon(lv, ar.types);
+  advFight({type: 'questGrass', quest: i, catchable: !!mon.family, sets: [mon], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · grass · level ${lv}`}});
+}
+$('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questContinue(questIdx()); else if (e.target.id === 'qGrass') questGrass(questIdx()); });
 $('questLeave').addEventListener('click', () => { if (AREAS[questIdx()] && AREAS[questIdx()].legend && questIdx() !== MISS) openTrail(); else openAdvMap({}); });
 $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
@@ -5872,7 +5893,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: i => openQuest(i), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
