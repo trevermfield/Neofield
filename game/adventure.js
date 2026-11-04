@@ -250,7 +250,7 @@ export function awardXP(team, parts, kind, foeLevels, cfg = XP) {
     const share = parts.has(slot) ? 1 : cfg.benchShare;
     let gain = 0;
     for (const lv of foeLevels) gain += xpForKO(kind, lv, m.level, cfg);
-    gain = Math.max(1, Math.round(gain * share));   // every battle gives at least 1 XP, even against much weaker foes
+    gain = cfg.flat != null ? cfg.flat : Math.max(1, Math.round(gain * share));   // every battle gives at least 1 XP, even against much weaker foes. cfg.flat: a fixed amount for the whole team
     const before = m.level;
     m.xp = (m.xp || 0) + gain;
     let n = 0;

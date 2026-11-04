@@ -2965,8 +2965,8 @@ function awardFightXP(fight) {
   const trail = fight.type === 'trailTrainer' || fight.type === 'trailWild' || (fight.quest != null && fight.quest >= LEG0);
   const mult = fight.type === 'champion' ? 3 : trail ? 2 : 1;   // the Champion is worth triple XP, the Laurel Pass double
   let cfg = mult > 1 ? {...E.XP, base: Object.fromEntries(Object.entries(E.XP.base).map(([k, v]) => [k, v * mult]))} : E.XP;
-  // Once the Summit has been beaten, the Elite Four are far below your team, so their XP would fall to almost nothing. From then on they never pay less than three quarters of an even-level fight (about 800 XP per Mon over all four fights).
-  if (fight.type === 'e4' && beatenOnce()) cfg = {...cfg, minMult: 0.75};
+  // Once the Victory Summit has been beaten, each Elite Four fight gives every Mon on the team a flat 100 XP and the Champion 400, whatever the levels (Farm Mons get none)
+  if ((fight.type === 'e4' || fight.type === 'champion') && beatenOnce()) cfg = {...cfg, flat: fight.type === 'champion' ? 400 : 100};
   const events = E.awardXP(A.team, parts, XP_KIND[fight.type] || 'wild', fight.sets.map(x => x.level), cfg);
   saveA();
   return events;

@@ -20,9 +20,6 @@ export function xpNeed(level, cfg = XP) {
 }
 
 export function xpMultiplier(foeLevel, myLevel, cfg = XP) {
-  return Math.max(cfg.minMult || 0, rawMultiplier(foeLevel, myLevel, cfg));   // minMult: an optional floor (used for Summit rematches)
-}
-function rawMultiplier(foeLevel, myLevel, cfg) {
   const gap = foeLevel - myLevel;
   if (gap >= cfg.bonusGap) return cfg.bonusMult + cfg.bonusStep * (Math.floor(gap / cfg.bonusGap) - 1);   // +5 is x1.5, then +.25 for every further 5 levels
   if (gap >= cfg.fullDownTo) return 1;
