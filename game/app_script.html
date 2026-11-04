@@ -2525,7 +2525,7 @@ function advNextBarClick(id) {
   else if (id === 'aChallenge') advChallenge();
   else if (id === 'aSummit') openSummit();
   else if (id === 'aTrain') advTrain();
-  else if (id === 'aShop') openShop();
+  else if (id === 'aShop') openShop('town');
   else if (id === 'aFarm') openFarm();
   else if (id === 'aDev') openDev();
   else if (id === 'rGrass') routeBattle(A.loc);
@@ -3882,7 +3882,7 @@ function openSummit(opts = {}) {
   $('summitSvg').innerHTML = svg;
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
-    <button class="btn primary" id="sRematch">Rematch the Summit</button>
+    <button class="btn primary" id="sRematch">Rematch the Summit</button><button class="btn" id="sShop">Summit Shop (Move Tutor)</button>
     <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
     <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
@@ -3905,6 +3905,7 @@ function openSummit(opts = {}) {
 }
 $('summitBar').addEventListener('click', e => {
   if (e.target.id === 'sGoFight') advChallenge();
+  else if (e.target.id === 'sShop') openShop('summit');
   else if (e.target.id === 'sDevSkip') { A.e4pos = 4; saveA(); openSummit({animate: true}); }
   else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sDevNote') showTylerNote();
@@ -4015,13 +4016,16 @@ $('trailTeam').addEventListener('click', () => openTeamView('trail'));
 $('trailBag').addEventListener('click', () => openAdvBag('trail'));
 
 // --- shop ---
-function openShop() { $('shopNote').textContent = 'Tap Buy to add an item to your bag.'; renderShop(); show('shop'); }
+// The Move Tutor is only at the Victory Summit shop; the town shops sell items only.
+let shopAt = 'town';
+function openShop(at = 'town') { shopAt = at; $('shopNote').textContent = 'Tap Buy to add an item to your bag.'; renderShop(); show('shop'); }
 function renderShop() {
   $('shopMoney').textContent = money(A.money);
   $('tutorPrice').textContent = money(TUTOR_PRICE);
   $('shopItems').innerHTML = Object.entries(PRICES).map(([id, price]) => `<div class="shoprow"><div><b>${esc(E.ITEMS[id].name)} <small style="display:inline">· you have ${A.bag[id] || 0}</small></b><small>${esc(E.ITEMS[id].desc)}</small><span class="price">${money(price)}</span></div>
     <button class="btn primary" id="buy-${id}" data-buy="${id}" ${A.money < price || (id === 'pokeball' && (A.bag.pokeball || 0) >= 99) ? 'disabled' : ''}>${id === 'pokeball' && (A.bag.pokeball || 0) >= 99 ? 'Max 99' : 'Buy'}</button></div>`).join('');
-  $('shopTutor').innerHTML = A.team.map((m, i) => {
+  $('shopTutorSec').hidden = shopAt !== 'summit';
+  $('shopTutor').innerHTML = shopAt !== 'summit' ? '' : A.team.map((m, i) => {
     const cur = mset(m);
     const opts = E.tutorMoves(m);
     return `<div class="tutorbox"><b>${esc(cur.species)} <span class="lvl">Lv ${m.level}</span></b><small class="note">Knows ${cur.moves.map(esc).join(', ')}</small>
@@ -4038,7 +4042,7 @@ $('shopItems').addEventListener('click', e => {
   renderShop();
 });
 $('shopTutor').addEventListener('click', async e => {
-  const b = e.target.closest('[data-tutor]'); if (!b || b.disabled) return;
+  const b = e.target.closest('[data-tutor]'); if (!b || b.disabled || shopAt !== 'summit') return;
   const m = A.team[+b.dataset.tutor];
   if (A.money < TUTOR_PRICE) return;
   const mv = b.dataset.move, name = mset(m).species;
@@ -4053,7 +4057,7 @@ $('shopTutor').addEventListener('click', async e => {
   $('shopNote').textContent = msg;
   renderShop();
 });
-$('shopBack').addEventListener('click', () => openAdvMap({}));
+$('shopBack').addEventListener('click', () => { if (shopAt === 'summit') openSummit(); else openAdvMap({}); });
 
 // --- team & bag ---
 function openAdvBag(from) { advBagFrom = from; advBagSel = null; mapMode = 'adventure'; delete $('jbagNote').dataset.msg; renderAdvBag(); show('jbag'); }
@@ -5275,12 +5279,12 @@ function renderSlots() {
           <div class="acts"><button class="btn ${warn ? 'danger' : 'gold'}" type="button" data-act="start" data-n="${x.n}">${warn ? 'Erase and start' : 'Start'}</button><button class="btn ghostbtn" type="button" data-act="cancel">${warn ? 'Keep it' : 'Cancel'}</button></div>
         </div>`;
       }
-    } else if (adv && x.adv && (x.adv.done || x.adv.hof > 0) && slotNg === x.n) {
+    } else if (adv && x.adv && (x.adv.done || (x.adv.hof || 0) > (x.adv.hofStart || 0)) && slotNg === x.n) {
       acts = `<div class="askbox"><p><b style="color:var(--fg)">Start New Game+ in Slot ${x.n}?</b></p><div class="nginfo">${ngInfoHTML()}</div>
         <span class="note">Difficulty for the new run</span>${diffSegHTML(slotNgDiff)}
         <div class="acts"><button class="btn gold" type="button" data-act="ngyes" data-n="${x.n}">Start New Game+</button><button class="btn ghostbtn" type="button" data-act="ngno">Not now</button></div></div>`;
     } else if (has) {
-      const ngBtn = adv && x.adv && (x.adv.done || x.adv.hof > 0) ? `<button class="btn" type="button" data-act="ng" data-n="${x.n}">New Game+</button>` : '';
+      const ngBtn = adv && x.adv && (x.adv.done || (x.adv.hof || 0) > (x.adv.hofStart || 0)) ? `<button class="btn" type="button" data-act="ng" data-n="${x.n}">New Game+</button>` : '';
       acts = `<div class="acts"><button class="btn" type="button" data-act="cont" data-n="${x.n}">${adv ? 'Continue' : 'Open'}</button>${ngBtn}<button class="btn ghostbtn" type="button" data-act="new" data-n="${x.n}">${adv ? 'New game' : 'Start over'}</button></div>`;
     } else {
       acts = `<div class="acts"><button class="btn" type="button" data-act="new" data-n="${x.n}">${adv ? (empty ? 'New game' : 'Start an adventure') : (empty ? 'New game' : 'Start the Battle Hall')}</button></div>`;
