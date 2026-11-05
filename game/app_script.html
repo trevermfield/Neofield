@@ -3847,7 +3847,7 @@ function openSummit(opts = {}) {
   $('summitLeave').textContent = summitLocked() ? 'Forfeit' : 'Leave';
   const cleared = A.done ? 5 : A.e4pos < 4 ? A.e4pos : 4;
   // fights you can't reach yet stay a mystery until it's your turn
-  steps.forEach((st, i) => { if (i < 4 && i > cleared) { st.label = `Elite Four - ${i + 1}`; st.sub = 'Not yet'; st.icon = 'star'; } });
+  steps.forEach((st, i) => { if (i < 4 && i > cleared) { st.label = `Elite Four - ${i + 1}`; st.sub = ''; st.icon = 'star'; } });
   const gold = CHAMP.color;
   setAccent(cleared < 4 ? steps[cleared].color : gold);
   if (!A.done && !introNext) bgmStart('hall', {fade: 3.5, vol: .45}); else if (A.done) hallOff();   // the hall music plays whenever you're in the Summit between fights
