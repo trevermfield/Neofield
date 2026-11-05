@@ -1692,6 +1692,7 @@ const tonyLines = n => ['Oh yes, that was wonderful. So entertaining. The cinema
   "I'm not going to give you a fight, I'm going to show you a fight!"];
 const ANNA_CHAMP = 'THE OWNER';
 const ANNA_CHAMP_LINES = ["Your Mons are strong. I'll win with them!", "My team can't win without them. Give me your essence. I'll win it all with dem boys!", "Now let's kick this off. I'll own your Mons, then I'm owning the whole region."];
+const modeWord = g => g.mode === 'triples' ? 'Triple' : g.mode === 'doubles' ? 'Double' : 'Single';
 const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
 const summitOpen = () => !!A && (A.summit === 'open' || A.summit === 'anna');
 const summitAnna = () => !!A && A.summit === 'anna';
@@ -2298,11 +2299,11 @@ $('jbagBack').addEventListener('click', () => { if (mapMode !== 'adventure') ope
 
 
 // ---------- Adventure mode ----------
-// Gym levels climb from 10 to 60, the Elite Four from 62 to 68, the Champion is level 70.
+// Gym levels climb from 10 to 60, the Elite Four from 70 to 76, the Champion is level 78.
 const ADV_START_LV = 8;
 const GYM_LV = JORDER.map((_, i) => i === 0 ? 8 : i === 1 ? 11 : i === 2 ? 14 : Math.round(10 + i * 50 / 16));
-const E4_LV = [62, 64, 66, 68];
-const CHAMP_LV = 70;
+const E4_LV = [70, 72, 74, 76];
+const CHAMP_LV = 78;
 // a rematch of the Summit has the same levels as the first time
 const lvBonus = () => 0;
 const e4Lv = i => Math.min(100, E4_LV[i] + lvBonus());
@@ -2510,7 +2511,7 @@ function renderAdvNextBarMain() {
   }
   const sp = speakerFor(st);
   const lv = st.kind === 'gym' ? GYM_LV[A.pos] : st.kind === 'e4' ? e4Lv(A.e4pos) : ((window.__neoTest && window.__neoTest.champLv) || champLv());
-  const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : `Victory Summit · level ${lv}`;
+  const sub = st.kind === 'gym' ? `${TOWNS[st.key]} · ${LEADERS[st.key].type} gym · level ${lv}` : st.kind === 'e4' ? `Victory Summit · Elite Four ${A.e4pos + 1} of 4 · level ${lv}` : 'Victory Summit · Champion - level ???';
   const label = st.kind === 'gym' ? `Challenge ${LEADERS[st.key].first}` : '';   // gyms only: the Summit has its own button
   if (st.kind !== 'gym') {   // the Elite Four and the Champion are fought on the Victory Summit map
     bar.innerHTML = `<div class="nextcard" style="--c:${sp.color}"><span class="face">${portraitHTML(st.kind === 'e4' ? null : sp.key, sp.color)}</span><div><b>${LEAGUE}</b><small>${st.kind === 'e4' ? `Elite Four ${A.e4pos + 1} of 4 is next` : 'The Champion is waiting at the top'} · your team averages level ${avgLevel()}</small></div></div>
@@ -3732,8 +3733,8 @@ function questIdx() { return AREAS.findIndex(a => a.name === $('questName').text
 
 // --- Victory Summit: the Elite Four and the Champion on one straight path, like a side quest map ---
 function summitSteps() {
-  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${modeName(g)} · level ${e4Lv(i)}`, icon: g.icon, color: g.color}; });
-  steps.push({key: null, label: 'The Champion', sub: `Champion · level ${champLv()}`, icon: 'crown', color: CHAMP.color});
+  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${modeWord(g)} - level ${e4Lv(i)}`, icon: g.icon, color: g.color}; });
+  steps.push({key: null, label: 'The Champion', sub: 'Champion - level ???', icon: 'crown', color: CHAMP.color});
   return steps;
 }
 // ---- Victory Summit entrance: a cinematic walk up to the gate, played the first time a dev enters (reset in the dev tools) ----
@@ -3882,10 +3883,10 @@ function openSummit(opts = {}) {
   $('summitSvg').innerHTML = svg;
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
-    <button class="btn primary" id="sRematch">Rematch the Summit</button><button class="btn" id="sShop">Shop</button>
+    <button class="btn primary" id="sRematch">Rematch the Summit</button>
     <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
-    <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button><button class="btn" id="sShop">Shop</button>`;
+    <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button>`;
   if (devOn() && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at ${summitOpen() ? 'the first Elite Four battle' : 'the In-Laws'}. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
@@ -3905,7 +3906,6 @@ function openSummit(opts = {}) {
 }
 $('summitBar').addEventListener('click', e => {
   if (e.target.id === 'sGoFight') advChallenge();
-  else if (e.target.id === 'sShop') openShop('summit');
   else if (e.target.id === 'sDevSkip') { A.e4pos = 4; saveA(); openSummit({animate: true}); }
   else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sDevNote') showTylerNote();
@@ -4057,7 +4057,7 @@ $('shopTutor').addEventListener('click', async e => {
   $('shopNote').textContent = msg;
   renderShop();
 });
-$('shopBack').addEventListener('click', () => { if (shopAt === 'summit') openSummit(); else openAdvMap({}); });
+$('shopBack').addEventListener('click', () => openAdvMap({}));
 
 // --- team & bag ---
 function openAdvBag(from) { advBagFrom = from; advBagSel = null; mapMode = 'adventure'; delete $('jbagNote').dataset.msg; renderAdvBag(); show('jbag'); }
