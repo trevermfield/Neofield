@@ -2525,7 +2525,7 @@ function advNextBarClick(id) {
   else if (id === 'aChallenge') advChallenge();
   else if (id === 'aSummit') openSummit();
   else if (id === 'aTrain') advTrain();
-  else if (id === 'aShop') openShop('town');
+  else if (id === 'aShop') openShop(A.pos >= 17 && advTown() >= 18 && !labPlace() && A.loc == null ? 'summit' : 'town');   // the Move Tutor is in the shop at Victory Summit
   else if (id === 'aFarm') openFarm();
   else if (id === 'aDev') openDev();
   else if (id === 'rGrass') routeBattle(A.loc);
@@ -3882,10 +3882,10 @@ function openSummit(opts = {}) {
   $('summitSvg').innerHTML = svg;
   const nowSt = A.done ? null : steps[cleared < 4 ? cleared : 4];
   if (A.done) $('summitBar').innerHTML = `<div class="nextcard" style="--c:${gold}"><span class="face">${emblem('crown', gold)}</span><div><b>Hall of Fame</b><small>You beat the Elite Four and the Champion.</small></div></div>
-    <button class="btn primary" id="sRematch">Rematch the Summit</button><button class="btn" id="sShop">Summit Shop (Move Tutor)</button>
+    <button class="btn primary" id="sRematch">Rematch the Summit</button><button class="btn" id="sShop">Shop</button>
     <p class="note">Fight all five again, at the same levels. Leaving partway counts as a forfeit.</p>`;
   else $('summitBar').innerHTML = `<div class="nextcard" style="--c:${nowSt.color}"><span class="face">${portraitHTML(nowSt.g ? nowSt.g.members[0] : null, nowSt.color)}</span><div><b>${esc(nowSt.g ? nowSt.g.title : 'The Champion')}</b><small>${esc(nowSt.sub)} · your team averages level ${avgLevel()}</small></div></div>
-    <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button><button class="btn" id="sShop">Summit Shop (Move Tutor)</button>`;
+    <button class="btn primary" id="sGoFight">${nowSt.g ? `Challenge ${esc(nowSt.g.title)}` : 'Face the Champion'}</button><button class="btn" id="sShop">Shop</button>`;
   if (devOn() && !A.done) $('summitBar').insertAdjacentHTML('beforeend', `<div class="advactions">${A.e4pos < 4 ? '<button class="btn" id="sDevSkip">Skip to the Champion</button>' : ''}<button class="btn" id="sDevWin">Auto-beat the Summit</button>${summitOpen() ? '' : '<button class="btn" id="sDevNote">Replay the note</button>'}</div>`);
   if (summitAsk) $('summitBar').innerHTML = `<div class="nextcard" style="--c:#e25b4f"><span class="face">${emblem('star', '#e25b4f')}</span><div><b>Forfeit the Elite Four?</b><small>If you leave Victory Summit you lose all your progress here and must start over at ${summitOpen() ? 'the first Elite Four battle' : 'the In-Laws'}. Are you sure?</small></div></div>
     <div class="row"><button class="btn primary" id="sForfeitYes">Yes, forfeit</button><button class="btn" id="sForfeitNo">Keep going</button></div>`;
@@ -4016,7 +4016,7 @@ $('trailTeam').addEventListener('click', () => openTeamView('trail'));
 $('trailBag').addEventListener('click', () => openAdvBag('trail'));
 
 // --- shop ---
-// The Move Tutor is only at the Victory Summit shop; the town shops sell items only.
+// The Move Tutor is only in the shop at Victory Summit (on the map or inside the Summit); the town shops sell items only.
 let shopAt = 'town';
 function openShop(at = 'town') { shopAt = at; $('shopNote').textContent = 'Tap Buy to add an item to your bag.'; renderShop(); show('shop'); }
 function renderShop() {
