@@ -1692,7 +1692,6 @@ const tonyLines = n => ['Oh yes, that was wonderful. So entertaining. The cinema
   "I'm not going to give you a fight, I'm going to show you a fight!"];
 const ANNA_CHAMP = 'THE OWNER';
 const ANNA_CHAMP_LINES = ["Your Mons are strong. I'll win with them!", "My team can't win without them. Give me your essence. I'll win it all with dem boys!", "Now let's kick this off. I'll own your Mons, then I'm owning the whole region."];
-const modeWord = g => g.mode === 'triples' ? 'Triple' : g.mode === 'doubles' ? 'Double' : 'Single';
 const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
 const summitOpen = () => !!A && (A.summit === 'open' || A.summit === 'anna');
 const summitAnna = () => !!A && A.summit === 'anna';
@@ -3733,7 +3732,7 @@ function questIdx() { return AREAS.findIndex(a => a.name === $('questName').text
 
 // --- Victory Summit: the Elite Four and the Champion on one straight path, like a side quest map ---
 function summitSteps() {
-  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${modeWord(g)} - level ${e4Lv(i)}`, icon: g.icon, color: g.color}; });
+  const steps = A.e4.map((k, i) => { const g = E4_FIGHTS[k]; return {key: k, g, label: g.title, sub: `${modeName(g)} - level ${e4Lv(i)}`, icon: g.icon, color: g.color}; });
   steps.push({key: null, label: 'The Champion', sub: 'Champion - level ???', icon: 'crown', color: CHAMP.color});
   return steps;
 }
