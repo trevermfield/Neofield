@@ -135,7 +135,7 @@ export const FAMILIES = [
     moves: [[1, 'Astonish'], [1, 'Defense Curl'], [5, 'Rock Throw'], [9, 'Night Shade'], [14, 'Rock Tomb'], [20, 'Shadow Sneak'], [25, 'Hex'],
       [30, 'Rock Slide'], [35, 'Shadow Claw'], [40, 'Stone Edge'], [46, 'Poltergeist'], [52, 'Head Smash']],
     evoMoves: {'Ripgool': ['Stone Edge']},
-    final: {ability: 'Solid Rock', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, def: 4}, moves: ['Stone Edge', 'Poltergeist', 'Shadow Sneak', 'Stealth Rock']}},
+    final: {ability: 'Solid Rock', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, def: 4}, moves: ['Stone Edge', 'Rage Fist', 'Shadow Sneak', 'Stealth Rock']}},
 
   {key: 'campyre', color: '#f07a3a', catchRate: 150,
     stages: [
@@ -247,7 +247,7 @@ export const FAMILIES = [
     moves: [[1, 'Pound'], [1, 'Leer'], [6, 'Low Kick'], [12, 'Fake Out'], [18, 'Slam'], [24, 'Brick Break'], [30, 'Body Slam'],
       [36, 'Bulk Up'], [42, 'Close Combat'], [48, 'Double-Edge']],
     evoMoves: {},
-    final: {ability: 'Scrappy', item: 'Choice Band', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Double-Edge', 'Close Combat', 'Knock Off', 'Earthquake']}},
+    final: {ability: 'Scrappy', item: 'Choice Band', nature: 'Jolly', evs: {atk: 252, spe: 252, hp: 4}, moves: ['Double-Edge', 'Thunderous Kick', 'Knock Off', 'Earthquake']}},
 
   {key: 'banchief', color: '#3fd8a0', catchRate: 60,
     stages: [
@@ -269,7 +269,7 @@ export const FAMILIES = [
     moves: [[1, 'Tackle'], [1, 'Defense Curl'], [5, 'Powder Snow'], [10, 'Mud-Slap'], [15, 'Ice Shard'], [20, 'Bulldoze'], [26, 'Ice Fang'],
       [34, 'Icicle Crash'], [39, 'Iron Defense'], [44, 'Earthquake'], [50, 'Megahorn'], [56, 'Head Smash']],
     evoMoves: {'Rimeocerus': ['Icicle Crash']},
-    final: {ability: 'Thick Fat', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, def: 4}, moves: ['Icicle Crash', 'Earthquake', 'Ice Shard', 'Stealth Rock']}},
+    final: {ability: 'Ice Body', item: 'Leftovers', nature: 'Adamant', evs: {hp: 252, atk: 252, def: 4}, moves: ['Icicle Crash', 'Earthquake', 'Ice Shard', 'Stealth Rock']}},
 
   {key: 'wyrmie', color: '#5f8a3a', catchRate: 45,
     stages: [
@@ -415,7 +415,7 @@ const MOVE_EDITS = {
   starter3: [[1, 'Tackle'], [1, 'Growl'], [20, 'Protect'], [24, 'Crunch'], [28, 'Iron Defense'], [32, 'Hyper Voice'], [36, 'Aqua Tail'], [65, 'Hydro Cannon']],
   wild2: [[10, 'Confuse Ray'], [20, 'Confusion'], [31, 'Tri Attack']],
   bizon: [[45, 'Lunar Blessing']],
-  wild6: [[1, 'Astonish'], [1, 'Harden'], [5, 'Accelerock'], [30, 'Ancient Power'], [35, 'Last Respects']],
+  wild6: [[1, 'Astonish'], [1, 'Harden'], [5, 'Accelerock'], [25, 'Ominous Wind'], [30, 'Ancient Power'], [35, 'Last Respects'], [46, 'Rage Fist'], [57, 'Amnesia']],
   maraudur: [[10, 'Rage'], [54, 'Behemoth Blade']],
   wild5: [[33, 'Super Fang'], [50, 'Ice Beam']],
   marooner: [[38, 'Tailwind']],
@@ -423,7 +423,7 @@ const MOVE_EDITS = {
   noterish: [[1, 'Pay Day'], [1, 'Minimize'], [5, 'Leafage'], [9, 'Lucky Chant'], [46, 'Focus Punch']],
   pinedale: [[23, 'Trailblaze'], [28, 'Trop Kick'], [55, 'Behemoth Bash']],
   nidomonk: [[24, 'Dragon Claw'], [55, 'Expanding Force']],
-  chetswatch: [[1, 'Pound'], [1, 'Hone Claws']],
+  chetswatch: [[1, 'Pound'], [1, 'Hone Claws'], [42, 'Thunderous Kick'], [54, 'Coaching']],
   banchief: [[1, 'Astonish'], [1, 'Spite'], [12, 'Revenge'], [18, 'Poison Jab'], [30, 'Sacred Sword'], [36, 'Destiny Bond'], [48, 'Shadow Force']],
   cryodon: [[5, 'Ice Ball'], [26, 'Snowscape'], [50, 'Head Smash'], [56, 'Mountain Gale']],
   wyrmie: [[1, 'Cut'], [1, 'String Shot'], [15, 'Sticky Web']],
