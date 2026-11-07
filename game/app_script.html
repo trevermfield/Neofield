@@ -997,13 +997,13 @@ function renderControlsMulti(req) {
       const fs = battle[FOE].active.filter(p => p && !p.fainted);
       html += '<div class="moves">' + act.moves.map((m, i) => {
         const mv = E.Dex.moves.get(m.id), type = m.target || mv.target;
-        const reach = !E.needsTarget(type) || E.targetLocs(battle, me, type).length > 0;
+        const reach = lockedEntry(m) || !E.needsTarget(type) || E.targetLocs(battle, me, type).length > 0;
         const pow = mv.category === 'Status' ? 'Status' : (mv.basePower ? `${mv.basePower} power` : mv.category);
         const aim = type === 'allAdjacentFoes' ? 'All foes' : type === 'allAdjacent' ? 'Everyone' : '';
         return `<button class="move" data-mm="${i + 1}" style="--t:${TYPE_COLORS[mv.type] || '#999'}" ${m.disabled || !reach ? 'disabled' : ''} title="${esc(mv.shortDesc || '')}">
           <b>${esc(m.move)}</b><small><span>${esc(mv.type)} · ${esc(pow)}</span></small><small>${aim ? `<span>${aim}</span>` : (reach ? '<span></span>' : '<span>Out of reach</span>')}<span>${m.maxpp ? `${m.pp}/${m.maxpp} PP` : ''}</span></small></button>`;
       }).join('') + '</div>';
-      if (act.moves.every(m => m.disabled || (E.needsTarget(m.target || E.Dex.moves.get(m.id).target) && !E.targetLocs(battle, me, m.target || E.Dex.moves.get(m.id).target).length)))
+      if (act.moves.every(m => m.disabled || (!lockedEntry(m) && E.needsTarget(m.target || E.Dex.moves.get(m.id).target) && !E.targetLocs(battle, me, m.target || E.Dex.moves.get(m.id).target).length)))
         html += '<div class="row"><button class="btn" data-mauto="1">Let the game pick</button></div>';
     }
     if (mc.parts.some(p => p !== 'pass')) html += '<div class="row"><button class="btn ghost" data-mreset="1">Start this turn over</button></div>';
@@ -1012,6 +1012,8 @@ function renderControlsMulti(req) {
   c.innerHTML = html;
   renderCards();
 }
+// A move the Mon is already locked into (the hit turn of Shadow Force, Fly or Dig, Outrage, Recharge) comes with no target and no PP; it must be sent without a target.
+const lockedEntry = m => !!m && m.target === undefined && m.pp === undefined && m.maxpp === undefined;
 function swapBtn(x, disabled) {
   const [hpStr, st] = x.p.condition.split(' '), [a, b] = hpStr.split('/').map(Number), pct = b ? a / b * 100 : 0;
   return `<button class="swap" data-msw="${x.i}" ${disabled ? 'disabled' : ''}><b>${esc(x.p.details.split(',')[0])}</b>
@@ -1033,7 +1035,7 @@ function multiClick(t) {
   const mega = $('megaBox') && $('megaBox').checked ? ' mega' : '';
   if (t.dataset.mm) {
     const m = act.moves[+t.dataset.mm - 1], type = m.target || E.Dex.moves.get(m.id).target;
-    if (E.needsTarget(type)) {
+    if (!lockedEntry(m) && E.needsTarget(type)) {
       const locs = E.targetLocs(battle, me, type);
       if (locs.length === 1) { mcPush(`move ${t.dataset.mm} ${locs[0].loc}${mega}`); return; }
       mc.stage = 'target'; mc.move = +t.dataset.mm; mc.mega = mega; renderControls(); return;
@@ -1823,12 +1825,20 @@ function applySummitByName() {
   A.summit = want; A.e4pos = 0; A.champTeam = null; A.summitIntro = 0; A.summitNote = 0;
   if (want === 'classic') A.e4 = E4_KEYS.slice();
 }
+// Every rematch re-rolls the Elite Four: the Default Summit draws a new line-up, the others fight in a new order.
+function reshuffleSummit() {
+  if (summitOpen() && !summitAnna()) { A.e4gen = null; A.e4 = null; setupOpenSummit(); return; }
+  if (summitAnna()) setupAnnaSummit();
+  for (let i = A.e4.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [A.e4[i], A.e4[j]] = [A.e4[j], A.e4[i]]; }
+}
 function drawOpenSummit() {
   const pool = ORDER.slice();
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   let at = 0;
   return OPEN_SHAPE.map(sh => { const m = pool.slice(at, at + sh.n); at += sh.n; return m; });
 }
+// The fight order is saved in A.e4; it is kept as long as it still holds exactly the four Summit fights (a rematch shuffles it).
+const keepE4Order = () => Array.isArray(A.e4) && A.e4.length === OPEN_KEYS.length && OPEN_KEYS.every(k => A.e4.includes(k)) ? A.e4 : OPEN_KEYS.slice();
 function setupAnnaSummit() {
   ANNA_E4.forEach((sh, i) => {
     const key = OPEN_KEYS[i], L = sh.members.map(k => LEADERS[k]);
@@ -1839,7 +1849,7 @@ function setupAnnaSummit() {
     E4_TALK[key] = {intro: sh.members.map(k => [k, sh.intro[k]]), win: sh.members.map(k => [k, sh.win[k]])};
   });
   A.e4gen = ANNA_E4.map(sh => sh.members.slice());
-  A.e4 = OPEN_KEYS.slice();
+  A.e4 = keepE4Order();
 }
 function setupOpenSummit() {
   if (summitAnna()) { setupAnnaSummit(); return; }
@@ -1853,7 +1863,7 @@ function setupOpenSummit() {
     E4_FIGHTS[key] = g;
     E4_TALK[key] = {intro: members.map(k => [k, LINES[k].e4]), win: members.map(k => [k, E4_WIN_OPEN[k]])};
   });
-  A.e4 = OPEN_KEYS.slice();
+  A.e4 = keepE4Order();
 }
 // the Champion mirrors the player's own party: same Mons and moves, a few levels higher
 function mirrorSets() {
@@ -2451,7 +2461,7 @@ let summitAsk = false, ngAsk = false;
 function openAdvMap({fromBattle, msg, force} = {}) {
   if (!A) { openProfessor(); return; }
   fixAbilities(); if (E) syncDexFromTeam();
-  if (summitLocked() && !force) { openSummit(); return; }
+  if (summitLocked() && !force && !fromBattle) { openSummit(); return; }   // the in-battle Map is only a look at the map: it must not drop you out of a Summit fight
   hallOff();
   if (A.regional && A.pos >= 16) { bgmPreload('rising'); bgmPreload('hall'); }   // the Victory Summit walk and hall music are ready before you get there
   mapMode = 'adventure';
@@ -3908,7 +3918,7 @@ $('summitBar').addEventListener('click', e => {
   else if (e.target.id === 'sDevSkip') { A.e4pos = 4; saveA(); openSummit({animate: true}); }
   else if (e.target.id === 'sDevWin') devSummitWin();
   else if (e.target.id === 'sDevNote') showTylerNote();
-  else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA(); openSummit(); }
+  else if (e.target.id === 'sRematch') { A.rematch = (A.rematch || 0) + 1; A.done = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; reshuffleSummit(); saveA(); openSummit(); }
   else if (e.target.id === 'sForfeitNo') { summitAsk = false; openSummit(); }
   else if (e.target.id === 'sForfeitYes') {
     summitAsk = false; A.e4pos = 0; A.runMs = 0; A.champTeam = null; saveA();
