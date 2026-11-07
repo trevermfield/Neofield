@@ -279,8 +279,8 @@ function startVsCpu(foeTeamText, state, playerText, playerName, gameType) {
   if (ctx && ctx.kind === 'adventure') applyAdvHP();
   battle.p1.pokemon.forEach(p => { if (p.name === 'Nobody') { p.hp = 0; p.fainted = true; } });
   E.recountLeft(battle.p1);
-  // No Map during a Victory Summit fight: once it starts, the only ways out are winning, losing or forfeiting.
-  $('battleMap').hidden = !(ctx && (ctx.kind === 'journey' || ctx.kind === 'adventure')) || !!(ctx.kind === 'adventure' && ctx.fight && (ctx.fight.type === 'e4' || ctx.fight.type === 'champion'));
+  // No Map in a gym, trainer or Summit fight: once it starts, the only ways out are winning, losing or forfeiting.
+  $('battleMap').hidden = !(ctx && (ctx.kind === 'journey' || ctx.kind === 'adventure')) || !!(ctx.kind === 'adventure' && ctx.fight && !WILD_FIGHTS.includes(ctx.fight.type));
   showLeadScreen();
 }
 
