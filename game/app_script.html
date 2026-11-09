@@ -1724,7 +1724,7 @@ const TONY_NAME = 'Tony Perkis';
 const tonyLines = n => ['Oh yes, that was wonderful. So entertaining. The cinematography, the editing techniques. Though I must say, the villain is a bit... over the top.',
   "Did you ever hear the story of Icarus? You're just like Icarus, too close to the sun.",
   `The PerkiSystem doesn't work with cheaters, like ${n}. So I have taken your Mons as my own.`,
-  "I'm not going to give you a fight, I'm going to show you a fight!"];
+  "I'm not going to give you a fight, I'm going to show you the fight!"];
 const ANNA_CHAMP = 'THE OWNER';
 const ANNA_CHAMP_LINES = ["Your Mons are strong. I'll win with them!", "My team can't win without them. Give me your essence. I'll win it all with dem boys!", "Now let's kick this off. I'll own your Mons, then I'm owning the whole region."];
 const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
@@ -3181,7 +3181,7 @@ async function advBattleOver(won) {
   // gym, Elite Four, Champion
   if (fight.type === 'e4') { battleOff(); bgmStart('hall', {fade: 3, vol: .45});   // the hall music comes back while the trainers talk
     await e4Talk({...E4_FIGHTS[fight.stage.key], key: fight.stage.key}, 'win'); }
-  else if (fight.type === 'champion') await championDefeat(fight.mirror ? (summitAnna() ? 'Well played. Some things cannot be owned.' : MIRROR_LINES.defeat) : undefined);
+  else if (fight.type === 'champion') await championDefeat(isTT() ? 'How you doing little Tony? ...bad' : fight.mirror ? (summitAnna() ? 'Well played. Some things cannot be owned.' : MIRROR_LINES.defeat) : undefined, isTT());
   else await talk(fight.speaker, LINES[fight.stage.key].win);
   if (fight.type === 'champion') { gloomOff(); await finale(); }
   endBattleQuietly(); ctx = null;
@@ -3262,7 +3262,7 @@ async function championReveal(species) {
 // the Champion, seen only as a dark silhouette (waist up) in the fog
 // the whole layout is in place from the start; only opacity changes, so nothing moves while he speaks
 const ciJerry = (over, name) => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox ciJerry" id="ciImg"><img class="jy j1 on" src="portraits/jerry1.png" alt="" draggable="false"><img class="jy j2" src="portraits/jerry2.png" alt="" draggable="false"><img class="jy j3" src="portraits/jerry3.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName" id="ciName">${esc(name)}</b><p class="ciLine" id="ciLine"></p></div>`;
-const ciTony = (over, name) => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox ciJerry ciTony" id="ciImg"><img class="jy j1 on" src="portraits/tony1.jpg" alt="" draggable="false"><img class="jy j2" src="portraits/tony2.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName ciTonyName" id="ciName">${esc(name)}</b><p class="ciLine" id="ciLine"></p></div>`;
+const ciTony = (over, name) => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox ciJerry ciTony" id="ciImg"><img class="jy j1 on" src="portraits/tony1.png" alt="" draggable="false"><img class="jy j2" src="portraits/tony2.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName ciTonyName" id="ciName">${esc(name)}</b><p class="ciLine" id="ciLine"></p></div>`;
 const ciLayout = (over, name = 'CANCER') => `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox" id="ciImg"><img class="ciHuman" src="cancer.png" alt="" draggable="false"></span>${over ? `<div class="ciOver" id="ciOver"><b>${over}</b></div>` : ''}</div><b class="ciName" id="ciName">${esc(name)}</b><p class="ciLine" id="ciLine"></p></div>`;
 async function ciSay(lineEl, text, ms, tap) {
   lineEl.textContent = text; lineEl.classList.remove('say'); void lineEl.offsetWidth; lineEl.classList.add('say');
@@ -3276,12 +3276,12 @@ function showCoupon() {
   { const m = toneMuted; toneMuted = false; tone(880, 0, .25, 'triangle', .08); tone(1175, .12, .3, 'triangle', .07); toneMuted = m; }
   return new Promise(r => { $('couponGo').onclick = () => { c.classList.add('leaving'); setTimeout(() => { c.hidden = true; c.classList.remove('on', 'leaving'); r(); }, 950); }; });
 }
-async function championDefeat(said = CHAMP_LINES.win[0]) {
+async function championDefeat(said = CHAMP_LINES.win[0], tony = false) {
   const el = $('champIntro'), stage = $('ciStage');
   let release = () => {};
   const tapP = new Promise(r => { release = r; });
   $('ciSkip').onclick = e => { e.stopPropagation(); release(); };
-  stage.innerHTML = ciLayout('');
+  stage.innerHTML = tony ? `<div class="ciStack"><div class="ciFig"><span class="ciHumanBox ciJerry ciTony ciTonyHurt" id="ciImg"><img class="jy j3 on" src="portraits/tony3.png" alt="" draggable="false"></span></div><b class="ciName" id="ciName"></b><p class="ciLine" id="ciLine"></p></div>` : ciLayout('');
   // a slow fade: the battle buttons melt away first, then the dark settles in, then he appears
   const slow = !reducedMotion(), ctl = $('controls');
   if (slow && ctl) { ctl.style.transition = 'opacity .5s ease'; ctl.style.opacity = '0'; ctl.style.pointerEvents = 'none'; }
@@ -6057,7 +6057,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: (i, o) => openQuest(i, o), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), refreshQuests: () => refreshSideQuests(), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: (i, o) => openQuest(i, o), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), champDefeat: t => championDefeat(t ? 'How you doing little Tony? ...bad' : undefined, !!t), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), refreshQuests: () => refreshSideQuests(), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
