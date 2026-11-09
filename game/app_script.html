@@ -1687,6 +1687,35 @@ const ANNA_E4 = [
     intro: {makenna: "Strong Mons eh, well you can't beat me.", charlotte: "You won't battle me, I'll battle you!", lillian: "Mom. Forget this game. Let's go snuggle instead."},
     win: {makenna: "Dang. I just used my lowest Mons. Trust me, I did.", charlotte: "You won't battle me, I WILL!", lillian: "Ah ba ba ba ba ba ba ahhhhhh. I'm hungry now."}},
 ];
+// ---- Tucker's and Tanner's Victory Summits: fixed Elite Four lists (a blank line falls back to that trainer's Default Summit line) ----
+const TUCKER_E4 = [
+  {members: ['kaley'], mode: 'singles', picks: [6],
+    intro: {kaley: "Well hello there, handsome!! Don't think I'll go easy on you."},
+    win: {kaley: "So, I saw that coming I guess. Great job!"},
+    lose: {kaley: "Ha!!! Try again... But first make me coffee."}},
+  {members: ['tyler', 'tanner', 'trever'], mode: 'doubles', picks: [2, 2, 2],
+    intro: {tyler: "Little brother, you'll get no mercy from my venomous mons.", tanner: "It's laps for you when my ice mons blow you out.", trever: "The numbers are in our favor, we will see if you can derive a win"},
+    win: {tyler: "I taught you well, it seems.", tanner: "Cold, bro. Your Cinderella playoff run starts now.", trever: "Great job, you figure out how to break steel"}},
+  {members: ['kent', 'lynne'], mode: 'doubles', picks: [3, 3],
+    intro: {kent: "Strong as my Dragons? Let's see.", lynne: "Momma has to put this team in timeout!"},
+    win: {kent: "You always were tough. You'll have your hands full with the next team, though."}},
+  {members: ['tali', 'parker', 'jack'], mode: 'triples', picks: [2, 2, 2],
+    intro: {tali: "Prepare for annihilation.", parker: "Get ready to get smashed.", jack: "I will kill you"},
+    win: {tali: "Well, I went easy on you.", parker: "Darn it.", jack: "You might have beat me this time, but you won't next time! I'm the boss of you!"},
+    lose: {tali: "I won, now take me to the bookstore.", parker: "I told you", jack: "I told you I'm the boss of you and I always win."}},
+];
+const TANNER_E4 = [
+  {members: ['oksana'], mode: 'singles', picks: [6], intro: {}, win: {}},
+  {members: ['lynne', 'kent'], mode: 'doubles', picks: [3, 3],
+    intro: {kent: "You won't cool off my Dragons, little boy.", lynne: "You're grounded!"},
+    win: {kent: "Guess I was the underdog after all.", lynne: "Your team has what it takes, Tanner!"}},
+  {members: ['tali', 'parker', 'makenna', 'jack', 'charlotte', 'theo'], mode: 'doubles', picks: [1, 1, 1, 1, 1, 1],
+    intro: {tali: "I foresee your demise.", parker: "Game on, Uncle Tan.", makenna: "This will be a shutout.", jack: "I'm blocking your shot, Unc!", charlotte: "You'll melt when the game is on the line.", theo: "Bugs, let's squish this pest!"},
+    win: {tali: "I didn't foresee this.", parker: "GG, Unc. You're pretty cool.", makenna: "I was in the dark about your team, Uncle Tanner. Good luck.", jack: "Dang, you got a good team, Unc.", charlotte: "You sure shocked me! Go get'em Uncle Tan!", theo: "We got squished!"}},
+  {members: ['tyler', 'tucker', 'trever'], mode: 'triples', picks: [2, 2, 2],
+    intro: {tyler: "This upset is gunna sting. Prepare for my venom, snow boy.", tucker: "Can you handle the rock?!"},
+    win: {tyler: "You withstood our run. Good game, coach.", tucker: "We crumbled under pressure. Now go see what's in store in The Finals."}},
+];
 // Tucker and Tanner saves: Tony Perkis takes the Champion's place (it is the Open Summit's mirror Champion, so he fights with their own Mons)
 const TONY_NAME = 'Tony Perkis';
 const tonyLines = n => ['Oh yes, that was wonderful. So entertaining. The cinematography, the editing techniques. Though I must say, the villain is a bit... over the top.',
@@ -1696,7 +1725,8 @@ const tonyLines = n => ['Oh yes, that was wonderful. So entertaining. The cinema
 const ANNA_CHAMP = 'THE OWNER';
 const ANNA_CHAMP_LINES = ["Your Mons are strong. I'll win with them!", "My team can't win without them. Give me your essence. I'll win it all with dem boys!", "Now let's kick this off. I'll own your Mons, then I'm owning the whole region."];
 const modeName = g => g.mode === 'triples' ? 'Triples' : g.mode === 'doubles' ? 'Doubles' : 'Singles';
-const summitOpen = () => !!A && (A.summit === 'open' || A.summit === 'anna');
+const summitOpen = () => !!A && (A.summit === 'open' || A.summit === 'anna' || A.summit === 'tucker' || A.summit === 'tanner');
+const fixedSummit = () => !A ? null : A.summit === 'anna' ? ANNA_E4 : A.summit === 'tucker' ? TUCKER_E4 : A.summit === 'tanner' ? TANNER_E4 : null;   // the Summits with a fixed Elite Four list
 const summitAnna = () => !!A && A.summit === 'anna';
 // any name containing "tyler" (any capitalization) gets Tyler Victory Summit; everyone else gets the Default one. The dev toggle overrides this.
 const isTylerName = n => /tyler/i.test(n || '');
@@ -1818,7 +1848,7 @@ const ttLines = ls => ls.map(l => l.replace(/\{name\}/g, A.playerName));
 const isAnnaName = n => /^\s*anna\s*$/i.test(n||'');
 const isMakennaName = n => /^\s*makenna\s*$/i.test(n||'');
 const isTannerName = n => /^\s*tanner\s*$/i.test(n || '');
-const summitForName = n => isTylerName(n) ? 'classic' : isAnnaName(n) ? 'anna' : 'open';
+const summitForName = n => isTylerName(n) ? 'classic' : isAnnaName(n) ? 'anna' : isTuckerName(n) ? 'tucker' : isTannerName(n) ? 'tanner' : 'open';
 function applySummitByName() {
   if (!A || A.summitDev) return;
   const want = summitForName(A.playerName);
@@ -1828,8 +1858,8 @@ function applySummitByName() {
 }
 // Every rematch re-rolls the Elite Four: the Default Summit draws a new line-up, the others fight in a new order.
 function reshuffleSummit() {
-  if (summitOpen() && !summitAnna()) { A.e4gen = null; A.e4 = null; setupOpenSummit(); return; }
-  if (summitAnna()) setupAnnaSummit();
+  if (summitOpen() && !fixedSummit()) { A.e4gen = null; A.e4 = null; setupOpenSummit(); return; }
+  if (fixedSummit()) setupFixedSummit(fixedSummit());
   for (let i = A.e4.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [A.e4[i], A.e4[j]] = [A.e4[j], A.e4[i]]; }
 }
 function drawOpenSummit() {
@@ -1840,20 +1870,20 @@ function drawOpenSummit() {
 }
 // The fight order is saved in A.e4; it is kept as long as it still holds exactly the four Summit fights (a rematch shuffles it).
 const keepE4Order = () => Array.isArray(A.e4) && A.e4.length === OPEN_KEYS.length && OPEN_KEYS.every(k => A.e4.includes(k)) ? A.e4 : OPEN_KEYS.slice();
-function setupAnnaSummit() {
-  ANNA_E4.forEach((sh, i) => {
+function setupFixedSummit(table) {
+  table.forEach((sh, i) => {
     const key = OPEN_KEYS[i], L = sh.members.map(k => LEADERS[k]);
     const title = sh.members.length === 1 ? `Elite Four ${L[0].title}` : L.map(l => l.first).join(', ').replace(/, ([^,]*)$/, ' & $1');
     const g = {title, members: sh.members.slice(), picks: sh.picks.slice(), mode: sh.mode, must: {}, color: L[0].color, icon: L[0].icon};
     g.label = `${modeName(g)} · ${sh.members.length} ${sh.members.length === 1 ? 'trainer' : 'trainers'}`;
     E4_FIGHTS[key] = g;
-    E4_TALK[key] = {intro: sh.members.map(k => [k, sh.intro[k]]), win: sh.members.map(k => [k, sh.win[k]])};
+    E4_TALK[key] = {intro: sh.members.map(k => [k, sh.intro[k] || LINES[k].e4]), win: sh.members.map(k => [k, sh.win[k] || E4_WIN_OPEN[k]]), lose: sh.members.filter(k => sh.lose && sh.lose[k]).map(k => [k, sh.lose[k]])};
   });
-  A.e4gen = ANNA_E4.map(sh => sh.members.slice());
+  A.e4gen = table.map(sh => sh.members.slice());
   A.e4 = keepE4Order();
 }
 function setupOpenSummit() {
-  if (summitAnna()) { setupAnnaSummit(); return; }
+  if (fixedSummit()) { setupFixedSummit(fixedSummit()); return; }
   const ok = Array.isArray(A.e4gen) && A.e4gen.length === 4 && A.e4gen.every((m, i) => Array.isArray(m) && m.length === OPEN_SHAPE[i].n && m.every(k => LEADERS[k])) && new Set(A.e4gen.flat()).size === 7;
   if (!ok) A.e4gen = drawOpenSummit();   // drawn once; kept in the save so retrying never changes who you face
   A.e4gen.forEach((members, i) => {
@@ -3012,6 +3042,7 @@ async function advBattleOver(won) {
     if (fight.quest != null && fight.type !== 'questGrass') A.quests[fight.quest].step = 0;   // walking in the grass of a cleared area never restarts its quest
     if (fight.sham != null) A.shamburg.step[fight.sham] = 0;
     saveA();
+    if (fight.type === 'e4') { const lk = fight.stage.key; if (E4_TALK[lk] && E4_TALK[lk].lose && E4_TALK[lk].lose.length) { battleOff(); await e4Talk({...E4_FIGHTS[lk], key: lk}, 'lose'); } }
     advResult(fight.foe.icon || 'star', fight.foe.color, 'You blacked out',
       `Your team was rushed to the Mon Center and fully healed. ${fight.sham != null ? 'Team Shamburg is waiting, and you have to beat them again from the first trainer.' : fight.type === 'questGrass' ? 'The area is still cleared. Walk in the grass again whenever you like.' : fight.quest != null ? 'The side quest starts over from the entrance.' : fight.type === 'e4' || fight.type === 'champion' ? 'The Elite Four must be faced again from the start.' : 'Train up and try again.'}`,
       null, `<button class="btn primary" id="aToMap">Back to map</button>`);
