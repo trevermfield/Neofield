@@ -3698,30 +3698,30 @@ function ensureQuest(i) {
   return A.quests[i];
 }
 // Side quest area pictures (www/areas/<slug>.webp, same 6:7 shape as the quest map) and where the path's stops sit on each one.
-// Stops are given as [x, y] on a 260x303 grid, entrance first, then the wild spots, then the trainer or legendary Mon.
+// Stops are given as [x, y] percentages of the picture, entrance first, then the wild spots, then the trainer or legendary Mon.
 const AREA_ART = {
-  'Whisperleaf Forest': [[45, 280], [120, 250], [170, 200], [110, 150], [190, 75]],
-  'Echo Cave': [[50, 235], [160, 200], [90, 150], [180, 95], [120, 40]],
-  'Galecrest Mountain': [[45, 278], [160, 245], [80, 195], [185, 140], [110, 75]],
-  'Mirror Lake': [[80, 280], [180, 240], [100, 185], [185, 130], [120, 70]],
-  'Sunscar Desert': [[30, 270], [150, 225], [70, 170], [160, 115], [110, 55]],
-  'Emberpeak Volcano': [[40, 265], [150, 225], [110, 160], [200, 115], [175, 50]],
-  'Fogmire Swamp': [[70, 275], [160, 225], [100, 165], [170, 115], [115, 55]],
-  'Frostfang Tundra': [[50, 278], [190, 250], [100, 190], [190, 130], [150, 60]],
-  'Old Stone Ruins': [[60, 278], [180, 240], [90, 190], [190, 135], [130, 75]],
-  'Saltwind Beach': [[40, 278], [130, 240], [140, 180], [190, 120], [150, 60]],
-  'Thunder Plains': [[60, 278], [160, 245], [100, 195], [190, 135], [130, 70]],
-  'Duskwood Grove': [[40, 265], [150, 235], [190, 165], [115, 125], [120, 60]],
-  'Skyreach Cliffs': [[50, 278], [180, 240], [90, 195], [170, 145], [130, 70]],
-  'Old Iron Works': [[60, 278], [170, 250], [80, 195], [180, 140], [95, 80]],
-  'Fairy Meadow': [[40, 278], [120, 240], [170, 175], [120, 110], [180, 50]],
-  "Dragon's Den": [[40, 275], [170, 240], [80, 185], [190, 130], [110, 70]],
-  'Whiteout Summit': [[50, 278], [140, 250], [80, 190], [150, 70]],
-  'Stormcall Ridge': [[50, 275], [160, 230], [90, 150], [150, 60]],
-  'Embersong Glade': [[40, 278], [140, 235], [70, 170], [130, 45]],
-  'Rose Rock Canyon': [[45, 270], [140, 215], [80, 140], [170, 65]],
-  'Tarwing Crater': [[60, 278], [150, 210], [70, 130], [150, 60]],
-  'Whisperwind Perch': [[60, 275], [140, 225], [80, 155], [190, 65]],
+  'Whisperleaf Forest': [[14, 90], [62, 73], [30, 52], [74, 38], [45, 11]],
+  'Echo Cave': [[12, 73], [55, 79], [35, 57], [66, 28], [42, 12]],
+  'Galecrest Mountain': [[22, 90], [60, 72], [35, 52], [55, 30], [50, 10]],
+  'Mirror Lake': [[35, 92], [70, 76], [60, 53], [72, 40], [85, 31]],
+  'Sunscar Desert': [[12, 90], [45, 70], [25, 53], [62, 40], [42, 20]],
+  'Emberpeak Volcano': [[40, 90], [25, 78], [60, 66], [35, 46], [75, 28]],
+  'Fogmire Swamp': [[8, 90], [42, 72], [18, 53], [60, 37], [35, 20]],
+  'Frostfang Tundra': [[50, 92], [75, 72], [30, 62], [78, 40], [30, 18]],
+  'Old Stone Ruins': [[30, 92], [62, 76], [45, 52], [75, 40], [42, 20]],
+  'Saltwind Beach': [[15, 92], [28, 68], [30, 48], [45, 32], [50, 24]],
+  'Thunder Plains': [[5, 92], [35, 74], [72, 55], [45, 42], [40, 29]],
+  'Duskwood Grove': [[14, 87], [72, 67], [30, 52], [72, 35], [28, 21]],
+  'Skyreach Cliffs': [[15, 92], [58, 76], [30, 57], [68, 35], [35, 15]],
+  'Old Iron Works': [[20, 90], [60, 68], [22, 52], [62, 38], [38, 22]],
+  'Fairy Meadow': [[20, 88], [45, 75], [65, 58], [40, 45], [68, 24]],
+  "Dragon's Den": [[20, 88], [45, 70], [30, 50], [60, 38], [40, 22]],
+  'Whiteout Summit': [[10, 90], [60, 76], [50, 52], [70, 28]],
+  'Stormcall Ridge': [[58, 92], [65, 70], [55, 45], [65, 17]],
+  'Embersong Glade': [[10, 92], [30, 68], [22, 52], [60, 18]],
+  'Rose Rock Canyon': [[12, 90], [28, 70], [62, 50], [60, 16]],
+  'Tarwing Crater': [[15, 90], [55, 75], [40, 52], [70, 32]],
+  'Whisperwind Perch': [[25, 93], [62, 72], [45, 56], [62, 31]],
 };
 const areaSlug = n => n.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
 // The weather or terrain that is always active in each ordinary side area (screen effects on the map, and active in wild fights and the boss fight).
@@ -3754,7 +3754,7 @@ function openQuest(i, opts = {}) {
   // quest map: entrance, three wild spots, trainer
   const nWild = q.legend ? 2 : 3, nodes = nWild + 1;
   const art = AREA_ART[ar.name];
-  const pts = art ? art.map(([x, y]) => ({x: Math.round(x * 360 / 260), y: Math.min(376, Math.round(y * 420 / 303))}))
+  const pts = art ? art.map(([x, y]) => ({x: Math.round(x * 3.6), y: Math.min(376, Math.round(y * 4.2))}))
     : (q.legend ? [{x: 60, y: 380}, {x: 240, y: 290}, {x: 100, y: 180}, {x: 220, y: 60}] : [{x: 60, y: 380}, {x: 240, y: 330}, {x: 100, y: 240}, {x: 260, y: 150}, {x: 150, y: 60}]);
   const r = rng(1000 + i);
   let svg = `<rect width="360" height="420" fill="color-mix(in srgb, ${ar.color} 14%, #121820)"/>`;
