@@ -2978,6 +2978,8 @@ function awardFightXP(fight) {
   let cfg = mult > 1 ? {...E.XP, base: Object.fromEntries(Object.entries(E.XP.base).map(([k, v]) => [k, v * mult]))} : E.XP;
   // Once the Victory Summit has been beaten, each Elite Four fight gives every Mon on the team a flat 100 XP and the Champion 400, whatever the levels (Farm Mons get none)
   if ((fight.type === 'e4' || fight.type === 'champion') && beatenOnce()) cfg = {...cfg, flat: fight.type === 'champion' ? 400 : 100};
+  // Refighting Prof. Okla (level 99) is for money and Lustrous odds, not levels: no Mon gains more than 100 XP from him
+  if (fight.type === 'okla' && A.lab && A.lab.beat) cfg = {...cfg, cap: 100};
   const events = E.awardXP(A.team, parts, XP_KIND[fight.type] || 'wild', fight.sets.map(x => x.level), cfg);
   saveA();
   return events;
@@ -3074,7 +3076,7 @@ async function advBattleOver(won) {
       return;
     }
     A.shamburg.done[fight.sham] = true; A.shamburg.step[fight.sham] = 0;
-    if (fight.sham === 2) await talk({name: S.trainers[k][0], key: SHAM_ART[S.trainers[k][0]] || null, color: SHAM_COLOR, icon: 'star'}, [`You have the strongest Mons I've ever faced. They would have been a great army for me. My team had discovered a dark force that replicated strong Mons. But it sought a stronger power of its own. I see now the power is in you, but I sense a darkness as well. We shall meet again.`]);
+    if (fight.sham === 2) await talk({name: S.trainers[k][0], key: SHAM_ART[S.trainers[k][0]] || null, color: SHAM_COLOR, icon: 'star'}, [`You have the strongest Mons I've ever faced. They would have been a great army for me. My team had discovered a dark force that could replicate strong Mons. But it escaped our control.`, `Your strength isn't your Mons, it is you. Team Shamburg relents, for now. Your light was too bright.`, `The darkness is behind you, but someday it may catch up. We will meet again.`]);
     const arrived = A.regional && A.travelled < advDest() && S.route === advDest() - 1;
     if (arrived) A.travelled = advDest();
     saveA();
@@ -3131,11 +3133,11 @@ async function advBattleOver(won) {
   }
   if (fight.type === 'questTrainer') {
     const q = A.quests[fight.quest]; q.step = 4; q.done = true;
-    const prize = trainerPrize(q.level);
+    const prize = trainerPrize(q.refresh ? q.refresh.lv : q.level);
     A.money += prize;
     const got = addItems(A.bag, {hyperpotion: 2, fullrestore: 1, revive: 1});
     saveA();
-    await talk({name: qName(q), key: TRAINER_ART[q.trainer] || null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, [`You're the real deal. Take these, you've earned them.`]);
+    await talk({name: qName(q), key: TRAINER_ART[q.trainer] || null, color: AREAS[fight.quest].color, icon: AREAS[fight.quest].icon}, q.refresh ? [`Beat me again! You really are the best. Take these, you earned them.`] : [`You're the real deal. Take these, you've earned them.`]);
     const lines = await showGrowth(xpEvents);
     advResult(AREAS[fight.quest].icon, AREAS[fight.quest].color, `${AREAS[fight.quest].name} cleared`, `You won ${money(prize)}. ${esc(got)}.`, lines,
       `<button class="btn primary" id="aToMap">Back to map</button>`);
@@ -3166,7 +3168,7 @@ async function advBattleOver(won) {
     const lines = await showGrowth(xpEvents);
     advResult(E4_FIGHTS[fight.stage.key].icon, E4_FIGHTS[fight.stage.key].color, `${E4_FIGHTS[fight.stage.key].title} defeated`, `You won ${money(E4_PRIZE)}. ${esc(got)}.`, lines, `<button class="btn primary" id="aToSummit">${A.e4pos >= 4 ? 'On to the Champion' : 'Continue up the Summit'}</button>`);
   } else {
-    A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
+    A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1; refreshSideQuests();
     recordWin(); A.runMs = 0;
     champions[A.difficulty] = true; store.set('champions', champions);
     saveA();
@@ -3455,7 +3457,7 @@ $('vhallBack').addEventListener('click', () => openSummit({keepAsk: true}));
 $('summitHall').addEventListener('click', openVHall);
 $('summitBag').addEventListener('click', () => openAdvBag('summit'));
 async function devSummitWin() {
-  A.e4pos = 4; A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1;
+  A.e4pos = 4; A.money += CHAMP_PRIZE; A.done = true; A.hof = (A.hof || 0) + 1; refreshSideQuests();
   champions[A.difficulty] = true; store.set('champions', champions);
   saveA();
   await finale();
@@ -3625,6 +3627,21 @@ $('result').addEventListener('click', e => {
 });
 
 // --- side quests ---
+// After every Victory Summit win the region's trainers want a go at the new Champion: every ordinary side quest resets,
+// and its trainer is now level 80 in a double or triple battle. The wild Mons there keep their own levels, and the
+// quest stays cleared until the next Summit win, so it cannot be farmed.
+const REFRESH_LV = 80;
+const qTrainerLv = q => q.refresh ? q.refresh.lv : q.level + 1;
+function refreshSideQuests() {
+  for (let i = 0; i < LEG0; i++) {
+    const ar = AREAS[i], q = ensureQuest(i), mode = Math.random() < .5 ? 'doubles' : 'triples';
+    q.step = 0; q.done = false;
+    q.wild = [0, 1, 2].map(k => A.regional ? E.regionalWild(i, Math.max(2, q.level - 2 + k)) : E.randomMon(Math.max(2, q.level - 2 + k), ar.types));
+    q.refresh = {lv: REFRESH_LV, mode};
+    q.trainerTeam = Array.from({length: mode === 'triples' ? 5 : 4}, () => E.randomMon(REFRESH_LV, ar.types, true, ar.skip, true));
+  }
+  A.refreshNote = true;
+}
 function ensureQuest(i) {
   if (A.quests[i] && A.quests[i].wild) return A.quests[i];
   const ar = AREAS[i], lv = questLevel(i);
@@ -3689,7 +3706,7 @@ function openQuest(i, opts = {}) {
     <button class="btn primary" id="qGo">Keep going</button>`;
   else if (q.legend) card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(q.trainer)}</b><small>A legendary Mon · level ${q.boss.level} · weaken it, then throw a Mon Ball · ${A.bag.pokeball || 0} left</small></div></div>
     <button class="btn primary" id="qGo">Approach ${esc(q.trainer)}</button>`;
-  else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(qName(q))}</b><small>Three Mons around level ${q.level + 1} · prize ${money(trainerPrize(q.level))} and items</small></div></div>
+  else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(qName(q))}</b><small>${q.refresh ? `${q.refresh.mode === 'triples' ? 'Triples' : 'Doubles'} · ${q.trainerTeam.length} Mons at level ${q.refresh.lv}` : `Three Mons around level ${q.level + 1}`} · prize ${money(trainerPrize(q.refresh ? q.refresh.lv : q.level))} and items</small></div></div>
     <button class="btn primary" id="qGo">Challenge ${esc(qName(q))}</button>`;
   $('questBar').innerHTML = card;
   show('quest');
@@ -3721,7 +3738,7 @@ function questContinue(i) {
     advFight({type: 'questWild', quest: i, catchable: !!mon.family, sets: [JSON.parse(JSON.stringify(mon))], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · ${q.step + 1} of ${nWild}`}});
   } else {
     talk({name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: ar.icon}, isTT() && TT_QUEST[i] ? ttLines(TT_QUEST[i]) : [`You made it all the way through ${ar.name}? Then let's see what your team can do!`]).then(() => {
-      advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), foe: {name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: 'star', title: qName(q), subtitle: `${ar.name} · level ${q.level + 1}`}});
+      advFight({type: 'questTrainer', quest: i, sets: JSON.parse(JSON.stringify(q.trainerTeam)), gameType: q.refresh ? q.refresh.mode : undefined, foe: {name: qName(q), key: TRAINER_ART[q.trainer] || null, color: ar.color, icon: 'star', title: qName(q), subtitle: `${ar.name} · ${q.refresh ? (q.refresh.mode === 'triples' ? 'triples · ' : 'doubles · ') : ''}level ${qTrainerLv(q)}`}});
     });
   }
 }
@@ -4538,7 +4555,8 @@ const LAB = {x: 296, y: 662};
 const OKLA = {name: 'Prof. Okla', key: 'okla', color: '#b8b29a', icon: 'star'};
 const OKLA_PRIZE = () => 5 * trainerPrize(trailLv(TRAIL_TRAINERS.length - 1));   // five times the last Laurel Pass trainer, every time
 const OKLA_LINES = {
-  note: ['Congratulations, Champion! I watched your whole journey from my window.', "Come and see me at my lab, just past Willow Hearth on Route 0. I have one more challenger for you, and he has been waiting a long time."],
+  note: ['Congratulations, Champion! I watched your whole journey from my window.', "Come and see me at my lab, just past Willow Hearth on Route 0. I have one more challenger for you, and he has been waiting a long time.", 'Careful on your travels back, region trainers all want to challenge the new Champ!'],
+  refresh: ['Careful on your travels back, region trainers all want to challenge the new Champ!'],
   intro: ['So you really did it. I have studied Mons my whole life, and I have never stopped training my own.', 'No badges, no rules, no mercy. Every one of my Mons is level 99. Show me everything you have!'],
   again: ['Back for another round? My Mons have been training too. Let us go!'],
   win: ['Incredible... beaten by my own student. I could not be prouder.', "Take this prize. And one more thing: the shore near my lab has started to glitch, and strange blocks of light float over the water. Something that belongs to no type at all lives there. Be careful if you go looking.",
@@ -4613,9 +4631,15 @@ async function oklaChallenge() {
   hallOff(); battleOff();   // no music in this fight
   advFight({type: 'okla', level: 99, sets: E.leaderSets(E.TEAM_TEXT.okla, 99), speaker: OKLA, foe: {name: 'Okla', key: 'okla', color: OKLA.color, icon: 'star', title: 'Prof. Okla', subtitle: "Okla's Lab · level 99"}});
 }
-function oklaNote() {   // once, the first time you are back on the open map after the Champion
-  if (!labOn() || A.labNote) return;
-  A.labNote = true; saveA();
+function oklaNote() {   // the first time you are back on the open map after the Champion (and a short warning after each later Summit win)
+  if (!labOn()) return;
+  if (A.labNote) {
+    if (!A.refreshNote) return;
+    A.refreshNote = false; saveA();
+    talk(OKLA, OKLA_LINES.refresh);
+    return;
+  }
+  A.labNote = true; A.refreshNote = false; saveA();
   talk(OKLA, OKLA_LINES.note);
 }
 const advDest = () => A.done ? 18 : Math.min(A.pos, 17) + 1;
@@ -4831,7 +4855,7 @@ function showDexEntry(name, lus) {
   try { moves = E.levelMoves(sp, sp.evoLevel || 1); } catch (e) { moves = []; }
   const moveHTML = moves.length ? `<div class="dexmoves">${moves.map(m => { const mv = E.Dex.moves.get(m.id); return `<span>${m.level}</span><span>${esc(mv.name)}</span>${typesHTML([mv.type])}`; }).join('')}</div>` : '<p class="note">No level-up moves.</p>';
   const status = adv && reg ? [A.dex.caught[reg.id] ? '<span class="caughtdot">●</span> Caught' : '', A.dex.lusCaught && A.dex.lusCaught[reg.id] ? '<span class="lusdot">◆</span> Lustrous caught' : '', A.dex.lv100 && A.dex.lv100[reg.id] ? '<span class="stardot">★</span> Lvl 100 reached' : ''].filter(Boolean).join(' · ') || 'Seen' : '';
-  const where = reg ? (reg.starter ? 'Given by Prof. Okla at the start of an adventure.' : reg.id === 'cryodon' ? (sp.name === 'Rimeocerus' ? 'Evolves from Cryodon.' : 'A fossil Mon. It never appears in the wild: Prof. Okla\'s aide revives it and sends it to your Farm on Route 7.') : reg.secret ? (reg.secretNote || 'A special Mon Prof. Okla found in a field. He only offers it to one very special trainer.') : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
+  const where = reg ? (reg.starter ? 'Given by Prof. Okla at the start of an adventure.' : reg.id === 'rimeocerus' ? 'Evolves from Cryodon.' : reg.id === 'cryodon' ? ('A fossil Mon. It never appears in the wild: Prof. Okla\'s aide revives it and sends it to your Farm on Route 7.') : reg.secret ? (reg.secretNote || 'A special Mon Prof. Okla found in a field. He only offers it to one very special trainer.') : reg.id === 'missingno' ? 'A secret Mon. Beat Prof. Okla at his lab after the Champion, then follow the glitching shore.' : reg.rare ? 'A legendary Mon. It guards a hidden site on the Laurel Pass and never shows up in the wild.' : `${reg.routes.map(esc).join(', ')}, plus the side quests next to those routes.`) : '';
   const dexNames = [...$('dexList').querySelectorAll('[data-dex]:not([disabled])')].map(b => b.dataset.dex);
   const di = dexNames.indexOf(sp.name), prevN = di > 0 ? dexNames[di - 1] : '', nextN = di >= 0 && di < dexNames.length - 1 ? dexNames[di + 1] : '';
   const dexNav = `<div class="dexnav"><button class="btn ghost" data-dexgo="${esc(prevN)}" ${prevN ? '' : 'disabled'}>‹ Previous</button><button class="btn ghost" data-dexgo="${esc(nextN)}" ${nextN ? '' : 'disabled'}>Next ›</button></div>`;
@@ -5907,7 +5931,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: i => openQuest(i), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: i => openQuest(i), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), refreshQuests: () => refreshSideQuests(), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
