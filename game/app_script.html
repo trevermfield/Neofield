@@ -3794,6 +3794,7 @@ function openQuest(i, opts = {}) {
     <button class="btn primary" id="qGo">Approach ${esc(q.trainer)}</button>`;
   else card = `<div class="nextcard" style="--c:${ar.color}"><span class="face">${emblem('star', ar.color)}</span><div><b>${esc(qName(q))}</b><small>${q.refresh ? `${q.refresh.mode === 'triples' ? 'Triples' : 'Doubles'} · ${q.trainerTeam.length} Mons at level ${q.refresh.lv}` : `Three Mons around level ${q.level + 1}`} · prize ${money(trainerPrize(q.refresh ? q.refresh.lv : q.level))} and items</small></div></div>
     <button class="btn primary" id="qGo">Challenge ${esc(qName(q))}</button>`;
+  if (devOn()) card += '<button class="btn" id="qDevReset">Developer: restart this quest</button>';
   $('questBar').innerHTML = card;
   show('quest');
   if (wxId) { const fx = $('wxfx'), tr = /terrain$/.test(wxId); fx.dataset.wx = tr ? '' : wxId; fx.dataset.tr = tr ? wxId : ''; wxStart([wxId], false); wxKey = wxId; }
@@ -3840,7 +3841,7 @@ function questGrass(i) {
   } else mon = A.regional ? E.regionalWild(i, lv) : E.randomMon(lv, ar.types);
   advFight({type: 'questGrass', quest: i, catchable: !!mon.family, sets: [mon], foe: {name: 'Wild', wild: true, key: null, color: ar.color, icon: ar.icon, title: `Wild ${mon.species}`, subtitle: `${ar.name} · grass · level ${lv}`}});
 }
-$('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questContinue(questIdx()); else if (e.target.id === 'qGrass') questGrass(questIdx()); });
+$('questBar').addEventListener('click', e => { if (e.target.id === 'qGo') questContinue(questIdx()); else if (e.target.id === 'qGrass') questGrass(questIdx()); else if (e.target.id === 'qDevReset' && devOn()) { const i = questIdx(); delete A.quests[i]; saveA(); openQuest(i); toast('Quest restarted.'); } });
 $('questLeave').addEventListener('click', () => { if (AREAS[questIdx()] && AREAS[questIdx()].legend && questIdx() !== MISS) openTrail(); else openAdvMap({}); });
 $('questBag').addEventListener('click', () => openAdvBag(questIdx()));
 function questIdx() { return AREAS.findIndex(a => a.name === $('questName').textContent); }
