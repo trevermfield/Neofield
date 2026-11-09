@@ -364,6 +364,7 @@ async function refresh() {
           if (battle.log.length === before) break;
         }
       }
+      if (mode === 'cpu') applyAreaWx();
       await play();
       if (gen !== battleGen) return;
     } while (refreshAgain && battle);
@@ -800,8 +801,8 @@ function wxStart(kinds, announce) {
 function renderField() {
   const f = battle.field, bits = [];
   const w = f.weather, tr = f.terrain;
-  if (w) { const n = ({sunnyday: 'Harsh Sun', raindance: 'Rain', desolateland: 'Harsh Sun', primordialsea: 'Heavy Rain', snowscape: 'Snow', sandstorm: 'Sandstorm', hail: 'Hail'})[w] || E.Dex.conditions.get(w).name || w; bits.push(`${n} · ${f.weatherState.duration || ''} turns left`); }
-  if (tr) { const n = (E.Dex.conditions.get(tr).name || tr).replace(/ Terrain$/, ''); bits.push(`${n} Terrain · ${f.terrainState.duration || ''} turns left`); }
+  if (w) { const n = ({sunnyday: 'Harsh Sun', raindance: 'Rain', desolateland: 'Harsh Sun', primordialsea: 'Heavy Rain', snowscape: 'Snow', sandstorm: 'Sandstorm', hail: 'Hail'})[w] || E.Dex.conditions.get(w).name || w; bits.push(f.weatherState.duration ? `${n} · ${f.weatherState.duration} turns left` : n); }
+  if (tr) { const n = (E.Dex.conditions.get(tr).name || tr).replace(/ Terrain$/, ''); bits.push(f.terrainState.duration ? `${n} Terrain · ${f.terrainState.duration} turns left` : `${n} Terrain`); }
   $('weather').textContent = bits.join('  |  ');
   const b = $('battle');
   b.dataset.wx = w || ''; b.dataset.tr = tr || '';
@@ -2604,6 +2605,7 @@ function advFight(fight) {
   // rolled once, just before the battle starts, so the picture never changes mid-battle; a legendary re-rolls every time you enter its battle
   if (fight.catchable) { const w = fight.sets[0], id = toId(w.species); w.lustrous = E.rollLustrous(id, fight.type === 'questLegend' || fight.type === 'labWild' || A.dex.seen[id], lusRate(fight.type === 'questLegend')); }
   if (fight.type === 'e4' || fight.type === 'champion') fight.t0 = performance.now();   // the Victory Hall clock only runs while a Summit battle is on
+  if (fight.quest != null && ['questWild', 'questGrass', 'questTrainer'].includes(fight.type)) fight.wx = areaWx(AREAS[fight.quest]);
   ctx = {kind: 'adventure', fight};
   foe = fight.foe;
   const sets = advSets();
@@ -3695,36 +3697,87 @@ function ensureQuest(i) {
   saveA();
   return A.quests[i];
 }
+// Side quest area pictures (www/areas/<slug>.webp, same 6:7 shape as the quest map) and where the path's stops sit on each one.
+// Stops are given as [x, y] on a 260x303 grid, entrance first, then the wild spots, then the trainer or legendary Mon.
+const AREA_ART = {
+  'Whisperleaf Forest': [[45, 280], [120, 250], [170, 200], [110, 150], [190, 75]],
+  'Echo Cave': [[50, 235], [160, 200], [90, 150], [180, 95], [120, 40]],
+  'Galecrest Mountain': [[45, 278], [160, 245], [80, 195], [185, 140], [110, 75]],
+  'Mirror Lake': [[80, 280], [180, 240], [100, 185], [185, 130], [120, 70]],
+  'Sunscar Desert': [[30, 270], [150, 225], [70, 170], [160, 115], [110, 55]],
+  'Emberpeak Volcano': [[40, 265], [150, 225], [110, 160], [200, 115], [175, 50]],
+  'Fogmire Swamp': [[70, 275], [160, 225], [100, 165], [170, 115], [115, 55]],
+  'Frostfang Tundra': [[50, 278], [190, 250], [100, 190], [190, 130], [150, 60]],
+  'Old Stone Ruins': [[60, 278], [180, 240], [90, 190], [190, 135], [130, 75]],
+  'Saltwind Beach': [[40, 278], [130, 240], [140, 180], [190, 120], [150, 60]],
+  'Thunder Plains': [[60, 278], [160, 245], [100, 195], [190, 135], [130, 70]],
+  'Duskwood Grove': [[40, 265], [150, 235], [190, 165], [115, 125], [120, 60]],
+  'Skyreach Cliffs': [[50, 278], [180, 240], [90, 195], [170, 145], [130, 70]],
+  'Old Iron Works': [[60, 278], [170, 250], [80, 195], [180, 140], [95, 80]],
+  'Fairy Meadow': [[40, 278], [120, 240], [170, 175], [120, 110], [180, 50]],
+  "Dragon's Den": [[40, 275], [170, 240], [80, 185], [190, 130], [110, 70]],
+  'Whiteout Summit': [[50, 278], [140, 250], [80, 190], [150, 70]],
+  'Stormcall Ridge': [[50, 275], [160, 230], [90, 150], [150, 60]],
+  'Embersong Glade': [[40, 278], [140, 235], [70, 170], [130, 45]],
+  'Rose Rock Canyon': [[45, 270], [140, 215], [80, 140], [170, 65]],
+  'Tarwing Crater': [[60, 278], [150, 210], [70, 130], [150, 60]],
+  'Whisperwind Perch': [[60, 275], [140, 225], [80, 155], [190, 65]],
+};
+const areaSlug = n => n.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
+// The weather or terrain that is always active in each ordinary side area (screen effects on the map, and active in wild fights and the boss fight).
+// The six Laurel Pass areas have none: only a legendary Mon's own ability (like Drizzle) can change the field there.
+const AREA_WX = {
+  'Whisperleaf Forest': 'sunnyday', 'Echo Cave': 'sandstorm', 'Galecrest Mountain': 'mistyterrain', 'Mirror Lake': 'grassyterrain',
+  'Sunscar Desert': 'sandstorm', 'Emberpeak Volcano': 'sunnyday', 'Fogmire Swamp': 'raindance', 'Frostfang Tundra': 'snowscape',
+  'Old Stone Ruins': 'mistyterrain', 'Saltwind Beach': 'raindance', 'Thunder Plains': 'electricterrain', 'Duskwood Grove': 'psychicterrain',
+  'Skyreach Cliffs': 'snowscape', 'Old Iron Works': 'electricterrain', 'Fairy Meadow': 'grassyterrain', "Dragon's Den": 'psychicterrain',
+};
+const WX_NAMES = {sunnyday: 'Harsh Sun', raindance: 'Rain', sandstorm: 'Sandstorm', snowscape: 'Snow', mistyterrain: 'Misty Terrain', grassyterrain: 'Grassy Terrain', electricterrain: 'Electric Terrain', psychicterrain: 'Psychic Terrain'};
+const areaWx = ar => (ar && !ar.legend && AREA_WX[ar.name]) || '';
+// Keeps an area's weather or terrain on the field for the whole fight. A Mon's own ability goes first; if that fades away, the area's returns.
+function applyAreaWx() {
+  const id = ctx && ctx.kind === 'adventure' && ctx.fight && ctx.fight.wx;
+  if (!id || !battle || battle.ended || battle.turn < 1) return;
+  const f = battle.field;
+  try {
+    if (/terrain$/.test(id)) { if (!f.terrain) { f.setTerrain(id, 'debug'); if (f.terrain === id) f.terrainState.duration = 0; } }
+    else if (!f.weather) { f.setWeather(id, 'debug'); if (f.weather === id) f.weatherState.duration = 0; }
+  } catch (e) { /* no Mon out yet: try again next time */ }
+}
 function openQuest(i, opts = {}) {
   mapMode = 'adventure';
   const q = ensureQuest(i), ar = AREAS[i];
   setAccent(ar.color);
   $('questName').textContent = ar.name;
-  $('questSub').textContent = q.done ? 'Cleared' : `${ar.kind} · level ${q.level} · ${money(A.money)}`;
+  const wxId = areaWx(ar);
+  $('questSub').textContent = (q.done ? 'Cleared' : `${ar.kind} · level ${q.level} · ${money(A.money)}`) + (wxId ? ` · ${WX_NAMES[wxId]}` : '');
   // quest map: entrance, three wild spots, trainer
   const nWild = q.legend ? 2 : 3, nodes = nWild + 1;
-  const pts = (q.legend ? [{x: 60, y: 380}, {x: 240, y: 290}, {x: 100, y: 180}, {x: 220, y: 60}] : [{x: 60, y: 380}, {x: 240, y: 330}, {x: 100, y: 240}, {x: 260, y: 150}, {x: 150, y: 60}]);
+  const art = AREA_ART[ar.name];
+  const pts = art ? art.map(([x, y]) => ({x: Math.round(x * 360 / 260), y: Math.min(376, Math.round(y * 420 / 303))}))
+    : (q.legend ? [{x: 60, y: 380}, {x: 240, y: 290}, {x: 100, y: 180}, {x: 220, y: 60}] : [{x: 60, y: 380}, {x: 240, y: 330}, {x: 100, y: 240}, {x: 260, y: 150}, {x: 150, y: 60}]);
   const r = rng(1000 + i);
   let svg = `<rect width="360" height="420" fill="color-mix(in srgb, ${ar.color} 14%, #121820)"/>`;
-  for (let k = 0; k < 40; k++) {
+  if (art) svg += `<image href="areas/${areaSlug(ar.name)}.webp" width="360" height="420" preserveAspectRatio="xMidYMid slice"/>`;
+  for (let k = 0; k < (art ? 0 : 40); k++) {
     const x = 10 + r() * 340, y = 10 + r() * 400;
     if (pts.some(p => Math.hypot(p.x - x, p.y - y) < 40)) continue;
     svg += ar.kind === 'Lake' || ar.kind === 'Beach' ? `<ellipse cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" rx="${(8 + r() * 14).toFixed(0)}" ry="${(4 + r() * 6).toFixed(0)}" fill="${ar.color}" opacity=".18"/>`
       : ar.kind === 'Forest' || ar.kind === 'Grove' || ar.kind === 'Meadow' || ar.kind === 'Swamp' ? `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(5 + r() * 7).toFixed(0)}" fill="${ar.color}" opacity=".22"/>`
       : `<path d="M${(x - 9).toFixed(0)} ${y.toFixed(0)} L${x.toFixed(0)} ${(y - 14).toFixed(0)} L${(x + 9).toFixed(0)} ${y.toFixed(0)}Z" fill="${ar.color}" opacity=".22"/>`;
   }
-  for (let k = 1; k < pts.length; k++) {
+  for (let k = 1; k < (art ? 0 : pts.length); k++) {
     const a = pts[k - 1], b = pts[k], done = q.step >= k;
     svg += `<path d="M${a.x} ${a.y} Q${(a.x + b.x) / 2 + (k % 2 ? 40 : -40)} ${(a.y + b.y) / 2} ${b.x} ${b.y}" fill="none" stroke="${done ? '#e9edf3' : '#56616f'}" stroke-width="3" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
   }
-  svg += `<text x="${pts[0].x}" y="${pts[0].y + 26}" text-anchor="middle" font-size="11" fill="#b4bdcb">Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
+  svg += `<text x="${pts[0].x}" y="${pts[0].y + 26}" text-anchor="middle" font-size="11" fill="#e9edf3" ${art ? 'stroke="#0b0e14" stroke-width="3" paint-order="stroke"' : ''}>Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
   for (let k = 1; k <= nodes; k++) {
     const p = pts[k], cleared = q.step >= k, cur = !q.done && q.step === k - 1;
     const label = k < nodes ? `Wild Mon ${k}` : qName(q);
     if (cur) svg += `<circle class="ringpulse" cx="${p.x}" cy="${p.y}" r="24" fill="none" stroke="${ar.color}" stroke-width="2"/>`;
     svg += `<circle cx="${p.x}" cy="${p.y}" r="17" fill="${cleared ? ar.color : '#1d2633'}" stroke="${cleared || cur ? ar.color : '#3a4658'}" stroke-width="${cur ? 3 : 2}"/>`;
     svg += k < nodes ? emblemAt(ar.icon, cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18) : emblemAt('star', cleared ? '#10131a' : cur ? ar.color : '#56616f', p.x, p.y, 18);
-    svg += `<text x="${p.x}" y="${p.y + 32}" text-anchor="middle" font-size="11" font-weight="${cur ? 700 : 500}" fill="${cur ? '#e9edf3' : '#95a0b2'}">${esc(label)}</text>`;
+    svg += `<text x="${p.x}" y="${p.y + 32}" text-anchor="middle" font-size="11" font-weight="${cur ? 700 : 500}" fill="${cur || art ? '#e9edf3' : '#95a0b2'}" ${art ? 'stroke="#0b0e14" stroke-width="3" paint-order="stroke"' : ''}>${esc(label)}</text>`;
   }
   const kd = Math.min(q.step + 1, nodes);   // the ball sits on the spot you are about to face
   const mk0 = opts.animate && q.step > 0 ? pts[kd - 1] : pts[kd];
@@ -3743,6 +3796,7 @@ function openQuest(i, opts = {}) {
     <button class="btn primary" id="qGo">Challenge ${esc(qName(q))}</button>`;
   $('questBar').innerHTML = card;
   show('quest');
+  if (wxId) { const fx = $('wxfx'), tr = /terrain$/.test(wxId); fx.dataset.wx = tr ? '' : wxId; fx.dataset.tr = tr ? wxId : ''; wxStart([wxId], false); wxKey = wxId; }
   if (opts.animate && q.step > 0 && !q.done) {
     const go = $('qGo'); if (go) go.disabled = true;
     const k = kd, a = pts[k - 1], b = pts[k], c = {x: (a.x + b.x) / 2 + (k % 2 ? 40 : -40), y: (a.y + b.y) / 2};
