@@ -3697,6 +3697,12 @@ function ensureQuest(i) {
   saveA();
   return A.quests[i];
 }
+// A smooth curve through the stops (Catmull-Rom turned into Beziers): segment k runs from stop k-1 to stop k
+function routeSeg(pts, k) {
+  const p0 = pts[Math.max(0, k - 2)], p1 = pts[k - 1], p2 = pts[k], p3 = pts[Math.min(pts.length - 1, k + 1)];
+  const f = n => n.toFixed(1);
+  return `M${f(p1.x)} ${f(p1.y)} C${f(p1.x + (p2.x - p0.x) / 6)} ${f(p1.y + (p2.y - p0.y) / 6)} ${f(p2.x - (p3.x - p1.x) / 6)} ${f(p2.y - (p3.y - p1.y) / 6)} ${f(p2.x)} ${f(p2.y)}`;
+}
 // Side quest area pictures (www/areas/<slug>.webp, same 6:7 shape as the quest map) and where the path's stops sit on each one.
 // Stops are given as [x, y] percentages of the picture, entrance first, then the wild spots, then the trainer or legendary Mon.
 const AREA_ART = {
@@ -3769,7 +3775,7 @@ function openQuest(i, opts = {}) {
   }
   for (let k = 1; k < (art ? 0 : pts.length); k++) {
     const a = pts[k - 1], b = pts[k], done = q.step >= k;
-    svg += `<path d="M${a.x} ${a.y} Q${(a.x + b.x) / 2 + (k % 2 ? 40 : -40)} ${(a.y + b.y) / 2} ${b.x} ${b.y}" fill="none" stroke="${done ? '#e9edf3' : '#56616f'}" stroke-width="3" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
+    svg += `<path d="${routeSeg(pts, k)}" fill="none" stroke="${done ? '#e9edf3' : '#56616f'}" stroke-width="3" ${done ? '' : 'stroke-dasharray="5 6"'} stroke-linecap="round"/>`;
   }
   svg += `<text x="${pts[0].x}" y="${pts[0].y + 26}" text-anchor="middle" font-size="11" fill="#e9edf3" ${art ? 'stroke="#0b0e14" stroke-width="3" paint-order="stroke"' : ''}>Entrance</text><circle cx="${pts[0].x}" cy="${pts[0].y}" r="8" fill="#e9edf3"/>`;
   for (let k = 1; k <= nodes; k++) {
@@ -3806,14 +3812,16 @@ function openQuest(i, opts = {}) {
   if (wxId) { const fx = $('wxfx'), tr = /terrain$/.test(wxId); fx.dataset.wx = tr ? '' : wxId; fx.dataset.tr = tr ? wxId : ''; wxStart([wxId], false); wxKey = wxId; }
   if (opts.animate && q.step > 0 && !q.done) {
     const go = $('qGo'); if (go) go.disabled = true;
-    const k = kd, a = pts[k - 1], b = pts[k], c = {x: (a.x + b.x) / 2 + (k % 2 ? 40 : -40), y: (a.y + b.y) / 2};
+    const k = kd;
+    $('questSvg').insertAdjacentHTML('beforeend', `<path id="qseg" d="${routeSeg(pts, k)}" fill="none" stroke="none"/>`);
+    const seg = $('qseg'), len = seg.getTotalLength();
     const t0 = performance.now();
     const tick = now => {
       const mk = $('questSvg').querySelector('#qmarker');
       if (!mk || curScreen !== 'quest') return;
-      const t = Math.min(1, (now - t0) / 2000), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      const x = (1 - e) * (1 - e) * a.x + 2 * (1 - e) * e * c.x + e * e * b.x, y = (1 - e) * (1 - e) * a.y + 2 * (1 - e) * e * c.y + e * e * b.y;
-      mk.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+      const t = Math.min(1, (now - t0) / 2200), e = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;   // eases in and out, and follows the curve by distance
+      const pt = seg.getPointAtLength(e * len);
+      mk.setAttribute('transform', `translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})`);
       if (t < 1) requestAnimationFrame(tick); else { const g = $('qGo'); if (g) g.disabled = false; }
     };
     requestAnimationFrame(tick);
@@ -6049,7 +6057,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: i => openQuest(i), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), refreshQuests: () => refreshSideQuests(), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: (i, o) => openQuest(i, o), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), refreshQuests: () => refreshSideQuests(), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
