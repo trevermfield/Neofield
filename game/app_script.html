@@ -529,6 +529,7 @@ function translate(lines) {
       }
       case 'cant': {
         const why = parts[2];
+        if (why.startsWith('ability: ')) { out.push({text: `${Nm(id)} is immune <span class="info">[${esc(why.slice(9))}]</span>!`, cls: 'info'}); break; }   // Queenly Majesty, Dazzling, Armor Tail: the holder blocks a priority move
         const msg = why === 'slp' ? 'is fast asleep.' : why === 'par' ? "is paralyzed! It can't move!" : why === 'frz' ? 'is frozen solid!' : why === 'recharge' ? 'must recharge!' : why === 'flinch' ? 'flinched!' : "can't move!";
         out.push({text: `${Nm(id)} ${msg}`, cls: 'info'});
         break;
@@ -594,7 +595,8 @@ function translate(lines) {
       case '-ability': out.push({text: `<span class="info">[${nm(id)}'s ${esc(parts[2])}]</span>`}); break;
       case '-activate': {
         const eff = parts[2] || '';
-        if (eff === 'ability: Sturdy') out.push({text: `${Nm(id)} endured the hit with Sturdy!`});
+        if (eff === 'move: Psychic Terrain') out.push({text: `${Nm(id)} is immune <span class="info">[Psychic Terrain]</span>!`, cls: 'info'});   // a grounded Mon blocks a priority move
+        else if (eff === 'ability: Sturdy') out.push({text: `${Nm(id)} endured the hit with Sturdy!`});
         else if (eff.startsWith('move: Infestation')) out.push({text: `${Nm(id)} is trapped by an infestation!`, cls: 'info'});
         else if (eff === 'confusion') out.push({text: `${Nm(id)} is confused!`, cls: 'info'});
         break;
