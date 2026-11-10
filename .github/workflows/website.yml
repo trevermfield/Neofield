@@ -33,5 +33,16 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: www
-      - id: deployment
+      # GitHub Pages sometimes fails on its own side (a 500, a deploy stuck
+      # syncing, or the just-uploaded artifact not showing up yet). Try once
+      # more after a short wait before calling the deploy failed.
+      - id: deploy-first
         uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deploy-first.outcome == 'failure'
+        run: sleep 60
+      - id: deploy-retry
+        if: steps.deploy-first.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+      - id: deployment
+        run: echo "page_url=${{ steps.deploy-retry.outputs.page_url || steps.deploy-first.outputs.page_url }}" >> "$GITHUB_OUTPUT"
