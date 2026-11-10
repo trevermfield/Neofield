@@ -3341,13 +3341,16 @@ async function championIntro(sets, lv, sp, opts = {}) {
   tone(98, 0, 1.8, 'sine', .14);
   await Promise.race([sleepOrSkip(3200), tap()]);
   // 3. his name appears under the image, then his words under the name
-  if (opts.tony) {   // his silhouette and his first words, then the man fades in over it, his name shows and fades away, then the rest
-    const say = async t => { if (!skipped) await ciSay($('ciLine'), t, 6200, Promise.race([tap(), new Promise(r => pending.push(r))])); };
+  if (opts.tony) {   // his silhouette and his first words, then the man fades in over it, his name shows and fades away, then the rest; every line and step waits for a tap
+    const wait = async () => { if (skipped) return; $('ciHint').hidden = false; await Promise.race([tap(), new Promise(r => pending.push(r))]); $('ciHint').hidden = true; };
+    const say = async t => { if (skipped) return; const l = $('ciLine'); l.textContent = t; l.classList.remove('say', 'stay'); void l.offsetWidth; l.classList.add('stay'); await wait(); };
     await say(opts.lines[0]);
-    stage.querySelector('.jy.j2').classList.add('on'); beat(); await Promise.race([sleepOrSkip(1400), tap()]);
+    stage.querySelector('.jy.j2').classList.add('on'); beat(); $('ciLine').classList.remove('stay');
+    await Promise.race([sleepOrSkip(1800), tap()]);
     $('ciName').classList.add('on'); tone(65, 0, 2.4, 'sine', .2);
-    await Promise.race([sleepOrSkip(2600), tap()]);
+    await wait();
     $('ciName').classList.remove('on');
+    await Promise.race([sleepOrSkip(1200), tap()]);
     for (const t of opts.lines.slice(1)) await say(t);
   } else if (opts.jerry) {   // his silhouette, then the man steps out of it, his name, then his grin as he asks for your Mons
     const show = c => stage.querySelectorAll('.jy').forEach(im => im.classList.toggle('on', im.classList.contains(c) || (c === 'j2' && im.classList.contains('j1'))));
@@ -4681,7 +4684,7 @@ const LAB = {x: 296, y: 662};
 const OKLA = {name: 'Prof. Okla', key: 'okla', color: '#b8b29a', icon: 'star'};
 const OKLA_PRIZE = () => 5 * trainerPrize(trailLv(TRAIL_TRAINERS.length - 1));   // five times the last Laurel Pass trainer, every time
 const OKLA_LINES = {
-  note: ['Congratulations, Champion! I watched your whole journey from my window.', "Come and see me at my lab, just past Willow Hearth on Route 0. I have one more challenger for you, and he has been waiting a long time.", 'Careful on your travels back, region trainers all want to challenge the new Champ!'],
+  note: ['Congratulations, Champion! I followed your journey every step of the way.', "Come and see me at my lab, just past Willow Hearth on Route 0. I have one more challenger for you, and he has been waiting a long time.", 'Careful on your travels back, region trainers all want to challenge the new Champ!'],
   refresh: ['Careful on your travels back, region trainers all want to challenge the new Champ!'],
   intro: ['So you really did it. I have studied Mons my whole life, and I have never stopped training my own.', 'No badges, no rules, no mercy. Every one of my Mons is level 99. Show me everything you have!'],
   again: ['Back for another round? My Mons have been training too. Let us go!'],
