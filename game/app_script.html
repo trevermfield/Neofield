@@ -5214,6 +5214,8 @@ function noteUsed(mine) {
   ls.set('recentTeams', [mine.id, ...recentIds().filter(id => id !== mine.id)].slice(0, 5));
 }
 const newTeamId = () => 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// Only these stop a team from battling; everything else is just a heads-up.
+const hardProblems = ps => (ps || []).filter(p => /at least one Mon|needs at least one move/i.test(p));
 function teamProblems(mons) {
   const problems = E.checkTeam(mons.map(E.builtSet));
   for (const m of mons) {
@@ -5274,7 +5276,7 @@ function myTeam() {
   }
   if (t.kind === 'built') {
     const bt = builtTeams().find(x => x.id === t.id);
-    if (!bt || !bt.mons.length || (bt.problems && bt.problems.length)) return null;
+    if (!bt || !bt.mons.length || hardProblems(bt.problems).length) return null;
     return {kind: 'built', id: bt.id, sets: bt.mons.map(E.builtSet), name: who || 'You', label: bt.name, color: CUSTOM_COLOR};
   }
   const L = LEADERS[t.key];
@@ -5316,11 +5318,11 @@ function renderTeamPanel() {
     if (!bt) {
       html = `<p>Pick one of your built teams, or build a new one.</p><div class="row"><button class="btn primary" type="button" data-act="teams">Choose or build a team</button></div>`;
     } else {
-      const bad = bt.problems && bt.problems.length;
+      const bad = hardProblems(bt.problems).length, soft = !bad && bt.problems && bt.problems.length;
       html = `<div class="row" style="justify-content:space-between"><b>${bt.fav ? '★ ' : ''}${esc(bt.name)}</b><button class="btn" type="button" data-act="teams">Change</button></div>
         <div class="minis">${bt.mons.map(m => `<span class="mini">${monIcon(m.species)}</span>`).join('')}</div>
-        ${bad ? `<p style="color:var(--danger)">This team has problems to fix before it can battle.</p><div class="row"><button class="btn primary" type="button" data-act="edit">Fix the team</button></div>`
-          : `<p>Built teams play at level 100.</p><div class="row"><button class="btn" type="button" data-act="guide">Team guide</button></div>`}`;
+        ${bad ? `<p style="color:var(--danger)">This team needs at least one Mon with a move.</p><div class="row"><button class="btn primary" type="button" data-act="edit">Fix the team</button></div>`
+          : `${soft ? '<p class="note">Heads up: this team isn\'t Showdown-legal, but you can still battle with it.</p>' : ''}<p>Built teams play at level 100.</p><div class="row"><button class="btn" type="button" data-act="guide">Team guide</button></div>`}`;
     }
   }
   $('teamPanel').innerHTML = html;
@@ -5498,13 +5500,13 @@ let teamsPaste = false, teamsDelete = null;
 function openTeams() { teamsPaste = false; teamsDelete = null; renderTeams(); setAccent(CUSTOM_COLOR); show('teams'); }
 $('teamsBack').addEventListener('click', () => openHall());
 function teamCardHTML(t, sel) {
-  const bad = t.problems && t.problems.length;
+  const bad = hardProblems(t.problems).length, soft = !bad && t.problems && t.problems.length;
   const del = teamsDelete === t.id;
   return `<article class="teamcard${sel ? ' sel' : ''}" aria-label="${esc(t.name)}">
     <div class="top"><b>${esc(t.name)}${sel ? ' <span class="note">· in use</span>' : ''}</b>
       <button class="star" type="button" data-act="star" data-id="${t.id}" aria-pressed="${!!t.fav}" aria-label="${t.fav ? 'Remove ' + esc(t.name) + ' from favorites' : 'Add ' + esc(t.name) + ' to favorites'}"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="${t.fav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></button></div>
     <div class="minis">${t.mons.map(m => `<span class="mini">${monIcon(m.species)}</span>`).join('') || '<span class="note">No Mons yet</span>'}</div>
-    ${bad ? `<p class="err">Needs fixing: ${esc(t.problems[0])}${t.problems.length > 1 ? ` (+${t.problems.length - 1} more)` : ''}</p>` : ''}
+    ${bad ? `<p class="err">Needs fixing: ${esc(hardProblems(t.problems)[0])}</p>` : soft ? `<p class="note">Not Showdown-legal, but it can still battle.</p>` : ''}
     ${del ? `<div class="warnbox"><p>Delete ${esc(t.name)}? This can't be undone.</p><div class="row"><button class="btn danger" type="button" data-act="delyes" data-id="${t.id}">Delete</button><button class="btn ghostbtn" type="button" data-act="delno">Keep it</button></div></div>`
       : `<div class="row"><button class="btn primary" type="button" data-act="use" data-id="${t.id}" ${bad || !t.mons.length ? 'disabled' : ''}>Use this team</button><button class="btn" type="button" data-act="edit" data-id="${t.id}">Edit</button><button class="btn ghostbtn" type="button" data-act="del" data-id="${t.id}">Delete</button></div>`}
   </article>`;
@@ -5534,7 +5536,7 @@ $('teamsBody').addEventListener('click', e => {
     const nt = text.trim() ? importTeamText(text, `Pasted team ${list.length + 1}`) : null;
     if (!nt) { $('pasteNote').textContent = "That doesn't look like a Showdown team. Export it from the Teambuilder and paste the whole thing."; return; }
     teamsPaste = false; renderTeams();
-    toast(nt.problems.length ? `${nt.name} added. It needs a few fixes before it can battle.` : `${nt.name} added.`);
+    toast(nt.problems.length ? `${nt.name} added. It isn't Showdown-legal, but it can still battle.` : `${nt.name} added.`);
   } else if (act === 'star' && t) { t.fav = !t.fav; saveBuiltTeams(list); renderTeams(); }
   else if (act === 'use' && t) { setHallTeam({kind: 'built', id, gym: hallTeam().gym}); openHall(); toast(`Using ${t.name}.`); }
   else if (act === 'edit' && t) openBuilder(id);
@@ -5589,7 +5591,7 @@ function renderBuilder() {
   if (btLeave) html += `<div class="warnbox"><p>Leave without saving your changes?</p><div class="row"><button class="btn danger" type="button" data-act="leave">Leave</button><button class="btn ghostbtn" type="button" data-act="stay">Keep editing</button></div></div>`;
   html += `<div class="field"><label for="btName">Team name</label><input id="btName" maxlength="24" autocomplete="off" value="${esc(bt.name)}"></div>
     <div class="bslots">${slots}</div>
-    ${btProblems && btProblems.length ? `<div class="problems"><b>Fix these before this team can battle:</b><ul>${btProblems.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>` : ''}
+    ${btProblems && btProblems.length ? `<div class="problems"><b>Heads up (only a missing Mon or move stops a battle):</b><ul>${btProblems.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>` : ''}
     <p class="note">${bt.mons.length ? 'Tap a Mon above to change its moves and item, or to remove it.' : 'Pick up to 6 Mons from the list below.'}</p>`;
   if (!full) {
     html += `<div class="section"><h2>Choose a Mon for slot ${bt.mons.length + 1}</h2>
@@ -5616,7 +5618,7 @@ function saveBuilder() {
   if (i >= 0) list[i] = JSON.parse(JSON.stringify(bt)); else list.push(JSON.parse(JSON.stringify(bt)));
   saveBuiltTeams(list);
   btDirty = false;
-  if (bt.problems.length) { btProblems = bt.problems; renderBuilder(); toast('Saved. Fix the problems listed before this team can battle.', 4200); return; }
+  if (bt.problems.length) { btProblems = bt.problems; renderBuilder(); toast(hardProblems(bt.problems).length ? 'Saved. Add a Mon with a move before this team can battle.' : 'Saved. It isn\'t Showdown-legal, but it can still battle.', 4200); return; }
   toast(`${bt.name} saved.`);
   openTeams();
 }
