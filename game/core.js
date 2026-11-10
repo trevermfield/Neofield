@@ -15,6 +15,11 @@ export function parseTeam(text) {
   return {team, problems: problems || []};
 }
 
+// A side quest area's own Grassy Terrain never heals anyone (it only boosts Grass moves), so a wild Mon can't out-heal your attacks there.
+{
+  const gt = Dex.conditions.get('grassyterrain'), healOnce = gt.onResidual;
+  if (healOnce && !gt.areaPatched) { gt.areaPatched = true; gt.onResidual = function (pokemon) { if (this.field.terrainState && this.field.terrainState.areaTerrain) return; return healOnce.call(this, pokemon); }; }
+}
 // gameType: 'singles' (default), 'doubles' (2 out per side) or 'triples' (3 out per side)
 export function createBattle(p1, p2, seed, gameType = 'singles') {
   let battle;
