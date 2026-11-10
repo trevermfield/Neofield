@@ -970,7 +970,7 @@ function renderControlsMulti(req) {
       if (!t) return row === 1 && ci === idx ? `<span class="tself" title="${mcName(me)} is using the move">${artOf(me.species.name) || `<b>${mcName(me)}</b>`}</span>` : '<span class="tgap"></span>';
       const tm = t.mon, pct = Math.round(tm.hp / tm.maxhp * 100);
       let eff = '';
-      if (t.foe && mv.category !== 'Status') { const r = E.estimate(battle, me, tm.illusion ? Object.assign(Object.create(tm), {types: tm.illusion.types, species: tm.illusion.species, ability: ''}) : tm, m.id); eff = r.eff === 0 ? 'No effect' : r.eff > 1 ? 'Super effective' : r.eff < 1 ? 'Resisted' : ''; }
+      if (t.foe && mv.category !== 'Status') { const r = E.estimate(battle, me, tm.illusion ? Object.assign(Object.create(tm), {types: tm.illusion.types, species: tm.illusion.species, ability: ''}) : tm, m.id) || {eff: 1}; eff = r.eff === 0 ? 'No effect' : r.eff > 1 ? 'Super effective' : r.eff < 1 ? 'Resisted' : ''; }
       return `<button class="btn ${t.foe ? '' : 'ghost'}" data-mt="${t.loc}">${esc(tm.illusion ? tm.illusion.species.name : tm.species.name)}${t.mon === me ? ' (you)' : t.foe ? '' : ' (ally)'}<small>${pct}% HP${eff ? ' · ' + eff : ''}</small></button>`;
     };
     const rows = [cols.map(c => c.foe), cols.map(c => c.me)];

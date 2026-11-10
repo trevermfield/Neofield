@@ -127,6 +127,9 @@ export function estimate(battle, atk, def, moveId) {
     bp = r >= 5 ? 120 : r >= 4 ? 100 : r >= 3 ? 80 : r >= 2 ? 60 : 40;
   }
   if (move.id === 'eruption' || move.id === 'waterspout') bp = Math.max(1, Math.floor(150 * atk.hp / atk.maxhp));
+  if (move.id === 'electroball') { const r = stat(battle, atk, 'spe') / Math.max(1, stat(battle, def, 'spe')); bp = r >= 4 ? 150 : r >= 3 ? 120 : r >= 2 ? 80 : r >= 1 ? 60 : 40; }
+  if (move.id === 'gyroball') bp = Math.min(150, 1 + Math.floor(25 * stat(battle, def, 'spe') / Math.max(1, stat(battle, atk, 'spe'))));
+  if (!bp && move.basePowerCallback && !move.damageCallback) bp = 60;   // other moves whose power changes in battle: a middle-of-the-road guess
   if (move.id === 'return') bp = 102;
   if (move.id === 'tripleaxel') bp = 120;
   else if (move.id === 'triplekick') bp = 60;
