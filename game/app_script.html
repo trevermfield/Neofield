@@ -3750,7 +3750,7 @@ function applyAreaWx() {
   if (!id || !battle || battle.ended || battle.turn < 1) return;
   const f = battle.field;
   try {
-    if (/terrain$/.test(id)) { if (!f.terrain) { f.setTerrain(id, 'debug'); if (f.terrain === id) { f.terrainState.duration = 0; f.terrainState.areaTerrain = true; } } }
+    if (/terrain$/.test(id)) { if (!f.terrain) { f.setTerrain(id, 'debug'); if (f.terrain === id) f.terrainState.duration = 0; } }
     else if (!f.weather) { f.setWeather(id, 'debug'); if (f.weather === id) f.weatherState.duration = 0; }
   } catch (e) { /* no Mon out yet: try again next time */ }
 }
