@@ -2527,6 +2527,8 @@ function openAdvMap({fromBattle, msg, force} = {}) {
     if (A.regional && A.loc != null) placeMarkerOnRoute(A.loc);
     if (labAt) labMarker();
     if (msg) toast(msg, 4600);
+    // The aide's Cryodon must never be missed: if you are past the Route 6 stage and it has not come yet, it comes now (not only when Route 6 is tapped)
+    if (!fromBattle && A.regional && !A.cryoGift && (A.done || A.pos >= 5)) { oklaAide(); return; }
     if (!fromBattle && !msg) oklaNote();
     if (firstTrip) animateMarker(dest, () => { A.travelled = dest; saveA(); });
   });
