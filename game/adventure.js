@@ -247,6 +247,7 @@ export function awardXP(team, parts, kind, foeLevels, cfg = XP) {
     if (m.level >= 100) return;
     const chain = chainOf(m.final.species);
     const species = chain[stageAt(chain, m.level)].sp.name;
+    if (cfg.noBench && !parts.has(slot)) return;   // shared XP off: only Mons that fought gain anything
     const share = parts.has(slot) ? 1 : cfg.benchShare;
     let gain = 0;
     for (const lv of foeLevels) gain += xpForKO(kind, lv, m.level, cfg);

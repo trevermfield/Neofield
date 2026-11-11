@@ -2306,7 +2306,7 @@ function hallOfFame() {
 
 // --- team & bag between battles ---
 let jBagSel = null;
-function openBag() { jBagSel = null; renderBag(); show('jbag'); }
+function openBag() { jBagSel = null; renderBag(); $('jbagShare').hidden = true; show('jbag'); }
 function renderBag() {
   $('jbagItems').innerHTML = bagButtons(J.bag, jBagSel);
   const note = $('jbagNote');
@@ -3016,6 +3016,7 @@ function awardFightXP(fight) {
   if ((fight.type === 'e4' || fight.type === 'champion') && beatenOnce()) cfg = {...cfg, flat: fight.type === 'champion' ? 400 : 100};
   // Refighting Prof. Okla (level 99) is for money and Lustrous odds, not levels: no Mon gains more than 100 XP from him
   if (fight.type === 'okla' && A.lab && A.lab.beat) cfg = {...cfg, cap: 100};
+  if (isFosterName(A.playerName) && A.noShareXp) cfg = {...cfg, noBench: true};
   const events = E.awardXP(A.team, parts, XP_KIND[fight.type] || 'wild', fight.sets.map(x => x.level), cfg);
   saveA();
   return events;
@@ -4219,7 +4220,16 @@ $('shopTutor').addEventListener('click', async e => {
 $('shopBack').addEventListener('click', () => openAdvMap({}));
 
 // --- team & bag ---
-function openAdvBag(from) { advBagFrom = from; advBagSel = null; mapMode = 'adventure'; delete $('jbagNote').dataset.msg; renderAdvBag(); show('jbag'); }
+const isFosterName = n => /^\s*foster\s*$/i.test(n || '');
+function renderShareBtn() {
+  const b = $('jbagShare'), on = !(A && A.noShareXp);
+  b.hidden = !(mapMode === 'adventure' && A && isFosterName(A.playerName));
+  b.textContent = `Shared XP: ${on ? 'On' : 'Off'}`;
+  b.setAttribute('aria-pressed', String(on));
+  b.title = on ? 'Mons that sit out still earn some XP. Tap to turn off.' : 'Only Mons that fought earn XP. Tap to turn on.';
+}
+$('jbagShare').addEventListener('click', () => { A.noShareXp = !A.noShareXp; saveA(); renderShareBtn(); toast(A.noShareXp ? 'Shared XP off: only Mons that fight earn XP.' : 'Shared XP on: the whole team earns XP.'); });
+function openAdvBag(from) { advBagFrom = from; advBagSel = null; mapMode = 'adventure'; delete $('jbagNote').dataset.msg; renderAdvBag(); renderShareBtn(); show('jbag'); }
 function renderAdvBag() {
   $('jbagItems').innerHTML = bagButtons(A.bag, advBagSel);
   const note = $('jbagNote');
@@ -6065,7 +6075,7 @@ $('optVersion').textContent = `Version ${BUILD}`;
 })();
 
 // Automated tests open the game with ?test to read the battle state.
-if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: (i, o) => openQuest(i, o), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), champDefeat: t => championDefeat(t ? 'How you doing little Tony? ...bad' : undefined, !!t), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), refreshQuests: () => refreshSideQuests(), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
+if (new URLSearchParams(location.search).has('test')) window.__neoTest = {hp: () => battle ? JSON.stringify(['p1', 'p2'].map(sd => battle[sd].pokemon.map(x => x.hp))) : null, linkClose: () => link && link.conn && link.conn.close(), adv: {lusRate: l => lusRate(l), openQuest: (i, o) => openQuest(i, o), champIntro: tony => championIntro([], 50, null, tony ? {name: TONY_NAME, lines: tonyLines(A ? A.playerName : 'Tucker'), tony: true} : {name: ANNA_CHAMP, lines: ANNA_CHAMP_LINES, jerry: true}), aide: () => oklaAide(), champDefeat: t => championDefeat(t ? 'How you doing little Tony? ...bad' : undefined, !!t), migrate: () => { migrateA(); return A.team.map(m => m.final.ability); }, labOn: () => labOn(), openMap: () => openAdvMap({}), starters: lus => { introLus = lus; introPick = null; show('intro'); showStarters(); }, mutA: fn => { fn(A); saveA(); }, win: () => { battle.forceWin('p1'); return refresh(); }, live: () => !!battle && !battle.ended, busy: () => playing || refreshing, fightType: () => ctx && ctx.fight ? ctx.fight.type : null, koFoe: () => { const f = battle && battle.p2.active[0]; if (!f || f.hp <= 0) return false; f.hp = 1; try { f.setStatus('slp'); } catch (e) {} return true; }, team: spec => { A.team = spec.map(([f, l]) => E.newMember(f, l)); A.pos = 17; A.playerName = 'Tyler'; saveA(); }, bgm: () => bgm ? {n: bgm.name, src: !!bgm.src, snd: evoSound, st: audio && audio.state} : null, summit: () => openSummit(), ctx: () => ctx, art: (n, l) => artOf(n, l), lusSide: (s, n) => lusSide(s, n), start: (n, f) => startRegionalAdventure(n, f), bag: () => openAdvBag('map'), refreshQuests: () => refreshSideQuests(), fight: r => routeBattle(r), A: () => A, dex: n => showDexEntry(n), openDex: () => openDex('adventure', 'map'), addCaught: c => addCaught(c)}};
 
 // ---------- developer mode: tap the Mon on the loading screen 5 times ----------
 let devMode = store.get('devMode', false);
